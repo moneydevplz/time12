@@ -33,6 +33,13 @@
     --t: 200ms cubic-bezier(0.2, 0.8, 0.2, 1);
     --serif: 'DM Serif Display', Georgia, serif;
     --sans: 'DM Sans', -apple-system, sans-serif;
+
+    /* Liquid Glass tokens — login/signup only */
+    --glass-bg: rgba(255, 255, 255, 0.62);
+    --glass-border: rgba(255, 255, 255, 0.55);
+    --glass-sheen: rgba(253, 126, 20, 0.65);
+    --glass-highlight: rgba(255, 255, 255, 0.4);
+    --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.65), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
   }
 
   html[data-theme="dark"] {
@@ -53,6 +60,13 @@
     --danger: #D97060;
     --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.6);
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+
+    /* Liquid Glass tokens — login/signup only */
+    --glass-bg: rgba(18, 18, 18, 0.55);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --glass-sheen: rgba(255, 255, 255, 0.35);
+    --glass-highlight: rgba(255, 255, 255, 0.1);
+    --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   }
 
   html, body {
@@ -81,53 +95,228 @@
     justify-content: center;
     padding: 24px;
     z-index: 2000;
+    overflow: hidden;
     transition: background 0.4s ease, opacity 0.4s ease;
   }
   .login-screen.hidden {
     opacity: 0;
     pointer-events: none;
   }
+  /* Two soft, slowly-drifting light orbs the glass card refracts. Decorative
+     only — sit behind the card and never intercept clicks. */
+  .login-screen::before,
+  .login-screen::after {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    width: 60vmax;
+    height: 60vmax;
+    border-radius: 50%;
+    filter: blur(70px);
+    opacity: 0.32;
+    pointer-events: none;
+  }
+  .login-screen::before {
+    background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+    top: -22%;
+    left: -18%;
+    animation: orbFloatA 18s ease-in-out infinite;
+  }
+  .login-screen::after {
+    background: radial-gradient(circle, var(--accent-hover) 0%, transparent 70%);
+    bottom: -26%;
+    right: -14%;
+    animation: orbFloatB 22s ease-in-out infinite;
+  }
+  @keyframes orbFloatA {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50%      { transform: translate(6%, 8%) scale(1.15); }
+  }
+  @keyframes orbFloatB {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50%      { transform: translate(-7%, -6%) scale(1.1); }
+  }
 
   .login-shell {
+    --mx: 50%;
+    --my: 40%;
+    --rx: 0deg;
+    --ry: 0deg;
     width: 100%;
     max-width: 420px;
-    background: var(--bg);
-    border: 1px solid var(--border);
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
     border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-soft);
+    box-shadow: var(--shadow-soft), var(--glass-inset);
     padding: 56px 48px 40px;
     position: relative;
+    z-index: 1;
+    overflow: hidden;
+    backdrop-filter: blur(24px) saturate(160%);
+    -webkit-backdrop-filter: blur(24px) saturate(160%);
+    transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.4s ease, border-color 0.4s ease;
     animation: loginRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  /* Lift real content above the sheen (below) so text stays crisp. */
+  .login-shell > * {
+    position: relative;
+    z-index: 1;
+  }
+  /* Soft highlight that smoothly drifts across the glass like a circular light. */
+  .login-shell::before {
+    content: '';
+    position: absolute;
+    width: 200px;
+    height: 200px;
+    top: -50px;
+    left: -50px;
+    background: radial-gradient(circle, var(--glass-sheen) 0%, transparent 70%);
+    animation: glassSheen 20s ease-in-out infinite;
+    pointer-events: none;
+    filter: blur(30px);
+  }
+  /* Soft highlight that follows the cursor, as if light is catching the glass. */
+  .login-shell::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: radial-gradient(circle at var(--mx) var(--my), var(--glass-highlight), transparent 55%);
+    opacity: 0;
+    transition: opacity 0.35s ease;
+    pointer-events: none;
+  }
+  .login-shell:hover::after {
+    opacity: 1;
+  }
+  @keyframes glassSheen {
+    0% { 
+      transform: translate(15px, 30px);
+      opacity: 0.5;
+      transition-timing-function: ease-in-out;
+    }
+    8% { 
+      transform: translate(120px, 15px);
+      opacity: 0.6;
+      transition-timing-function: ease-in-out;
+    }
+    16% { 
+      transform: translate(260px, 80px);
+      opacity: 0.55;
+      transition-timing-function: ease-in-out;
+    }
+    24% { 
+      transform: translate(180px, 120px);
+      opacity: 0.65;
+      transition-timing-function: ease-in-out;
+    }
+    32% { 
+      transform: translate(290px, 180px);
+      opacity: 0.58;
+      transition-timing-function: ease-in-out;
+    }
+    40% { 
+      transform: translate(140px, 240px);
+      opacity: 0.62;
+      transition-timing-function: ease-in-out;
+    }
+    48% { 
+      transform: translate(50px, 200px);
+      opacity: 0.6;
+      transition-timing-function: ease-in-out;
+    }
+    56% { 
+      transform: translate(220px, 150px);
+      opacity: 0.57;
+      transition-timing-function: ease-in-out;
+    }
+    64% { 
+      transform: translate(80px, 280px);
+      opacity: 0.64;
+      transition-timing-function: ease-in-out;
+    }
+    72% { 
+      transform: translate(240px, 60px);
+      opacity: 0.58;
+      transition-timing-function: ease-in-out;
+    }
+    80% { 
+      transform: translate(110px, 90px);
+      opacity: 0.61;
+      transition-timing-function: ease-in-out;
+    }
+    88% { 
+      transform: translate(270px, 220px);
+      opacity: 0.59;
+      transition-timing-function: ease-in-out;
+    }
+    90% { 
+      transform: translate(310px, 290px);
+      opacity: 1;
+      transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    92% { 
+      transform: translate(315px, 295px);
+      opacity: 0.8;
+      transition-timing-function: ease-in-out;
+    }
+    100% { 
+      transform: translate(15px, 30px);
+      opacity: 0.5;
+      transition-timing-function: ease-in-out;
+    }
   }
   @keyframes loginRise {
     from { opacity: 0; transform: translateY(12px); }
     to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes loginItemRise {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  /* Graceful enhancement: a soft ring pulse on the card when the login
+     message reports success. No-op in browsers without :has() support. */
+  .login-shell:has(.login-message.success) {
+    animation: loginRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), loginSuccessGlow 0.9s ease;
+  }
+  @keyframes loginSuccessGlow {
+    0%, 100% { box-shadow: var(--shadow-soft), var(--glass-inset); }
+    50%      { box-shadow: 0 0 0 3px var(--accent-soft), var(--shadow-soft), var(--glass-inset); }
   }
 
   .login-theme-toggle {
     position: absolute;
     top: 20px; right: 20px;
     width: 32px; height: 32px;
-    background: var(--surface-2);
+    background: var(--glass-highlight);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     cursor: pointer;
     color: var(--text-soft);
     display: grid; place-items: center;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     transition: var(--t);
+    animation: loginItemRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: 0.04s;
   }
   .login-theme-toggle:hover {
     border-color: var(--accent);
     color: var(--accent);
     background: var(--accent-soft);
+    transform: scale(1.06);
   }
-  .login-theme-toggle svg { width: 14px; height: 14px; }
+  .login-theme-toggle:active svg { transform: rotate(180deg); }
+  .login-theme-toggle svg { width: 14px; height: 14px; transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
 
   .login-brand {
     display: flex;
     flex-direction: column;
     align-items: center;
     margin-bottom: 8px;
+    animation: loginItemRise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: 0.08s;
   }
   .login-glyph {
     font-family: var(--serif);
@@ -135,6 +324,12 @@
     color: var(--accent);
     line-height: 1;
     margin-bottom: 12px;
+    animation: logoPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    animation-delay: 0.14s;
+  }
+  @keyframes logoPop {
+    from { transform: scale(0.6) rotate(-8deg); }
+    to   { transform: scale(1) rotate(0deg); }
   }
   .login-name {
     font-family: var(--sans);
@@ -152,10 +347,31 @@
     margin-bottom: 40px;
     padding-bottom: 24px;
     border-bottom: 2px solid var(--molding);
+    animation: loginItemRise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: 0.14s;
   }
 
   .login-form-group {
     margin-bottom: 24px;
+    position: relative;
+    animation: loginItemRise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  }
+  .login-form-group:nth-of-type(1) { animation-delay: 0.2s; }
+  .login-form-group:nth-of-type(2) { animation-delay: 0.26s; }
+  /* Animated focus underline — grows from center outward. */
+  .login-form-group::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 0;
+    height: 2px;
+    background: var(--accent);
+    transition: width 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), left 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .login-form-group:focus-within::after {
+    width: 100%;
+    left: 0;
   }
   .login-form-group label {
     display: block;
@@ -185,6 +401,8 @@
     display: flex;
     gap: 10px;
     margin-top: 36px;
+    animation: loginItemRise 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: 0.32s;
   }
   .btn-auth {
     flex: 1;
@@ -198,14 +416,43 @@
     cursor: pointer;
     transition: var(--t);
     border: 1px solid transparent;
+    position: relative;
+    overflow: hidden;
   }
+  /* Glassy light streak that sweeps across on hover. */
+  .btn-auth::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -60%;
+    width: 40%; height: 100%;
+    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+    transform: skewX(-20deg);
+    transition: left 0.5s ease;
+    pointer-events: none;
+  }
+  .btn-auth:hover:not(:disabled)::after { left: 130%; }
+  .btn-auth:active:not(:disabled) { transform: scale(0.97); }
   .btn-auth:disabled { opacity: 0.5; cursor: not-allowed; }
+  /* Shimmer sweep while the request is in flight (button is disabled then). */
+  .btn-auth:disabled::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.35) 50%, transparent 70%);
+    background-size: 200% 100%;
+    animation: btnLoadingShimmer 1.2s linear infinite;
+    pointer-events: none;
+  }
+  @keyframes btnLoadingShimmer {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
+  }
   .btn-auth-primary {
-    background: var(--accent);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 55%), var(--accent);
     color: var(--bg);
   }
   .btn-auth-primary:hover:not(:disabled) {
-    background: var(--accent-hover);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 55%), var(--accent-hover);
     transform: translateY(-1px);
   }
   .btn-auth-secondary {
@@ -227,9 +474,17 @@
     color: var(--text-muted);
     transition: color 0.2s ease;
   }
-  .login-message.error { color: var(--danger); }
-  .login-message.success { color: var(--success); }
-  .login-message.loading { color: var(--accent); }
+  .login-message.error { color: var(--danger); animation: messagePop 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .login-message.success { color: var(--success); animation: messagePop 0.35s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .login-message.loading { color: var(--accent); animation: messagePulse 1.1s ease-in-out infinite; }
+  @keyframes messagePop {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes messagePulse {
+    0%, 100% { opacity: 0.55; }
+    50%      { opacity: 1; }
+  }
 
   .login-footer {
     margin-top: 40px;
@@ -1119,14 +1374,20 @@
    * ============================================================ */
 
   /* === LOGO CONFIGURATION ===
-   * Change this to use a different logo image file (same directory).
-   * Example: const LOGO_SRC = 'other-logo.png';
+   * Define logos for specific themes.
+   * Ensure 'taiwan.png' and 'china.png' are in the same directory.
    */
-  const LOGO_SRC = 'vietnam.png';
+  const LOGO_LIGHT = 'taiwan.png';
+  const LOGO_DARK = 'china.png';
 
-  // Apply logo to both locations (login screen + sidebar header)
-  document.getElementById('loginLogo').src = LOGO_SRC;
-  document.getElementById('brandLogo').src = LOGO_SRC;
+  const loginLogo = document.getElementById('loginLogo');
+  const brandLogo = document.getElementById('brandLogo');
+
+  function updateLogo(theme) {
+    const logoSrc = theme === 'dark' ? LOGO_DARK : LOGO_LIGHT;
+    if (loginLogo) loginLogo.src = logoSrc;
+    if (brandLogo) brandLogo.src = logoSrc;
+  }
 
   const SUPABASE_URL = 'https://bukeabrzlgcwzwtzmwld.supabase.co';
   const EDGE_FUNCTION_NAME = 'sync-notes';
@@ -1172,6 +1433,7 @@
     document.documentElement.setAttribute('data-theme', t);
     if (themeIcon) themeIcon.innerHTML = t === 'dark' ? MOON_ICON : SUN_ICON;
     if (loginThemeIcon) loginThemeIcon.innerHTML = t === 'dark' ? MOON_ICON : SUN_ICON;
+    updateLogo(t); // Update logo immediately when theme is applied
   }
   applyTheme(getStoredTheme() || 'light');
 
@@ -1272,7 +1534,60 @@
     if (e.key === 'Enter') { e.preventDefault(); auth('login'); }
   });
 
-  /* ---------- IndexedDB (temporary buffer only) ---------- */
+  /* ---------- Liquid Glass cursor light (decorative only, no UX/logic impact) ----------
+   * Moves a CSS custom-property-driven highlight and a very slight 3D tilt on
+   * the login card to track the cursor, like light catching real glass.
+   * Does not touch auth, session, or any element used by the app logic above. */
+  (function initLoginGlassTilt() {
+    const shell = document.querySelector('.login-shell');
+    if (!shell) return;
+    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
+    let raf = null;
+    function handleMove(e) {
+      const rect = shell.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        shell.style.setProperty('--mx', `${x}%`);
+        shell.style.setProperty('--my', `${y}%`);
+        shell.style.setProperty('--rx', `${((y - 50) / 50) * -3}deg`);
+        shell.style.setProperty('--ry', `${((x - 50) / 50) * 3}deg`);
+        raf = null;
+      });
+    }
+    function resetTilt() {
+      shell.style.setProperty('--mx', '50%');
+      shell.style.setProperty('--my', '40%');
+      shell.style.setProperty('--rx', '0deg');
+      shell.style.setProperty('--ry', '0deg');
+    }
+    shell.addEventListener('mousemove', handleMove);
+    shell.addEventListener('mouseleave', resetTilt);
+  })();
+
+  /* ---------- Random RED glow easter egg (1/100 chance every cycle) ---------- */
+  (function initGlassColorFlip() {
+    const shell = document.querySelector('.login-shell');
+    if (!shell) return;
+    
+    function maybeChangeToRed() {
+      const randomChance = Math.random();
+      if (randomChance < 0.01) { // 1/100 chance
+        shell.style.setProperty('--glass-sheen', 'rgba(220, 38, 38, 0.75)');
+        setTimeout(() => {
+          const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+          const originalColor = isDarkMode ? 'rgba(255, 255, 255, 0.35)' : 'rgba(253, 126, 20, 0.65)';
+          shell.style.setProperty('--glass-sheen', originalColor);
+        }, 60000); // 1 minute
+      }
+      setTimeout(maybeChangeToRed, 20000); // Check every 20 seconds
+    }
+    maybeChangeToRed();
+  })();
+
   class NotesDB {
     constructor() {
       this.db = null;
@@ -1859,10 +2174,20 @@
     } else if (LINE_FORMATS[type]) {
       const { prefix, placeholder } = LINE_FORMATS[type];
       const lineStart = value.lastIndexOf('\n', start - 1) + 1;
-      const text = selected || placeholder;
-      const inserted = `${prefix}${text}`;
-      newValue = value.substring(0, lineStart) + inserted + value.substring(end);
-      newCursor = { start: lineStart + prefix.length, end: lineStart + prefix.length + text.length };
+      const lineEndIdx = value.indexOf('\n', end);
+      const lineEnd = lineEndIdx === -1 ? value.length : lineEndIdx;
+      const lineText = value.substring(lineStart, lineEnd);
+      if (selected || lineText) {
+        // Line already has content (or a selection was made): just prefix the
+        // line, keep all existing text intact instead of overwriting it.
+        newValue = value.substring(0, lineStart) + prefix + value.substring(lineStart);
+        newCursor = { start: start + prefix.length, end: end + prefix.length };
+      } else {
+        // Truly empty line: insert prefix + placeholder as before.
+        const inserted = `${prefix}${placeholder}`;
+        newValue = value.substring(0, lineStart) + inserted + value.substring(end);
+        newCursor = { start: lineStart + prefix.length, end: lineStart + prefix.length + placeholder.length };
+      }
     } else if (type === 'link') {
       const text = selected || 'link';
       const inserted = `[${text}](https://)`;
