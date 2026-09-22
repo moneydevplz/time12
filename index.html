@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-<title>Time12 — A place to write</title>
+<title>Time12 — Make Time True</title>
 <link id="favicon" rel="icon" type="image/png" href="china.png" />
 <link rel="apple-touch-icon" href="china.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1154,7 +1154,7 @@
       <img class="login-glyph" id="loginLogo" alt="Time12" style="width:56px;height:56px;object-fit:contain;" />
       <div class="login-name">Time12</div>
     </div>
-    <div class="login-tagline">A place to write</div>
+    <div class="login-tagline">Make Time True</div>
 
     <form id="authForm">
       <div class="login-form-group">
@@ -1363,7 +1363,7 @@
 
 <script type="module">
   /* ============================================================
-   * Time12 — front door is UniClvrPass
+   * Time12 — Make Time True
    * Supabase is the source of truth. IndexedDB is only a temporary
    * buffer for updates that have not yet been confirmed by Supabase.
    * ============================================================ */
@@ -1674,8 +1674,8 @@
         modified: new Date().toISOString(),
         synced: false,
       };
+      // Only save to local IndexedDB buffer. Do not push to Supabase yet.
       await this.saveNote(note);
-      await this.addToSyncQueue(note.id, 'save');
       return note;
     }
     async addToSyncQueue(noteId, action) {
@@ -1914,6 +1914,10 @@
     if (!t) return 0;
     return t.split(/\s+/).length;
   }
+  
+  function isNoteBlank(note) {
+    return note && !note.title.trim() && !note.content.trim();
+  }
 
   function updateCounters() {
     const text = contentInput.value;
@@ -1955,19 +1959,10 @@
     notes.forEach(n => { n.synced = true; });
     allNotes = notes;
 
-    if (notes.length === 0) {
-      const emptyNote = await db.createNote('');
-      const syncSuccess = await syncManager.syncNote(emptyNote.id, 'save');
-      emptyNote.synced = syncSuccess;
-      notes.unshift(emptyNote);
-      allNotes = [emptyNote];
-    } else {
-      // Create a fresh new note for the user automatically upon page load
-      const freshNote = await db.createNote('');
-      const syncSuccess = await syncManager.syncNote(freshNote.id, 'save');
-      freshNote.synced = syncSuccess;
-      allNotes.unshift(freshNote);
-    }
+    // Always create a fresh local blank note on page load
+    // It stays entirely local until the user types something
+    const freshNote = await db.createNote('');
+    allNotes.unshift(freshNote);
 
     renderNotesList();
 
@@ -2040,6 +2035,16 @@
     if (currentNoteId && hasUnsavedChanges) {
       await saveNote(true);
     }
+
+    // Automatically delete the current note from local buffer if it is completely blank
+    // so that blank notes never reach Supabase.
+    if (currentNoteId && currentNoteId !== id) {
+      const currentNote = allNotes.find(n => n.id === currentNoteId);
+      if (isNoteBlank(currentNote)) {
+        await deleteNotePermanently(currentNoteId);
+      }
+    }
+
     currentNoteId = id;
     hasUnsavedChanges = false;
     document.querySelectorAll('.note-item').forEach(el => el.classList.remove('active'));
@@ -2056,16 +2061,49 @@
     }
   }
 
+  async function deleteNotePermanently(id) {
+    try {
+      // Check if it was ever pushed to Supabase. If it's purely local, just clear it.
+    const note = allNotes.find(n => n.id === id);
+    if (note && !note.synced) {
+      await db.removeFromSyncQueue(id);
+      await db.deleteNote(id);
+    } else {
+      await db.addToSyncQueue(id, 'delete');
+      try { await syncManager.syncNote(id, 'delete'); }
+      catch (e) { console.warn('Auto-sync delete failed, will retry:', e); }
+      await db.deleteNote(id);
+    }
+
+      allNotes = allNotes.filter(n => n.id !== id);
+      renderNotesList();
+      updateSyncBadge();
+    } catch (error) {
+      console.error('Failed to auto-delete blank note:', error);
+    }
+  }
+
   async function saveNote(silent = false) {
     if (!currentNoteId) return;
+    
+    const currentNote = allNotes.find(n => n.id === currentNoteId);
+    const title = titleInput.value;
+    const content = contentInput.value;
+
+    // If the note is entirely blank, do not save or push to Supabase.
+    if (!title.trim() && !content.trim()) {
+      hasUnsavedChanges = false;
+      setStatus('ready');
+      return;
+    }
+
     setStatus('saving');
     try {
-      const existingNote = allNotes.find(n => n.id === currentNoteId);
       const note = {
         id: currentNoteId,
-        title: titleInput.value || 'Untitled',
-        content: contentInput.value,
-        created: existingNote ? existingNote.created : new Date().toISOString(),
+        title: title || 'Untitled',
+        content: content,
+        created: currentNote ? currentNote.created : new Date().toISOString(),
         modified: new Date().toISOString(),
         synced: false,
       };
@@ -2138,12 +2176,7 @@
     if (!deleteConfirmId) return;
     try {
       setStatus('saving');
-      await db.addToSyncQueue(deleteConfirmId, 'delete');
-      try { await syncManager.syncNote(deleteConfirmId, 'delete'); }
-      catch (e) { console.warn('Auto-sync delete failed, will retry:', e); }
-
-      await db.deleteNote(deleteConfirmId);
-      allNotes = allNotes.filter(n => n.id !== deleteConfirmId);
+      await deleteNotePermanently(deleteConfirmId);
 
       dialogOverlay.classList.remove('active');
 
@@ -2154,7 +2187,17 @@
         hasUnsavedChanges = false;
       }
 
-      await loadNotes();
+      // Create a fresh blank local note if we deleted the last one
+      if (allNotes.length === 0) {
+        const freshNote = await db.createNote('');
+        allNotes.unshift(freshNote);
+        renderNotesList();
+        selectNote(freshNote.id);
+      } else {
+        // Select the first available note
+        selectNote(allNotes[0].id);
+      }
+
       setStatus('saved');
       toast('Note deleted', 'warn');
       deleteConfirmId = null;
