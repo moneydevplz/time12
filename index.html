@@ -11,6 +11,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   :root {
+    /* five fixes/
     /* Light Mode — Pure White Main & Wood Surround */
     --bg: #FFFFFF;
     --surface: #F7F3EE;
@@ -1135,13 +1136,6 @@
   }
   .empty-list-text { font-size: 12px; }
 
-  @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
-      animation-duration: 0.01ms !important;
-      transition-duration: 0.01ms !important;
-    }
-  }
-
   @media (max-width: 860px) {
     .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
     .sidebar { height: 40vh; border-right: none; border-bottom: 2px solid var(--molding); }
@@ -1373,16 +1367,6 @@
    * buffer for updates that have not yet been confirmed by Supabase.
    * ============================================================ */
 
-  /* === LOGO CONFIGURATION ===
-   * Change this to use a different logo image file (same directory).
-   * Example: const LOGO_SRC = 'other-logo.png';
-   */
-  const LOGO_SRC = 'vietnam.png';
-
-  // Apply logo to both locations (login screen + sidebar header)
-  document.getElementById('loginLogo').src = LOGO_SRC;
-  document.getElementById('brandLogo').src = LOGO_SRC;
-
   const SUPABASE_URL = 'https://bukeabrzlgcwzwtzmwld.supabase.co';
   const EDGE_FUNCTION_NAME = 'sync-notes';
   const AUTO_SYNC_INTERVAL = 5000;
@@ -1416,6 +1400,8 @@
   const loginThemeIcon = document.getElementById('loginThemeIcon');
   const themeToggle = document.getElementById('themeToggle');
   const loginThemeToggle = document.getElementById('loginThemeToggle');
+  const loginLogo = document.getElementById('loginLogo');
+  const brandLogo = document.getElementById('brandLogo');
 
   function getStoredTheme() {
     try { return localStorage.getItem('Time12-theme'); } catch { return null; }
@@ -1427,6 +1413,11 @@
     document.documentElement.setAttribute('data-theme', t);
     if (themeIcon) themeIcon.innerHTML = t === 'dark' ? MOON_ICON : SUN_ICON;
     if (loginThemeIcon) loginThemeIcon.innerHTML = t === 'dark' ? MOON_ICON : SUN_ICON;
+    
+    // Apply the dynamically chosen logo based on the active theme
+    const logoSrc = t === 'dark' ? 'china.png' : 'taiwan.png';
+    if (loginLogo) loginLogo.src = logoSrc;
+    if (brandLogo) brandLogo.src = logoSrc;
   }
   applyTheme(getStoredTheme() || 'light');
 
@@ -1527,7 +1518,7 @@
     if (e.key === 'Enter') { e.preventDefault(); auth('login'); }
   });
 
-  /* ---------- Liquid Glass cursor light (decorative only, no UX/logic impact) ----------
+  /* ---------- Liquid Glass cursor light (decorative only, no UX/logic impact)----------
    * Moves a CSS custom-property-driven highlight and a very slight 3D tilt on
    * the login card to track the cursor, like light catching real glass.
    * Does not touch auth, session, or any element used by the app logic above. */
