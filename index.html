@@ -2033,6 +2033,16 @@
     });
   }
 
+  function updateNoteElement(id, title, modifiedIso) {
+    const noteElement = document.querySelector(`[data-id="${id}"]`);
+    if (noteElement) {
+      const titleEl = noteElement.querySelector('.note-item-title');
+      if (titleEl) titleEl.textContent = title || '';
+      const dateEl = noteElement.querySelector('.note-item-date');
+      if (dateEl && modifiedIso) dateEl.textContent = formatDate(modifiedIso);
+    }
+  }
+
   async function selectNote(id) {
     if (currentNoteId && hasUnsavedChanges) {
       await saveNote(true);
@@ -2126,18 +2136,19 @@
       }
 
       metaModified.textContent = longDate(note.modified);
+      updateNoteElement(note.id, note.title, note.modified);
 
-      const noteElement = document.querySelector(`[data-id="${currentNoteId}"]`);
-      if (noteElement) {
-        noteElement.querySelector('.note-item-date').textContent = formatDate(note.modified);
-        noteElement.querySelector('.note-item-title').textContent = note.title;
-        if (syncSuccess) {
+      if (syncSuccess) {
+        const noteElement = document.querySelector(`[data-id="${note.id}"]`);
+        if (noteElement) {
           noteElement.classList.remove('unsynced');
           if (idx > -1) allNotes[idx].synced = true;
-        } else {
-          noteElement.classList.add('unsynced');
         }
+      } else {
+        const noteElement = document.querySelector(`[data-id="${note.id}"]`);
+        if (noteElement) noteElement.classList.add('unsynced');
       }
+
       hasUnsavedChanges = false;
       updateSyncBadge();
     } catch (error) {
