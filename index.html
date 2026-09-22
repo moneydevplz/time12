@@ -1666,7 +1666,7 @@
         request.onsuccess = () => resolve();
       });
     }
-    async createNote(title = 'Untitled') {
+    async createNote(title = '') {
       const note = {
         id: crypto.randomUUID(),
         title, content: '',
@@ -2000,11 +2000,13 @@
       if (!note.synced) div.classList.add('unsynced');
 
       const preview = (note.content || '').replace(/[#*`_\-\[\]]/g, '').trim().slice(0, 60);
+      const titleText = note.title || '';
+      const displayTitle = escapeHtml(titleText);
 
       div.innerHTML = `
         <span class="note-dot"></span>
         <div class="note-item-content">
-          <div class="note-item-title">${escapeHtml(note.title || 'Untitled')}</div>
+          <div class="note-item-title">${displayTitle}</div>
           <div class="note-item-date">${formatDate(note.modified)}</div>
         </div>
         <button class="note-item-delete" data-delete="${note.id}" aria-label="Delete note">
@@ -2101,7 +2103,7 @@
     try {
       const note = {
         id: currentNoteId,
-        title: title || 'Untitled',
+        title: title || '',
         content: content,
         created: currentNote ? currentNote.created : new Date().toISOString(),
         modified: new Date().toISOString(),
