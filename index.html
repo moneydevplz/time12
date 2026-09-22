@@ -2,16 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
 <title>Time12 — A place to write</title>
+<link id="favicon" rel="icon" type="image/png" href="china.png" />
+<link rel="apple-touch-icon" href="china.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
   :root {
-    /* five fixes/
     /* Light Mode — Pure White Main & Wood Surround */
     --bg: #FFFFFF;
     --surface: #F7F3EE;
@@ -192,81 +193,21 @@
     opacity: 1;
   }
   @keyframes glassSheen {
-    0% { 
-      transform: translate(15px, 30px);
-      opacity: 0.5;
-      transition-timing-function: ease-in-out;
-    }
-    8% { 
-      transform: translate(120px, 15px);
-      opacity: 0.6;
-      transition-timing-function: ease-in-out;
-    }
-    16% { 
-      transform: translate(260px, 80px);
-      opacity: 0.55;
-      transition-timing-function: ease-in-out;
-    }
-    24% { 
-      transform: translate(180px, 120px);
-      opacity: 0.65;
-      transition-timing-function: ease-in-out;
-    }
-    32% { 
-      transform: translate(290px, 180px);
-      opacity: 0.58;
-      transition-timing-function: ease-in-out;
-    }
-    40% { 
-      transform: translate(140px, 240px);
-      opacity: 0.62;
-      transition-timing-function: ease-in-out;
-    }
-    48% { 
-      transform: translate(50px, 200px);
-      opacity: 0.6;
-      transition-timing-function: ease-in-out;
-    }
-    56% { 
-      transform: translate(220px, 150px);
-      opacity: 0.57;
-      transition-timing-function: ease-in-out;
-    }
-    64% { 
-      transform: translate(80px, 280px);
-      opacity: 0.64;
-      transition-timing-function: ease-in-out;
-    }
-    72% { 
-      transform: translate(240px, 60px);
-      opacity: 0.58;
-      transition-timing-function: ease-in-out;
-    }
-    80% { 
-      transform: translate(110px, 90px);
-      opacity: 0.61;
-      transition-timing-function: ease-in-out;
-    }
-    88% { 
-      transform: translate(270px, 220px);
-      opacity: 0.59;
-      transition-timing-function: ease-in-out;
-    }
-    90% { 
-      transform: translate(310px, 290px);
-      opacity: 1;
-      transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }
-    92% { 
-      transform: translate(315px, 295px);
-      opacity: 0.8;
-      transition-timing-function: ease-in-out;
-    }
-    100% { 
-      transform: translate(15px, 30px);
-      opacity: 0.5;
-      transition-timing-function: ease-in-out;
-    }
+    0% { transform: translate(15px, 30px); opacity: 0.5; }
+    8% { transform: translate(120px, 15px); opacity: 0.6; }
+    16% { transform: translate(260px, 80px); opacity: 0.55; }
+    24% { transform: translate(180px, 120px); opacity: 0.65; }
+    32% { transform: translate(290px, 180px); opacity: 0.58; }
+    40% { transform: translate(140px, 240px); opacity: 0.62; }
+    48% { transform: translate(50px, 200px); opacity: 0.6; }
+    56% { transform: translate(220px, 150px); opacity: 0.57; }
+    64% { transform: translate(80px, 280px); opacity: 0.64; }
+    72% { transform: translate(240px, 60px); opacity: 0.58; }
+    80% { transform: translate(110px, 90px); opacity: 0.61; }
+    88% { transform: translate(270px, 220px); opacity: 0.59; }
+    90% { transform: translate(310px, 290px); opacity: 1; }
+    92% { transform: translate(315px, 295px); opacity: 0.8; }
+    100% { transform: translate(15px, 30px); opacity: 0.5; }
   }
   @keyframes loginRise {
     from { opacity: 0; transform: translateY(12px); }
@@ -276,8 +217,6 @@
     from { opacity: 0; transform: translateY(8px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-  /* Graceful enhancement: a soft ring pulse on the card when the login
-     message reports success. No-op in browsers without :has() support. */
   .login-shell:has(.login-message.success) {
     animation: loginRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), loginSuccessGlow 0.9s ease;
   }
@@ -359,7 +298,6 @@
   }
   .login-form-group:nth-of-type(1) { animation-delay: 0.2s; }
   .login-form-group:nth-of-type(2) { animation-delay: 0.26s; }
-  /* Animated focus underline — grows from center outward. */
   .login-form-group::after {
     content: '';
     position: absolute;
@@ -391,7 +329,7 @@
     padding: 10px 0;
     color: var(--text);
     font-family: var(--sans);
-    font-size: 15px;
+    font-size: 16px; /* Prevents iOS zoom on focus */
     outline: none;
     transition: var(--t);
   }
@@ -420,7 +358,6 @@
     position: relative;
     overflow: hidden;
   }
-  /* Glassy light streak that sweeps across on hover. */
   .btn-auth::after {
     content: '';
     position: absolute;
@@ -434,7 +371,6 @@
   .btn-auth:hover:not(:disabled)::after { left: 130%; }
   .btn-auth:active:not(:disabled) { transform: scale(0.97); }
   .btn-auth:disabled { opacity: 0.5; cursor: not-allowed; }
-  /* Shimmer sweep while the request is in flight (button is disabled then). */
   .btn-auth:disabled::before {
     content: '';
     position: absolute;
@@ -522,6 +458,7 @@
     flex-direction: column;
     height: 100vh;
     overflow: hidden;
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
 
   .sidebar-header {
@@ -572,7 +509,7 @@
     padding: 8px 0;
     color: var(--text);
     font-family: var(--sans);
-    font-size: 14px;
+    font-size: 16px; /* Prevents iOS zoom */
     outline: none;
     transition: var(--t);
   }
@@ -606,7 +543,7 @@
   .btn-new:hover { background: var(--accent-hover); transform: translateY(-1px); }
   .btn-new svg { width: 14px; height: 14px; }
 
-  .notes-list { flex: 1; overflow-y: auto; }
+  .notes-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
   .notes-list::-webkit-scrollbar { width: 4px; }
   .notes-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
   .notes-list::-webkit-scrollbar-track { background: transparent; }
@@ -795,6 +732,7 @@
     flex: 1;
     overflow-y: auto;
     padding-top: 56px;
+    -webkit-overflow-scrolling: touch;
   }
   .editor-scroll::-webkit-scrollbar { width: 8px; }
   .editor-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
@@ -872,6 +810,8 @@
     gap: 2px;
     box-shadow: var(--shadow-soft);
     pointer-events: auto;
+    max-width: calc(100% - 48px);
+    overflow-x: auto;
   }
   .toolbar-group {
     display: flex;
@@ -892,6 +832,7 @@
     display: grid; place-items: center;
     font-size: 14px;
     transition: var(--t);
+    flex-shrink: 0;
   }
   .btn-toolbar:hover { background: var(--surface-2); color: var(--accent); }
   .btn-toolbar .serif { font-family: var(--serif); font-weight: 400; }
@@ -914,6 +855,17 @@
   }
   .counter strong { color: var(--text); font-weight: 600; }
   .counter-sep { color: var(--text-muted); }
+
+  .menu-toggle {
+    display: none;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text);
+    padding: 8px;
+    margin-left: -8px;
+  }
+  .menu-toggle svg { width: 20px; height: 20px; }
 
   /* Skeletons */
   .skeleton-note { padding: 16px 24px; border-bottom: 1px solid var(--border); }
@@ -941,6 +893,7 @@
     z-index: 1000;
     opacity: 0;
     transition: opacity 0.2s ease;
+    padding: 24px;
   }
   .dialog-overlay.active, .palette-overlay.active, .shortcuts-overlay.active {
     display: flex; opacity: 1;
@@ -1005,7 +958,7 @@
   }
   .btn-primary.destructive:hover { opacity: 0.9; }
 
-  .palette { max-width: 560px; overflow: hidden; margin-top: 10vh; }
+  .palette { max-width: 560px; overflow: hidden; margin-top: 10vh; max-height: 80vh; display: flex; flex-direction: column; }
   .palette-input-wrap {
     padding: 16px;
     border-bottom: 1px solid var(--border);
@@ -1013,8 +966,9 @@
     align-items: center;
     gap: 12px;
     color: var(--text-muted);
+    flex-shrink: 0;
   }
-  .palette-input-wrap svg { width: 16px; height: 16px; }
+  .palette-input-wrap svg { width: 16px; height: 16px; flex-shrink: 0; }
   .palette-input {
     flex: 1;
     background: transparent;
@@ -1023,8 +977,9 @@
     font-family: var(--sans);
     font-size: 16px;
     color: var(--text);
+    min-width: 0;
   }
-  .palette-list { max-height: 320px; overflow-y: auto; padding: 8px; }
+  .palette-list { max-height: 320px; overflow-y: auto; padding: 8px; -webkit-overflow-scrolling: touch; }
   .palette-section {
     padding: 8px 12px 4px;
     font-size: 10px;
@@ -1044,11 +999,11 @@
     transition: background 0.15s;
   }
   .palette-item.selected { background: var(--accent-soft); color: var(--accent); }
-  .palette-item svg { width: 16px; height: 16px; color: inherit; }
-  .palette-item-label { flex: 1; font-size: 14px; }
-  .palette-item-kbd { font-size: 11px; color: var(--text-muted); }
+  .palette-item svg { width: 16px; height: 16px; color: inherit; flex-shrink: 0; }
+  .palette-item-label { flex: 1; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .palette-item-kbd { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
 
-  .shortcuts-box { max-width: 480px; padding: 32px; }
+  .shortcuts-box { max-width: 480px; padding: 32px; max-height: 80vh; overflow-y: auto; }
   .shortcuts-title {
     font-family: var(--serif);
     font-size: 28px;
@@ -1101,6 +1056,7 @@
     gap: 8px;
     z-index: 1200;
     pointer-events: none;
+    width: max-content;
   }
   .toast {
     background: var(--surface);
@@ -1118,7 +1074,7 @@
     pointer-events: auto;
   }
   .toast.exit { animation: slideOut 0.25s ease forwards; }
-  .toast svg { width: 14px; height: 14px; }
+  .toast svg { width: 14px; height: 14px; flex-shrink: 0; }
   .toast.success svg { color: var(--success); }
   .toast.warn svg { color: var(--warn); }
   @keyframes slideIn {
@@ -1136,15 +1092,52 @@
   }
   .empty-list-text { font-size: 12px; }
 
+  /* Mobile backdrop */
+  .backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 40;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .backdrop.active {
+    display: block;
+    opacity: 1;
+  }
+
   @media (max-width: 860px) {
-    .app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
-    .sidebar { height: 40vh; border-right: none; border-bottom: 2px solid var(--molding); }
-    .editor-inner { padding: 40px 24px 140px; }
+    .app { grid-template-columns: 1fr; }
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 300px;
+      z-index: 50;
+      transform: translateX(-100%);
+      box-shadow: var(--shadow-soft);
+    }
+    .sidebar.open {
+      transform: translateX(0);
+    }
+    .menu-toggle { display: inline-flex; align-items: center; justify-content: center; }
+    .editor-top-bar { padding: 0 20px; }
+    .editor-inner { padding: 60px 24px 140px; }
     .editor-title-input { font-size: 32px; }
-    .toast-container { left: 50%; }
+    .toast-container { left: 50%; right: auto; width: auto; max-width: calc(100% - 48px); }
     .counter { display: none; }
     .shortcuts-list { grid-template-columns: 1fr; }
     .login-shell { padding: 48px 28px 32px; }
+    .palette { width: calc(100% - 32px); margin-top: 5vh; }
+    .palette-list { max-height: 50vh; }
+  }
+
+  @media (max-width: 480px) {
+    .shortcuts-box { padding: 24px; }
+    .dialog-box { padding: 24px; }
+    .btn-action { padding: 0 10px; font-size: 11px; }
+    .status-indicator { font-size: 11px; }
   }
 </style>
 </head>
@@ -1190,7 +1183,8 @@
 
 <!-- ============ APP ============ -->
 <div class="app" id="Time12App" style="display:none;">
-  <aside class="sidebar">
+  <div class="backdrop" id="backdrop"></div>
+  <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <div class="brand">
         <img class="brand-glyph" id="brandLogo" alt="Time12" style="width:24px;height:24px;object-fit:contain;" />
@@ -1237,6 +1231,13 @@
   <main class="editor-area">
     <div class="editor-top-bar">
       <div class="status-indicator" id="statusIndicator">
+        <button class="menu-toggle" id="menuToggle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
         <span class="status-dot"></span>
         <span id="statusText">Ready</span>
       </div>
@@ -1402,6 +1403,7 @@
   const loginThemeToggle = document.getElementById('loginThemeToggle');
   const loginLogo = document.getElementById('loginLogo');
   const brandLogo = document.getElementById('brandLogo');
+  const favicon = document.getElementById('favicon');
 
   function getStoredTheme() {
     try { return localStorage.getItem('Time12-theme'); } catch { return null; }
@@ -1409,6 +1411,37 @@
   function setStoredTheme(t) {
     try { localStorage.setItem('Time12-theme', t); } catch {}
   }
+  
+  function setFavicon(theme) {
+    const logoSrc = theme === 'dark' ? 'china.png' : 'taiwan.png';
+    fetch(logoSrc, { method: 'HEAD' })
+      .then(res => {
+        if (res.ok) {
+          favicon.href = logoSrc;
+        } else {
+          drawFavicon(theme);
+        }
+      })
+      .catch(() => drawFavicon(theme));
+  }
+  
+  function drawFavicon(theme) {
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 64;
+    const ctx = canvas.getContext('2d');
+    // Background
+    ctx.fillStyle = theme === 'dark' ? '#000000' : '#F7F3EE';
+    ctx.fillRect(0, 0, 64, 64);
+    // Text
+    ctx.fillStyle = theme === 'dark' ? '#FD7E14' : '#FD7E14';
+    ctx.font = 'bold 36px "DM Serif Display", Georgia, serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('T', 32, 30);
+    favicon.href = canvas.toDataURL('image/png');
+  }
+
   function applyTheme(t) {
     document.documentElement.setAttribute('data-theme', t);
     if (themeIcon) themeIcon.innerHTML = t === 'dark' ? MOON_ICON : SUN_ICON;
@@ -1418,6 +1451,8 @@
     const logoSrc = t === 'dark' ? 'china.png' : 'taiwan.png';
     if (loginLogo) loginLogo.src = logoSrc;
     if (brandLogo) brandLogo.src = logoSrc;
+    
+    setFavicon(t);
   }
   applyTheme(getStoredTheme() || 'light');
 
@@ -1518,10 +1553,7 @@
     if (e.key === 'Enter') { e.preventDefault(); auth('login'); }
   });
 
-  /* ---------- Liquid Glass cursor light (decorative only, no UX/logic impact)----------
-   * Moves a CSS custom-property-driven highlight and a very slight 3D tilt on
-   * the login card to track the cursor, like light catching real glass.
-   * Does not touch auth, session, or any element used by the app logic above. */
+  /* ---------- Liquid Glass cursor light (decorative only)---------- */
   (function initLoginGlassTilt() {
     const shell = document.querySelector('.login-shell');
     if (!shell) return;
@@ -1571,6 +1603,7 @@
     }
     maybeChangeToRed();
   })();
+  
   class NotesDB {
     constructor() {
       this.db = null;
@@ -1676,8 +1709,6 @@
       const note = await this.getNote(noteId);
       if (note) { note.synced = true; await this.saveNote(note); }
     }
-    // Wipe everything in IndexedDB — both notes and sync queue.
-    // Called on logout (error 3) and on fresh login (error 4).
     async clearAll() {
       return new Promise((resolve, reject) => {
         const transaction = this.db.transaction([this.storeName, this.syncQueueStore], 'readwrite');
@@ -1697,7 +1728,7 @@
     }
     async callEdgeFunction(action, note = null, noteId = null) {
       const functionUrl = `${SUPABASE_URL}/functions/v1/${EDGE_FUNCTION_NAME}`;
-      const token = localStorage.getItem('authToken'); // Get secure token
+      const token = localStorage.getItem('authToken'); 
       
       if (!token) {
         throw new Error("Not authenticated");
@@ -1708,7 +1739,7 @@
           method: 'POST',
           headers: { 
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` // Send secure token
+            'Authorization': `Bearer ${token}` 
           },
           body: JSON.stringify({ action, note, note_id: noteId }),
         });
@@ -1728,7 +1759,6 @@
         throw error;
       }
     }
-    // Fetch all notes from Supabase — Supabase is the source of truth.
     async fetchAllNotes() {
       try {
         const result = await this.callEdgeFunction('fetch_all');
@@ -1747,8 +1777,6 @@
           const note = await this.db.getNote(noteId);
           if (note) {
             await this.callEdgeFunction('save', note);
-            // Confirmation received from Supabase — remove completely from IndexedDB.
-            // The note now lives in Supabase, IndexedDB is only a temporary buffer.
             await this.db.deleteNote(noteId);
             await this.db.removeFromSyncQueue(noteId);
             success = true;
@@ -1793,7 +1821,6 @@
   let allNotes = [];
   let Time12Initialized = false;
 
-  // Throttle save timing: save every 5s while typing, final save 5s after typing stops.
   let typingSaveInterval = null;
   const SAVE_INTERVAL_MS = 5000;
 
@@ -1830,6 +1857,23 @@
   const logoutLink = $('logoutLink');
   const footerUsername = $('footerUsername');
   const userGlyph = $('userGlyph');
+  const sidebar = $('sidebar');
+  const backdrop = $('backdrop');
+  const menuToggle = $('menuToggle');
+
+  function toggleSidebar(open) {
+    const shouldOpen = open ?? !sidebar.classList.contains('open');
+    if (shouldOpen) {
+      sidebar.classList.add('open');
+      backdrop.classList.add('active');
+    } else {
+      sidebar.classList.remove('open');
+      backdrop.classList.remove('active');
+    }
+  }
+  
+  menuToggle.addEventListener('click', () => toggleSidebar(true));
+  backdrop.addEventListener('click', () => toggleSidebar(false));
 
   /* ---------- Toasts ---------- */
   function toast(msg, type = 'success') {
@@ -1907,25 +1951,28 @@
 
   async function loadNotes() {
     if (!notesList.querySelector('.skeleton-note')) renderSkeletons();
-    // Supabase is the source of truth — fetch from Supabase, not IndexedDB.
     const notes = await syncManager.fetchAllNotes();
-    // Anything that comes from Supabase is, by definition, synced.
     notes.forEach(n => { n.synced = true; });
     allNotes = notes;
 
     if (notes.length === 0) {
-      // Create a blank note locally (IndexedDB buffer), push to Supabase immediately.
       const emptyNote = await db.createNote('');
       const syncSuccess = await syncManager.syncNote(emptyNote.id, 'save');
       emptyNote.synced = syncSuccess;
       notes.unshift(emptyNote);
       allNotes = [emptyNote];
+    } else {
+      // Create a fresh new note for the user automatically upon page load
+      const freshNote = await db.createNote('');
+      const syncSuccess = await syncManager.syncNote(freshNote.id, 'save');
+      freshNote.synced = syncSuccess;
+      allNotes.unshift(freshNote);
     }
 
     renderNotesList();
 
-    if (!currentNoteId && notes.length > 0) {
-      selectNote(notes[0].id);
+    if (allNotes.length > 0) {
+      selectNote(allNotes[0].id);
     }
     updateSyncBadge();
   }
@@ -1976,6 +2023,7 @@
       div.addEventListener('click', (e) => {
         if (!e.target.closest('.note-item-delete')) {
           selectNote(note.id);
+          if (window.innerWidth <= 860) toggleSidebar(false);
         }
       });
 
@@ -1998,8 +2046,6 @@
     const el = document.querySelector(`[data-id="${id}"]`);
     if (el) el.classList.add('active');
 
-    // Notes live in Supabase; read from the in-memory list, not IndexedDB.
-    // (Once a note is confirmed synced, it is removed from IndexedDB entirely.)
     const note = allNotes.find(n => n.id === id);
     if (note) {
       titleInput.value = note.title;
@@ -2014,7 +2060,6 @@
     if (!currentNoteId) return;
     setStatus('saving');
     try {
-      // Read existing note from in-memory list (notes live in Supabase).
       const existingNote = allNotes.find(n => n.id === currentNoteId);
       const note = {
         id: currentNoteId,
@@ -2024,7 +2069,6 @@
         modified: new Date().toISOString(),
         synced: false,
       };
-      // Temporarily buffer in IndexedDB before pushing to Supabase.
       await db.saveNote(note);
       await db.addToSyncQueue(currentNoteId, 'save');
 
@@ -2047,8 +2091,6 @@
       if (noteElement) {
         noteElement.querySelector('.note-item-date').textContent = formatDate(note.modified);
         noteElement.querySelector('.note-item-title').textContent = note.title;
-        // Once Supabase confirms the save, the note no longer lives in IndexedDB —
-        // it lives in Supabase. Reflect that in the UI.
         if (syncSuccess) {
           noteElement.classList.remove('unsynced');
           if (idx > -1) allNotes[idx].synced = true;
@@ -2161,12 +2203,9 @@
       const lineEnd = lineEndIdx === -1 ? value.length : lineEndIdx;
       const lineText = value.substring(lineStart, lineEnd);
       if (selected || lineText) {
-        // Line already has content (or a selection was made): just prefix the
-        // line, keep all existing text intact instead of overwriting it.
         newValue = value.substring(0, lineStart) + prefix + value.substring(lineStart);
         newCursor = { start: start + prefix.length, end: end + prefix.length };
       } else {
-        // Truly empty line: insert prefix + placeholder as before.
         const inserted = `${prefix}${placeholder}`;
         newValue = value.substring(0, lineStart) + inserted + value.substring(end);
         newCursor = { start: lineStart + prefix.length, end: lineStart + prefix.length + placeholder.length };
@@ -2324,16 +2363,17 @@
     titleInput.select();
     updateSyncBadge();
   }
-  newNoteBtn.addEventListener('click', createNew);
+  newNoteBtn.addEventListener('click', () => {
+    createNew();
+    if (window.innerWidth <= 860) toggleSidebar(false);
+  });
   saveBtn.addEventListener('click', () => saveNote());
   deleteBtn.addEventListener('click', () => {
     if (currentNoteId) showDeleteConfirmation(currentNoteId);
   });
 
-  // Save throttling: save every 5s while typing continues, plus a final save 5s after typing stops.
   function scheduleTypingSave() {
     clearTimeout(saveTimeout);
-    // Final save 5 seconds after typing stops; also stops the periodic save interval.
     saveTimeout = setTimeout(() => {
       if (hasUnsavedChanges) saveNote(true);
       if (typingSaveInterval) {
@@ -2341,7 +2381,6 @@
         typingSaveInterval = null;
       }
     }, SAVE_INTERVAL_MS);
-    // Save every 5 seconds while typing continues.
     if (!typingSaveInterval) {
       typingSaveInterval = setInterval(() => {
         if (hasUnsavedChanges) saveNote(true);
@@ -2388,8 +2427,6 @@
   function doLogout() {
     const finishLogout = () => {
       syncManager.stopAutoSync?.();
-      // On logout, everything in IndexedDB is deleted. IndexedDB is only
-      // a temporary buffer; notes live in Supabase.
       db.clearAll().then(() => {
         clearSession();
         currentNoteId = null;
@@ -2449,17 +2486,11 @@
     }
 
     if (isFreshLogin) {
-      // Fresh login: IndexedDB is just a temporary buffer.
-      // Anything in IndexedDB that isn't in Supabase is deleted — clear it all.
       await db.clearAll();
     } else {
-      // Page reload (not logout/login): push any pending IndexedDB notes to
-      // Supabase first. IndexedDB is only for updates that haven't been
-      // confirmed by Supabase yet. Once confirmed, syncNote removes them.
       await syncManager.processSyncQueue();
     }
 
-    // Load notes from Supabase (source of truth).
     await loadNotes();
 
     if (!syncManager.syncInterval) {
@@ -2478,7 +2509,6 @@
   (function boot() {
     const session = getStoredSession();
     if (session) {
-      // Page reload — not a fresh login. Don't wipe IndexedDB; push it instead.
       enterApp(false);
     } else {
       showLogin();
