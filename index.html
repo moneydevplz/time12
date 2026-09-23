@@ -1457,6 +1457,136 @@
     opacity: 1;
   }
 
+  /* Group Tree & Badges */
+  .group-tree-node {
+    margin-top: 24px;
+    padding-left: 20px;
+    border-left: 2px solid var(--border);
+  }
+  .group-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+  .group-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .group-name {
+    font-family: var(--serif);
+    font-size: 24px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .group-id-badge {
+    font-size: 10px;
+    color: var(--bg);
+    background: var(--text-muted);
+    padding: 3px 8px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+  .group-actions {
+    display: flex;
+    gap: 8px;
+  }
+  .members-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .member-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+  }
+  .member-name { font-size: 14px; font-weight: 500; }
+  .btn-member-remove {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    transition: var(--t);
+  }
+  .btn-member-remove:hover { color: var(--danger); }
+  .btn-member-remove svg { width: 14px; height: 14px; }
+  
+  .tag-input-container {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .tag-input-container input {
+    background: transparent;
+    border: none;
+    outline: none;
+    flex: 1;
+    min-width: 100px;
+    padding: 6px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+  }
+  .email-tag {
+    background: var(--surface-2);
+    color: var(--text);
+    padding: 4px 8px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+  .tag-remove-btn {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: var(--text-muted);
+    padding: 0;
+    display: flex;
+  }
+  .tag-remove-btn:hover { color: var(--danger); }
+  .tag-remove-btn svg { width: 12px; height: 12px; }
+
+  .csv-dropzone {
+    border: 2px dashed var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    text-align: center;
+    color: var(--text-muted);
+    cursor: pointer;
+    margin-bottom: 16px;
+    transition: var(--t);
+  }
+  .csv-dropzone:hover, .csv-dropzone.dragover {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent);
+  }
+  .csv-dropzone input { display: none; }
+  .csv-filename { font-weight: 600; color: var(--text); margin-top: 8px; }
+
   @media (max-width: 860px) {
     .app { grid-template-columns: 1fr; }
     .sidebar {
@@ -1647,7 +1777,8 @@
 
       <!-- Hidden actions for Org Tab -->
       <div class="editor-actions" id="orgActions" style="display: none;">
-        <button class="btn-action primary" id="addAccountBtn">Add Account</button>
+        <button class="btn-action primary" id="addGroupBtn">Add Group</button>
+        <button class="btn-action primary" id="addAccountBtn" style="display:none;">Add Account</button>
         <button class="btn-action danger" id="bulkDeleteBtn" style="display:none;">Delete Selected</button>
       </div>
     </div>
@@ -2239,8 +2370,6 @@
   const deleteBtn = $('deleteBtn');
   const newNoteBtn = $('newNoteBtn');
   const dialogOverlay = $('dialogOverlay');
-  const cancelBtn = $('cancelBtn');
-  const confirmDeleteBtn = $('confirmDeleteBtn');
   const searchInput = $('searchInput');
   const paletteOverlay = $('paletteOverlay');
   const paletteInput = $('paletteInput');
@@ -2268,16 +2397,14 @@
    * ============================================================ */
   let ownerUsername = ""; 
   let orgNamespace = "";  
-  let selectedAccounts = new Set();
-  let accountCache = []; 
+  let orgGroups = [];
   
   const orgMainContentEl = document.getElementById('orgMainContent');
   const orgActions = document.getElementById('orgActions');
   const editorActions = document.getElementById('editorActions');
   const notesTabContent = document.getElementById('notesTabContent');
   const orgTabContent = document.getElementById('orgTabContent');
-  const addAccountBtn = document.getElementById('addAccountBtn');
-  const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+  const addGroupBtn = document.getElementById('addGroupBtn');
   const dialogBox = document.getElementById('dialogBox');
 
   async function orgApiCall(body) {
@@ -2321,29 +2448,29 @@
     ownerUsername = session.username;
     orgNamespace = ownerUsername + "@";
 
-    fetchAccounts();
+    fetchGroups();
   }
 
-  async function fetchAccounts() {
+  async function fetchGroups() {
     try {
       setStatus('saving');
-      const res = await orgApiCall({ action: "list_accounts" });
+      const res = await orgApiCall({ action: "list_groups" });
       
-      if (res.success && Array.isArray(res.accounts)) {
-        accountCache = res.accounts; 
-        renderAccountsTable(accountCache);
+      if (res.success && Array.isArray(res.groups)) {
+        orgGroups = res.groups; 
+        renderGroups(orgGroups);
       } else {
-        renderEmptyState();
+        renderEmptyOrgState();
       }
     } catch (error) {
       toast(error.message, 'error');
-      renderEmptyState();
+      renderEmptyOrgState();
     } finally {
       setStatus('ready');
     }
   }
 
-  function renderEmptyState() {
+  function renderEmptyOrgState() {
     orgMainContentEl.innerHTML = `
       <div class="org-header">
         <div>
@@ -2356,125 +2483,134 @@
         <span>Active</span>
       </div>
       <div class="empty-state">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-          <circle cx="9" cy="7" r="4"/>
-          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 64px; height: 64px; color: var(--text-muted); filter: grayscale(1);">
+          <circle cx="12" cy="12" r="10"/>
+          <path d="M8 15s1.5-2 4-2 4 2 4 2"/>
+          <line x1="9" y1="9" x2="9.01" y2="9"/>
+          <line x1="15" y1="9" x2="15.01" y2="9"/>
         </svg>
-        <div class="empty-state-title">No Sub-Accounts Yet</div>
-        <div class="empty-state-text">Create your first sub-account to manage access for this organization.</div>
+        <div class="empty-state-title">Sad and Lonely :(</div>
+        <div class="empty-state-text">You don't own any groups and aren't part of any. Create one to get started!</div>
       </div>
     `;
   }
 
-  function renderAccountsTable(accounts) {
-    if (!accounts || accounts.length === 0) {
-      renderEmptyState();
+  function renderGroups(groups) {
+    if (!groups || groups.length === 0) {
+      renderEmptyOrgState();
       return;
     }
 
-    selectedAccounts.clear();
-    bulkDeleteBtn.style.display = 'none';
-
-    const rowsHtml = accounts.map(acc => `
-      <tr>
-        <td class="checkbox-cell">
-          <input type="checkbox" data-user="${acc.username}" class="row-checkbox">
-        </td>
-        <td class="td-username">${acc.username}</td>
-        <td>
-          <div class="row-actions">
-            <button class="btn-row" data-action="reroll" data-user="${acc.username}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="23 4 23 10 17 10"/>
-                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
-              </svg>
-              Reroll
-            </button>
-            <button class="btn-row danger" data-action="delete" data-user="${acc.username}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="3 6 5 6 21 6"/>
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-              </svg>
-              Delete
-            </button>
-          </div>
-        </td>
-      </tr>
-    `).join('');
-
-    orgMainContentEl.innerHTML = `
+    const html = `
       <div class="org-header">
         <div>
           <div class="org-title">${ownerUsername}</div>
         </div>
       </div>
       <div class="org-meta">
-        <span>Accounts</span>
+        <span>Groups</span>
         <span class="dot"></span>
-        <span>${accounts.length} total</span>
+        <span>${groups.length} root</span>
       </div>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th class="checkbox-cell">
-                <input type="checkbox" id="selectAll">
-              </th>
-              <th>Username</th>
-              <th style="text-align:right;">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rowsHtml}
-          </tbody>
-        </table>
+      <div id="groupsContainer">
+        ${groups.map(g => renderGroupNode(g, 0)).join('')}
       </div>
     `;
-
-    attachTableEventListeners();
+    
+    orgMainContentEl.innerHTML = html;
+    attachGroupEventListeners();
   }
 
-  function attachTableEventListeners() {
-    document.querySelectorAll('.row-checkbox').forEach(cb => {
-      cb.addEventListener('change', (e) => {
-        const user = e.target.dataset.user;
-        if (e.target.checked) selectedAccounts.add(user);
-        else selectedAccounts.delete(user);
-        updateBulkDeleteBtn();
-      });
-    });
+  function renderGroupNode(group, depth) {
+    const memberList = group.group_members && group.group_members.length > 0 
+      ? group.group_members.map(m => `
+        <div class="member-item">
+          <span class="member-name">${m.users.username}</span>
+          <button class="btn-member-remove" data-group-id="${group.id}" data-user-id="${m.user_id}" title="Remove member">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      `).join('')
+      : `<div style="font-size: 13px; color: var(--text-muted); padding: 8px 0;">No members yet.</div>`;
+      
+    const subGroupsHtml = group.sub_groups && group.sub_groups.length > 0 
+      ? `<div class="group-tree-node">
+          ${group.sub_groups.map(sg => renderGroupNode(sg, depth + 1)).join('')}
+        </div>`
+      : '';
+      
+    return `
+      <div class="group-card" data-group-id="${group.id}">
+        <div class="group-card-header">
+          <div class="group-name">
+            ${escapeHtml(group.name)}
+            <span class="group-id-badge">ID: ${group.id.substring(0, 8)}</span>
+          </div>
+          <div class="group-actions">
+            <button class="btn-row" data-action="add-member" data-group-id="${group.id}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>
+              </svg>
+              Add Member
+            </button>
+            <button class="btn-row" data-action="add-subgroup" data-group-id="${group.id}" data-group-name="${escapeHtml(group.name)}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 5v14M5 12h14"/>
+              </svg>
+              Sub-Group
+            </button>
+            <button class="btn-row danger" data-action="delete-group" data-group-id="${group.id}" data-group-name="${escapeHtml(group.name)}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+              Delete
+            </button>
+          </div>
+        </div>
+        <div class="members-list">
+          ${memberList}
+        </div>
+      </div>
+      ${subGroupsHtml}
+    `;
+  }
 
-    const selectAllCb = document.getElementById('selectAll');
-    if (selectAllCb) {
-      selectAllCb.addEventListener('change', (e) => {
-        document.querySelectorAll('.row-checkbox').forEach(cb => {
-          cb.checked = e.target.checked;
-          if (e.target.checked) selectedAccounts.add(cb.dataset.user);
-          else selectedAccounts.delete(cb.dataset.user);
-        });
-        updateBulkDeleteBtn();
-      });
-    }
-
-    document.querySelectorAll('.btn-row').forEach(btn => {
+  function attachGroupEventListeners() {
+    document.querySelectorAll('[data-action="delete-group"]').forEach(btn => {
       btn.addEventListener('click', () => {
-        const action = btn.dataset.action;
-        const user = btn.dataset.user;
-        if (action === 'reroll') openRerollDialog(user);
-        else if (action === 'delete') openDeleteDialog([user]);
+        openDeleteGroupDialog(btn.dataset.groupId, btn.dataset.groupName);
       });
     });
-  }
 
-  function updateBulkDeleteBtn() {
-    if (selectedAccounts.size > 0) {
-      bulkDeleteBtn.style.display = 'flex';
-      bulkDeleteBtn.textContent = `Delete Selected (${selectedAccounts.size})`;
-    } else {
-      bulkDeleteBtn.style.display = 'none';
-    }
+    document.querySelectorAll('[data-action="add-subgroup"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        openCreateGroupDialog(btn.dataset.groupId, btn.dataset.groupName);
+      });
+    });
+
+    document.querySelectorAll('[data-action="add-member"]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        openAddMemberDialog(btn.dataset.groupId);
+      });
+    });
+
+    document.querySelectorAll('.btn-member-remove').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const groupId = btn.dataset.groupId;
+        const userId = btn.dataset.userId;
+        try {
+          setStatus('saving');
+          await orgApiCall({ action: 'remove_account_from_group', groupId, targetUserId: userId });
+          toast('Member removed');
+          fetchGroups();
+        } catch(e) {
+          toast(e.message, 'error');
+          setStatus('ready');
+        }
+      });
+    });
   }
 
   function closeDialog() {
@@ -2485,16 +2621,100 @@
     if (e.target === dialogOverlay) closeDialog();
   });
 
-  addAccountBtn.addEventListener('click', () => {
-    const dialogHtml = `
-      <div class="dialog-title">Add Sub-Account</div>
-      <div class="dialog-text">Create a new account under the <strong>${ownerUsername}</strong> organization.</div>
+  addGroupBtn.addEventListener('click', () => openCreateGroupDialog(null, null));
+
+  function openCreateGroupDialog(parentId, parentName) {
+    const title = parentId ? `Create Sub-Group in ${parentName}` : 'Create New Group';
+    dialogBox.innerHTML = `
+      <div class="dialog-title">${title}</div>
+      <div class="dialog-text">Enter a name for your new group.</div>
+      <div class="dialog-input-group">
+        <label>Group Name</label>
+        <input type="text" id="groupNameInput" class="dialog-input" placeholder="e.g. Engineering Team" autocomplete="off">
+      </div>
+      <div class="dialog-actions">
+        <button class="btn-primary" id="cancelDialog">Cancel</button>
+        <button class="btn-primary main" id="confirmCreateGroup">Create</button>
+      </div>
+    `;
+    dialogOverlay.classList.add('active');
+
+    document.getElementById('cancelDialog').onclick = closeDialog;
+    document.getElementById('confirmCreateGroup').onclick = async () => {
+      const name = document.getElementById('groupNameInput').value.trim();
+      if (!name) {
+        toast('Group name is required', 'error');
+        return;
+      }
+
+      try {
+        setStatus('saving');
+        await orgApiCall({ action: 'create_group', name, parentId });
+        toast('Group created successfully');
+        closeDialog();
+        fetchGroups();
+      } catch(e) {
+        toast(e.message, 'error');
+        setStatus('ready');
+      }
+    };
+  }
+
+  function openDeleteGroupDialog(groupId, groupName) {
+    dialogBox.innerHTML = `
+      <div class="dialog-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        </svg>
+      </div>
+      <div class="dialog-title">Delete Group</div>
+      <div class="dialog-text">
+        Are you sure you want to delete <strong>${groupName}</strong>? This will also permanently delete all sub-groups and remove all members.
+      </div>
+      <div class="dialog-actions">
+        <button class="btn-primary" id="cancelDialog">Cancel</button>
+        <button class="btn-primary destructive" id="confirmDelete">Delete</button>
+      </div>
+    `;
+    dialogOverlay.classList.add('active');
+
+    document.getElementById('cancelDialog').onclick = closeDialog;
+    document.getElementById('confirmDelete').onclick = async () => {
+      try {
+        setStatus('saving');
+        await orgApiCall({ action: 'delete_group', groupId });
+        toast('Group deleted', 'warn');
+        closeDialog();
+        fetchGroups();
+      } catch(e) {
+        toast(e.message, 'error');
+        setStatus('ready');
+      }
+    };
+  }
+
+  function openAddMemberDialog(groupId) {
+    dialogBox.innerHTML = `
+      <div class="dialog-title">Add Members</div>
+      <div class="dialog-text">Upload a CSV or type email addresses/username and press Enter to lock them in. Then click Add.</div>
       
       <div class="dialog-input-group">
-        <label>Username</label>
-        <input type="text" id="subUsernameInput" class="dialog-input" placeholder="name" autocomplete="off">
-        <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">
-          Final username: <span id="fullUsernamePreview">name@${ownerUsername}</span>
+        <label>Bulk Upload (CSV)</label>
+        <label class="csv-dropzone" id="csvDropzone">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; margin-bottom: 8px;">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+          </svg>
+          <div>Click to browse or drag & drop</div>
+          <div class="csv-filename" id="csvFilename"></div>
+          <input type="file" id="csvFileInput" accept=".csv" />
+        </label>
+      </div>
+
+      <div class="dialog-input-group">
+        <label>Manual Entry</label>
+        <div class="tag-input-container" id="emailTagContainer">
+          <input type="text" id="emailTagInput" placeholder="user@synapse or username..." />
         </div>
       </div>
 
@@ -2513,16 +2733,62 @@
 
       <div class="dialog-actions">
         <button class="btn-primary" id="cancelDialog">Cancel</button>
-        <button class="btn-primary main" id="confirmAddAccount">Create Account</button>
+        <button class="btn-primary main" id="confirmAddMembers">Add</button>
       </div>
     `;
-    dialogBox.innerHTML = dialogHtml;
     dialogOverlay.classList.add('active');
 
-    const subInput = document.getElementById('subUsernameInput');
-    const preview = document.getElementById('fullUsernamePreview');
-    subInput.addEventListener('input', () => {
-      preview.textContent = `${subInput.value || 'name'}@${ownerUsername}`;
+    const dropzone = document.getElementById('csvDropzone');
+    const fileInput = document.getElementById('csvFileInput');
+    const filenameEl = document.getElementById('csvFilename');
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        const file = e.target.files[0];
+        filenameEl.textContent = file.name;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const text = ev.target.result;
+          const lines = text.split(/\r?\n/);
+          lines.forEach(line => {
+            const val = line.trim().split(',')[0].trim(); // take first column
+            if (val) addEmailTag(val);
+          });
+        };
+        reader.readAsText(file);
+      }
+    });
+
+    const emailTagContainer = document.getElementById('emailTagContainer');
+    const emailTagInput = document.getElementById('emailTagInput');
+
+    function addEmailTag(value) {
+      const tag = document.createElement('div');
+      tag.className = 'email-tag';
+      tag.innerHTML = `
+        <span>${escapeHtml(value)}</span>
+        <button class="tag-remove-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      `;
+      tag.querySelector('.tag-remove-btn').addEventListener('click', () => tag.remove());
+      emailTagContainer.insertBefore(tag, emailTagInput);
+    }
+
+    emailTagInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ',') {
+        e.preventDefault();
+        const val = emailTagInput.value.trim().replace(/,$/, '');
+        if (val) {
+          addEmailTag(val);
+          emailTagInput.value = '';
+        }
+      } else if (e.key === 'Backspace' && emailTagInput.value === '') {
+        const tags = emailTagContainer.querySelectorAll('.email-tag');
+        if (tags.length > 0) tags[tags.length - 1].remove();
+      }
     });
 
     const randomBtn = document.getElementById('randomPassBtn');
@@ -2541,10 +2807,18 @@
     };
 
     document.getElementById('cancelDialog').onclick = closeDialog;
-    document.getElementById('confirmAddAccount').onclick = async () => {
-      const sub = subInput.value.trim();
-      if (!sub || !/^[a-zA-Z0-9]+$/.test(sub)) {
-        toast('Invalid username. Use only letters and numbers.', 'error');
+    document.getElementById('confirmAddMembers').onclick = async () => {
+      const tags = emailTagContainer.querySelectorAll('.email-tag span');
+      const accounts = Array.from(tags).map(t => {
+        const text = t.textContent.trim();
+        const parts = text.split('@');
+        const username = parts[0];
+        const domain = parts.length > 1 ? parts[1] : '';
+        return { username, password: domain ? null : document.getElementById('customPassInput').value || null };
+      });
+
+      if (accounts.length === 0) {
+        toast('Please add at least one account.', 'error');
         return;
       }
 
@@ -2553,184 +2827,61 @@
 
       try {
         setStatus('saving');
+        const res = await orgApiCall({
+          action: 'add_accounts_bulk',
+          accounts,
+          groupId,
+          useRandomPassword: useRandom
+        });
         
-        try {
-          const res = await orgApiCall({
-            action: 'add_account',
-            subUsername: sub,
-            useRandomPassword: useRandom,
-            customPassword: useRandom ? null : customPass
-          });
-          openCredentialsDialog(res.username, res.password, res.randomGenerated);
-        } catch (err) {
-          if (err.message.includes("You must create an organization first")) {
-            await orgApiCall({ action: 'create_organization' });
-            const res = await orgApiCall({
-              action: 'add_account',
-              subUsername: sub,
-              useRandomPassword: useRandom,
-              customPassword: useRandom ? null : customPass
-            });
-            openCredentialsDialog(res.username, res.password, res.randomGenerated);
-          } else {
-            throw err;
-          }
+        if (res.errors && res.errors.length > 0) {
+          toast(`Created ${res.createdAccounts.length} accounts with ${res.errors.length} errors.`, 'warn');
+        } else {
+          toast(`Successfully added ${res.createdAccounts.length} members.`);
         }
+        
+        if (res.createdAccounts && res.createdAccounts.length > 0) {
+          showBulkCredentialsDialog(res.createdAccounts);
+        } else {
+          closeDialog();
+        }
+        
+        fetchGroups();
       } catch(e) {
         toast(e.message, 'error');
-      } finally {
         setStatus('ready');
       }
     };
-  });
+  }
 
-  function openCredentialsDialog(username, password, isRandom) {
+  function showBulkCredentialsDialog(createdAccounts) {
     dialogBox.innerHTML = `
-      <div class="dialog-title">Account Created</div>
+      <div class="dialog-title">Accounts Created</div>
       <div class="dialog-text">
-        ${isRandom ? 'A secure random password was generated.' : 'Account is ready.'} 
-        Please copy the credentials now. For security reasons, the password will not be shown again.
+        Please copy the credentials now. For security reasons, the passwords will not be shown again.
       </div>
-
       <div class="dialog-input-group">
-        <label>Username</label>
-        <input type="text" class="dialog-input mono" value="${username}" readonly>
+        <label>Credentials List</label>
+        <textarea class="dialog-input mono" style="min-height: 200px; resize: vertical;" readonly>${createdAccounts.map(a => `${a.username} : ${a.password}`).join('\n')}</textarea>
       </div>
-
-      <div class="dialog-input-group">
-        <label>Password</label>
-        <input type="text" class="dialog-input mono" value="${password}" readonly>
-      </div>
-
       <div class="dialog-actions">
-        <button class="btn-primary" id="copyCredsBtn">Copy Credentials</button>
-        <button class="btn-primary main" id="acceptCredsBtn">I've saved them</button>
+        <button class="btn-primary" id="copyCredsBtn">Copy All</button>
+        <button class="btn-primary main" id="acceptCredsBtn">Done</button>
       </div>
     `;
     dialogOverlay.classList.add('active');
 
     document.getElementById('copyCredsBtn').onclick = () => {
-      const text = `Username: ${username}\nPassword: ${password}`;
+      const text = createdAccounts.map(a => `Username: ${a.username}\nPassword: ${a.password}`).join('\n\n');
       navigator.clipboard.writeText(text).then(() => {
         toast('Credentials copied to clipboard');
       });
     };
 
     document.getElementById('acceptCredsBtn').onclick = () => {
-      fetchAccounts(); 
       closeDialog();
     };
   }
-
-  function openRerollDialog(username) {
-    dialogBox.innerHTML = `
-      <div class="dialog-title">Reroll Password</div>
-      <div class="dialog-text">
-        Are you sure you want to generate a new password for <strong>${username}</strong>? 
-        The old password will immediately stop working.
-      </div>
-      <div class="dialog-actions">
-        <button class="btn-primary" id="cancelDialog">Cancel</button>
-        <button class="btn-primary main" id="confirmReroll">Generate New Password</button>
-      </div>
-    `;
-    dialogOverlay.classList.add('active');
-
-    document.getElementById('cancelDialog').onclick = closeDialog;
-    document.getElementById('confirmReroll').onclick = async () => {
-      try {
-        setStatus('saving');
-        const res = await orgApiCall({
-          action: 'reroll_password',
-          targetUsername: username
-        });
-        openNewPasswordDialog(res.username, res.newPassword);
-      } catch(e) {
-        toast(e.message, 'error');
-        setStatus('ready');
-      }
-    };
-  }
-
-  function openNewPasswordDialog(username, newPassword) {
-    dialogBox.innerHTML = `
-      <div class="dialog-title">Password Updated</div>
-      <div class="dialog-text">
-        The password for <strong>${username}</strong> has been rerolled. Copy the new password now.
-      </div>
-      <div class="dialog-input-group">
-        <label>New Password</label>
-        <input type="text" class="dialog-input mono" value="${newPassword}" readonly>
-      </div>
-      <div class="dialog-actions">
-        <button class="btn-primary" id="copyPassBtn">Copy Password</button>
-        <button class="btn-primary main" id="closeDialogBtn">Done</button>
-      </div>
-    `;
-    dialogOverlay.classList.add('active');
-    setStatus('ready');
-
-    document.getElementById('copyPassBtn').onclick = () => {
-      navigator.clipboard.writeText(newPassword).then(() => {
-        toast('Password copied to clipboard');
-      });
-    };
-    document.getElementById('closeDialogBtn').onclick = closeDialog;
-  }
-
-  function openDeleteDialog(usernames) {
-    const isMultiple = usernames.length > 1;
-    dialogBox.innerHTML = `
-      <div class="dialog-icon">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="3 6 5 6 21 6"/>
-          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-        </svg>
-      </div>
-      <div class="dialog-title">Delete ${isMultiple ? 'Accounts' : 'Account'}</div>
-      <div class="dialog-text">
-        You are about to delete ${isMultiple ? `${usernames.length} accounts` : `<strong>${usernames[0]}</strong>`}. 
-        This action cannot be undone.
-      </div>
-      <div class="dialog-actions">
-        <button class="btn-primary" id="cancelDialog">Cancel</button>
-        <button class="btn-primary destructive" id="confirmDelete">Delete</button>
-      </div>
-    `;
-    dialogOverlay.classList.add('active');
-
-    document.getElementById('cancelDialog').onclick = closeDialog;
-    document.getElementById('confirmDelete').onclick = async () => {
-      try {
-        setStatus('saving');
-        if (isMultiple) {
-          const res = await orgApiCall({
-            action: 'delete_multiple',
-            targetUsernames: usernames
-          });
-          toast(`Deleted ${res.deletedCount} accounts`);
-        } else {
-          await orgApiCall({
-            action: 'delete_account',
-            targetUsername: usernames[0]
-          });
-          toast(`Deleted ${usernames[0]}`, 'warn');
-        }
-
-        fetchAccounts(); 
-        closeDialog();
-      } catch(e) {
-        toast(e.message, 'error');
-      } finally {
-        setStatus('ready');
-      }
-    };
-  }
-
-  bulkDeleteBtn.addEventListener('click', () => {
-    const users = Array.from(selectedAccounts);
-    if (users.length > 0) openDeleteDialog(users);
-  });
 
   /* ---------- Tab Functionality ---------- */
   const tabItems = document.querySelectorAll(".tab-item");
@@ -2750,7 +2901,7 @@
       orgTabContent.classList.add('active');
       editorActions.style.display = 'none';
       orgActions.style.display = 'flex';
-      if (ownerUsername) fetchAccounts();
+      if (ownerUsername) fetchGroups();
       else initOrgManager();
     } else {
       notesTabContent.style.display = 'block';
