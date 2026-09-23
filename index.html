@@ -719,6 +719,30 @@
     color: var(--text);  
   }
 
+  /* Mobile Dropdown version of the tabs */
+  .tabs-dropdown {
+    display: none;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 500;
+    flex: 1;
+    max-width: 200px;
+    margin: 0 auto;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238C8175' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 14px;
+    padding-right: 28px;
+  }
+
   .status-indicator {
     font-size: 12px;
     font-weight: 500;
@@ -1184,77 +1208,17 @@
     .palette { width: calc(100% - 32px); margin-top: 5vh; }
     .palette-list { max-height: 50vh; }
     
-    /* MOBILE DROPDOWN TABS */
-    .tabs-container {
-      position: relative;
+    /* Make tabs a pill dropdown on mobile */
+    .sidebar-tabs {
       width: 100%;
+      order: 3; /* Place it on a new line below actions */
       margin-top: 8px;
-      border-radius: var(--radius); 
-      flex-direction: column;
-      align-items: stretch;
-      padding: 0;
     }
-    .tabs-trigger {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 16px;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text);
-      background: var(--surface-2);
-      border-radius: var(--radius);
-      cursor: pointer;
-      width: 100%;
+    .tabs-container {
+      display: none; /* Hide the standard pill tabs on mobile */
     }
-    .tabs-trigger svg {
-      width: 14px;
-      height: 14px;
-      transition: transform 0.2s ease;
-    }
-    .tabs-trigger.open svg {
-      transform: rotate(180deg);
-    }
-    .tabs-list {
-      position: absolute;
-      top: calc(100% + 4px); 
-      left: 0;
-      right: 0;
-      background: var(--surface-2);
-      border-radius: var(--radius);
-      box-shadow: var(--shadow-soft);
-      border: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      gap: 0; 
-      padding: 4px;
-      z-index: 20;
-      max-height: 60vh; /* Fallback scrolling safeguard */
-      overflow-y: auto;
-      opacity: 0;
-      pointer-events: none;
-      transform: translateY(-4px) scale(0.98);
-      transform-origin: top center;
-      transition: opacity 0.18s ease, transform 0.18s ease;
-    }
-    /* Auto-open upwards if near bottom edge */
-    .tabs-container.open-up .tabs-list {
-      top: auto;
-      bottom: calc(100% + 4px);
-      transform-origin: bottom center;
-    }
-    .tabs-container.open .tabs-list {
-      opacity: 1;
-      pointer-events: auto;
-      transform: translateY(0) scale(1);
-    }
-    .tab-item {
-      width: 100%;
-      padding: 12px 16px;
-      font-size: 14px;
-      border-radius: var(--radius);
-      text-align: center;
+    .tabs-dropdown {
+      display: block; /* Show the dropdown pill */
     }
   }
 
@@ -1369,19 +1333,17 @@
       </div>
 
       <div class="sidebar-tabs">
-        <div class="tabs-container" id="tabsContainer">
-          <div class="tabs-trigger" id="tabsTrigger">
-            <span class="tab-trigger-text">Notes</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </div>
-          <div class="tabs-list" id="tabsList">
-            <div class="tab-item active">Notes</div>
-            <div class="tab-item">Tasks</div>
-            <div class="tab-item">Organizations</div>
-          </div>
+        <div class="tabs-container">
+          <div class="tab-item active">Notes</div>
+          <div class="tab-item">Tasks</div>
+          <div class="tab-item">Organizations</div>
         </div>
+        <!-- Dropdown for mobile view -->
+        <select class="tabs-dropdown" id="tabsDropdown">
+          <option value="Notes" selected>Notes</option>
+          <option value="Tasks">Tasks</option>
+          <option value="Organizations">Organizations</option>
+        </select>
       </div>
 
       <div class="editor-actions">
@@ -2005,56 +1967,28 @@
   const menuToggle = $('menuToggle');
 
   // Tab functionality
-  const tabsContainer = document.getElementById('tabsContainer');
-  const tabsTrigger = document.getElementById('tabsTrigger');
-  const tabTriggerText = tabsTrigger.querySelector('.tab-trigger-text');
-  const tabsList = document.getElementById('tabsList');
-  const tabItems = document.querySelectorAll('.tab-item');
-
-  function closeTabsDropdown() {
-    tabsContainer.classList.remove('open');
-    tabsTrigger.classList.remove('open');
-    tabsContainer.classList.remove('open-up');
-  }
-
-  function openTabsDropdown() {
-    // Safeguard checking if dropdown list hits bottom edge
-    const rect = tabsContainer.getBoundingClientRect();
-    const spaceBelow = window.innerHeight - rect.bottom;
-    const dropdownHeight = Math.min(tabItems.length * 50, 300); 
-
-    if (spaceBelow < dropdownHeight + 20) {
-      tabsContainer.classList.add('open-up');
-    } else {
-      tabsContainer.classList.remove('open-up');
-    }
-    tabsContainer.classList.add('open');
-    tabsTrigger.classList.add('open');
-  }
-
-  tabsTrigger.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (tabsContainer.classList.contains('open')) {
-      closeTabsDropdown();
-    } else {
-      openTabsDropdown();
-    }
-  });
-
-  document.addEventListener('click', (e) => {
-    if (tabsContainer.classList.contains('open') && !tabsContainer.contains(e.target)) {
-      closeTabsDropdown();
-    }
-  });
-
+  const tabItems = document.querySelectorAll(".tab-item");
+  const tabsDropdown = document.getElementById("tabs-dropdown");
+  
+  // Click functionality for wider screens
   tabItems.forEach(tab => {  
-    tab.addEventListener('click', () => {  
-      tabItems.forEach(t => t.classList.remove('active'));  
-      tab.classList.add('active');  
-      tabTriggerText.textContent = tab.textContent;
-      closeTabsDropdown();
+    tab.addEventListener("click", () => {  
+      const target = tab.textContent.trim();
+      tabItems.forEach(t => t.classList.remove("active"));  
+      tab.classList.add("active");  
+      if (tabsDropdown) tabsDropdown.value = target; // Sync dropdown
     });  
   });
+
+  // Change functionality for mobile dropdown
+  if (tabsDropdown) {
+    tabsDropdown.addEventListener("change", (e) => {
+      const target = e.target.value;
+      tabItems.forEach(t => {
+        t.classList.toggle("active", t.textContent.trim() === target);
+      });
+    });
+  }
 
   function toggleSidebar(open) {
     const shouldOpen = open ?? !sidebar.classList.contains('open');
@@ -2718,7 +2652,6 @@
     } else if (e.key === 'Escape') {
       dialogOverlay.classList.remove('active');
       shortcutsOverlay.classList.remove('active');
-      closeTabsDropdown();
       closePalette();
       deleteConfirmId = null;
     }
