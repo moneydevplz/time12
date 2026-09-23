@@ -682,7 +682,7 @@
     justify-content: center;
     flex: 1;
     min-width: 0; /* Crucial for preventing grid/flex blowout */
-    overflow: hidden;
+    overflow: visible;
   }
   .tabs-container {  
     display: flex;  
@@ -719,28 +719,77 @@
     color: var(--text);  
   }
 
-  /* Mobile Dropdown version of the tabs */
+  /* Mobile Custom Dropdown version of the tabs */
   .tabs-dropdown {
     display: none;
-    padding: 6px 10px;
-    border-radius: 999px;
-    background: var(--surface-2);
-    border: 1px solid var(--border);
-    color: var(--text);
-    font-family: var(--sans);
-    font-size: 14px;
-    font-weight: 500;
-    flex: 1;
-    max-width: 200px;
+    position: relative;
+    width: 100%;
+    max-width: 220px;
     margin: 0 auto;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238C8175' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 8px center;
-    background-size: 14px;
-    padding-right: 28px;
+  }
+  .dropdown-toggle {
+    width: 100%;
+    padding: 7px 24px;
+    border-radius: 999px;
+    background: var(--bg);
+    color: var(--text);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 600;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transition: 0.2s ease;
+  }
+  .dropdown-toggle svg {
+    width: 16px;
+    height: 16px;
+    transition: transform 0.2s ease;
+  }
+  .tabs-dropdown.open .dropdown-toggle svg {
+    transform: rotate(180deg);
+  }
+  
+  .dropdown-menu {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-soft);
+    z-index: 20;
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 4px;
+  }
+  .tabs-dropdown.open .dropdown-menu {
+    display: flex;
+  }
+  .dropdown-item {
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 15px;
+    font-weight: 500;
+    transition: 0.2s ease;
+    text-align: center;
+  }
+  .dropdown-item:hover {
+    background: var(--surface-2);
+    color: var(--text);
+  }
+  .dropdown-item.active {
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 600;
   }
 
   .status-indicator {
@@ -1208,7 +1257,7 @@
     .palette { width: calc(100% - 32px); margin-top: 5vh; }
     .palette-list { max-height: 50vh; }
     
-    /* Make tabs a pill dropdown on mobile */
+    /* Make tabs a custom pill dropdown on mobile */
     .sidebar-tabs {
       width: 100%;
       order: 3; /* Place it on a new line below actions */
@@ -1218,7 +1267,7 @@
       display: none; /* Hide the standard pill tabs on mobile */
     }
     .tabs-dropdown {
-      display: block; /* Show the dropdown pill */
+      display: block; /* Show the custom dropdown pill */
     }
   }
 
@@ -1333,17 +1382,27 @@
       </div>
 
       <div class="sidebar-tabs">
+        <!-- Wider screen pill tabs -->
         <div class="tabs-container">
           <div class="tab-item active">Notes</div>
           <div class="tab-item">Tasks</div>
           <div class="tab-item">Organizations</div>
         </div>
-        <!-- Dropdown for mobile view -->
-        <select class="tabs-dropdown" id="tabsDropdown">
-          <option value="Notes" selected>Notes</option>
-          <option value="Tasks">Tasks</option>
-          <option value="Organizations">Organizations</option>
-        </select>
+        
+        <!-- Mobile custom dropdown -->
+        <div class="tabs-dropdown" id="tabsDropdown">
+          <button class="dropdown-toggle" id="dropdownToggle">
+            <span id="dropdownLabel">Notes</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+          <div class="dropdown-menu">
+            <div class="dropdown-item active">Notes</div>
+            <div class="dropdown-item">Tasks</div>
+            <div class="dropdown-item">Organizations</div>
+          </div>
+        </div>
       </div>
 
       <div class="editor-actions">
@@ -1968,24 +2027,50 @@
 
   // Tab functionality
   const tabItems = document.querySelectorAll(".tab-item");
-  const tabsDropdown = document.getElementById("tabs-dropdown");
+  const dropdownToggle = document.getElementById("dropdownToggle");
+  const tabsDropdown = document.getElementById("tabsDropdown");
+  const dropdownItems = document.querySelectorAll(".dropdown-item");
+  const dropdownLabel = document.getElementById("dropdownLabel");
   
-  // Click functionality for wider screens
+  // Wider screen tab clicks
   tabItems.forEach(tab => {  
     tab.addEventListener("click", () => {  
       const target = tab.textContent.trim();
       tabItems.forEach(t => t.classList.remove("active"));  
       tab.classList.add("active");  
-      if (tabsDropdown) tabsDropdown.value = target; // Sync dropdown
+      
+      // Sync custom dropdown state
+      if (dropdownLabel) dropdownLabel.textContent = target;
+      dropdownItems.forEach(d => d.classList.toggle("active", d.textContent.trim() === target));
     });  
   });
 
-  // Change functionality for mobile dropdown
-  if (tabsDropdown) {
-    tabsDropdown.addEventListener("change", (e) => {
-      const target = e.target.value;
-      tabItems.forEach(t => {
-        t.classList.toggle("active", t.textContent.trim() === target);
+  // Mobile custom dropdown logic
+  if (dropdownToggle) {
+    dropdownToggle.addEventListener("click", (e) => {
+      e.stopPropagation();
+      tabsDropdown.classList.toggle("open");
+    });
+
+    // Close dropdown when clicking outside
+    document.addEventListener("click", (e) => {
+      if (!tabsDropdown.contains(e.target)) {
+        tabsDropdown.classList.remove("open");
+      }
+    });
+
+    // Handle dropdown item selection
+    dropdownItems.forEach(item => {
+      item.addEventListener("click", () => {
+        const target = item.textContent.trim();
+        dropdownItems.forEach(d => d.classList.remove("active"));
+        item.classList.add("active");
+        if (dropdownLabel) dropdownLabel.textContent = target;
+        
+        // Sync wider screen tabs
+        tabItems.forEach(t => t.classList.toggle("active", t.textContent.trim() === target));
+        
+        tabsDropdown.classList.remove("open");
       });
     });
   }
@@ -2654,6 +2739,7 @@
       shortcutsOverlay.classList.remove('active');
       closePalette();
       deleteConfirmId = null;
+      tabsDropdown.classList.remove('open');
     }
   });
 
