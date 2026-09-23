@@ -1240,13 +1240,19 @@
       transform: translateX(0);
     }
     .menu-toggle { display: inline-flex; align-items: center; justify-content: center; }
+    
+    /* Grid ensures the dropdown is centered, and actions stay strictly to the right */
     .editor-top-bar { 
-      padding: 0 20px;
-      flex-wrap: wrap; /* Allow graceful wrapping if the screen gets too tight */
+      display: grid;
+      grid-template-columns: 1fr auto 1fr; 
+      padding: 10px 20px;
       height: auto;
-      padding-top: 10px;
-      padding-bottom: 10px;
+      gap: 12px;
     }
+    .status-indicator { justify-self: start; }
+    .sidebar-tabs { justify-self: center; width: 100; }
+    .editor-actions { justify-self: end; }
+    
     .editor-scroll { padding-top: 70px; }
     .editor-inner { padding: 60px 24px 140px; }
     .editor-title-input { font-size: 32px; }
@@ -1258,11 +1264,6 @@
     .palette-list { max-height: 50vh; }
     
     /* Make tabs a custom pill dropdown on mobile */
-    .sidebar-tabs {
-      width: 100%;
-      order: 3; /* Place it on a new line below actions */
-      margin-top: 8px;
-    }
     .tabs-container {
       display: none; /* Hide the standard pill tabs on mobile */
     }
