@@ -482,6 +482,50 @@
     color: var(--text);
   }
 
+  /* Sidebar Tabs */
+  .sidebar-tabs {
+    padding: 0 24px 16px;
+    display: flex;
+    justify-content: center;
+    background: transparent;
+  }
+  .tabs-container {  
+    display: flex;  
+    align-items: center;  
+    gap: 6px;  
+    padding: 6px;  
+    background: var(--surface-2);  
+    border-radius: 999px;  
+    width: 100%;
+    justify-content: center;
+    flex-wrap: nowrap; /* Keeps them on one line on desktop */
+  }  
+
+  .tab-item {  
+    padding: 11px 24px;  
+    border-radius: 999px;  
+    color: var(--text-muted);  
+    cursor: pointer;  
+    font-size: 15px;  
+    font-weight: 500;  
+    transition: 0.2s ease;  
+    user-select: none;
+    text-align: center;
+    flex: 1;
+    white-space: nowrap;
+  }  
+
+  .tab-item.active {  
+    background: var(--bg);  
+    color: var(--text);  
+    font-weight: 600;  
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);  
+  }  
+
+  .tab-item:hover:not(.active) {  
+    color: var(--text);  
+  }  
+
   .theme-toggle {
     width: 32px; height: 32px;
     background: var(--surface-2);
@@ -1113,7 +1157,7 @@
       position: fixed;
       top: 0;
       left: 0;
-      width: 300px;
+      width: 320px; /* Slightly wider to accommodate tabs */
       z-index: 50;
       transform: translateX(-100%);
       box-shadow: var(--shadow-soft);
@@ -1131,6 +1175,15 @@
     .login-shell { padding: 48px 28px 32px; }
     .palette { width: calc(100% - 32px); margin-top: 5vh; }
     .palette-list { max-height: 50vh; }
+    /* Allow tabs to wrap gracefully if they still don't fit */
+    .tabs-container {
+      flex-wrap: wrap;
+    }
+    .tab-item {
+      flex: 1 1 45%;
+      padding: 10px 16px;
+      font-size: 14px;
+    }
   }
 
   @media (max-width: 480px) {
@@ -1138,6 +1191,7 @@
     .dialog-box { padding: 24px; }
     .btn-action { padding: 0 10px; font-size: 11px; }
     .status-indicator { font-size: 11px; }
+    .sidebar { width: 100%; }
   }
 </style>
 </head>
@@ -1193,6 +1247,14 @@
       <button class="theme-toggle" id="themeToggle" title="Toggle theme (Ctrl+J)">
         <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
       </button>
+    </div>
+
+    <div class="sidebar-tabs">
+      <div class="tabs-container">
+        <div class="tab-item active">Notes</div>
+        <div class="tab-item">Tasks</div>
+        <div class="tab-item">Organizations</div>
+      </div>
     </div>
 
     <div class="sidebar-search">
@@ -1860,6 +1922,15 @@
   const sidebar = $('sidebar');
   const backdrop = $('backdrop');
   const menuToggle = $('menuToggle');
+
+  // Tab functionality
+  const tabItems = document.querySelectorAll(".tab-item");
+  tabItems.forEach(tab => {  
+    tab.addEventListener("click", () => {  
+      tabItems.forEach(t => t.classList.remove("active"));  
+      tab.classList.add("active");  
+    });  
+  });
 
   function toggleSidebar(open) {
     const shouldOpen = open ?? !sidebar.classList.contains('open');
