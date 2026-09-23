@@ -1612,7 +1612,7 @@
       gap: 12px;
     }
     .status-indicator { justify-self: start; }
-    .sidebar-tabs { justify-self: center; width: 100; }
+    .sidebar-tabs { justify-self: center; width: 100%; }
     .editor-actions { justify-self: end; }
     
     .editor-scroll { padding-top: 70px; }
@@ -2398,6 +2398,8 @@
   let ownerUsername = ""; 
   let orgNamespace = "";  
   let orgGroups = [];
+  let orgAccounts = [];
+  let currentTab = "Notes"; 
   
   const orgMainContentEl = document.getElementById('orgMainContent');
   const orgActions = document.getElementById('orgActions');
@@ -2405,6 +2407,7 @@
   const notesTabContent = document.getElementById('notesTabContent');
   const orgTabContent = document.getElementById('orgTabContent');
   const addGroupBtn = document.getElementById('addGroupBtn');
+  const addAccountBtn = document.getElementById('addAccountBtn');
   const dialogBox = document.getElementById('dialogBox');
 
   async function orgApiCall(body) {
@@ -2449,6 +2452,21 @@
     orgNamespace = ownerUsername + "@";
 
     fetchGroups();
+    fetchAccounts();
+  }
+
+  async function fetchAccounts() {
+    try {
+      const res = await orgApiCall({ action: "list_accounts" });
+      if (res.success && Array.isArray(res.accounts)) {
+        orgAccounts = res.accounts;
+        if (currentTab === 'Org') {
+          renderAccountsTable();
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch accounts:", error);
+    }
   }
 
   async function fetchGroups() {
@@ -2577,6 +2595,71 @@
     `;
   }
 
+  function renderAccountsTable() {
+    const accountsHtml = orgAccounts.length > 0 ? orgAccounts.map(a => `
+      <tr>
+        <td class="checkbox-cell"><input type="checkbox" class="acc-select" data-username="${a.username}"></td>
+        <td class="td-username">${a.username}</td>
+        <td>
+          <div class="row-actions">
+            <button class="btn-row" data-action="reroll" data-username="${a.username}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              Reroll
+            </button>
+            <button class="btn-row danger" data-action="delete" data-username="${a.username}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              Delete
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('') : `
+      <tr>
+        <td colspan="3" style="text-align: center; padding: 40px; color: var(--text-muted);">
+          No sub-accounts yet. Click Add Account to create one.
+        </td>
+      </tr>
+    `;
+
+    orgMainContentEl.innerHTML = `
+      <div class="org-header">
+        <div>
+          <div class="org-title">Sub-Accounts</div>
+        </div>
+      </div>
+      <div class="org-meta">
+        <span>Organization</span>
+        <span class="dot"></span>
+        <span>${orgAccounts.length} accounts</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th class="checkbox-cell"><input type="checkbox" id="selectAllAccounts"></th>
+              <th>Username</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="accountsTbody">
+            ${accountsHtml}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    document.getElementById('selectAllAccounts')?.addEventListener('change', (e) => {
+      document.querySelectorAll('.acc-select').forEach(cb => cb.checked = e.target.checked);
+    });
+
+    document.querySelectorAll('[data-action="reroll"]').forEach(btn => {
+      btn.addEventListener('click', () => rerollPassword(btn.dataset.username));
+    });
+    document.querySelectorAll('[data-action="delete"]').forEach(btn => {
+      btn.addEventListener('click', () => deleteSingleAccount(btn.dataset.username));
+    });
+  }
+
   function attachGroupEventListeners() {
     document.querySelectorAll('[data-action="delete-group"]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -2622,6 +2705,73 @@
   });
 
   addGroupBtn.addEventListener('click', () => openCreateGroupDialog(null, null));
+  addAccountBtn.addEventListener('click', () => openAddAccountDialog());
+  
+  document.getElementById('bulkDeleteBtn').addEventListener('click', () => {
+    const selected = Array.from(document.querySelectorAll('.acc-select:checked')).map(cb => cb.dataset.username);
+    if (selected.length === 0) {
+      toast('Select at least one account to delete.', 'warn');
+      return;
+    }
+    openBulkDeleteDialog(selected);
+  });
+
+  async function rerollPassword(username) {
+    try {
+      setStatus('saving');
+      const res = await orgApiCall({ action: 'reroll_password', targetUsername: username });
+      showSingleCredentialDialog(username, res.newPassword);
+    } catch(e) {
+      toast(e.message, 'error');
+      setStatus('ready');
+    }
+  }
+
+  async function deleteSingleAccount(username) {
+    try {
+      setStatus('saving');
+      await orgApiCall({ action: 'delete_account', targetUsername: username });
+      toast('Account deleted', 'warn');
+      fetchAccounts();
+      setStatus('ready');
+    } catch(e) {
+      toast(e.message, 'error');
+      setStatus('ready');
+    }
+  }
+
+  function openBulkDeleteDialog(usernames) {
+    dialogBox.innerHTML = `
+      <div class="dialog-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        </svg>
+      </div>
+      <div class="dialog-title">Delete Accounts</div>
+      <div class="dialog-text">
+        Are you sure you want to delete <strong>${usernames.length}</strong> accounts? This action cannot be undone.
+      </div>
+      <div class="dialog-actions">
+        <button class="btn-primary" id="cancelDialog">Cancel</button>
+        <button class="btn-primary destructive" id="confirmDelete">Delete</button>
+      </div>
+    `;
+    dialogOverlay.classList.add('active');
+
+    document.getElementById('cancelDialog').onclick = closeDialog;
+    document.getElementById('confirmDelete').onclick = async () => {
+      try {
+        setStatus('saving');
+        await orgApiCall({ action: 'delete_multiple', targetUsernames: usernames });
+        toast(`${usernames.length} accounts deleted`, 'warn');
+        closeDialog();
+        fetchAccounts();
+      } catch(e) {
+        toast(e.message, 'error');
+        setStatus('ready');
+      }
+    };
+  }
 
   function openCreateGroupDialog(parentId, parentName) {
     const title = parentId ? `Create Sub-Group in ${parentName}` : 'Create New Group';
@@ -2854,6 +3004,113 @@
     };
   }
 
+  function openAddAccountDialog() {
+    dialogBox.innerHTML = `
+      <div class="dialog-title">Add Sub-Account</div>
+      <div class="dialog-text">Create a new account under your organization namespace (${orgNamespace}).</div>
+      
+      <div class="dialog-input-group">
+        <label>Username (no domain)</label>
+        <input type="text" id="subUserInput" class="dialog-input" placeholder="e.g. john.doe" autocomplete="off">
+      </div>
+
+      <div class="dialog-input-group">
+        <label>Password Method</label>
+        <div class="toggle-group">
+          <button class="toggle-btn active" id="randomPassBtn">Generate Random</button>
+          <button class="toggle-btn" id="customPassBtn">Custom Password</button>
+        </div>
+      </div>
+
+      <div class="dialog-input-group" id="customPassGroup" style="display:none;">
+        <label>Custom Password</label>
+        <input type="text" id="customPassInput" class="dialog-input" placeholder="Min 6 characters">
+      </div>
+
+      <div class="dialog-actions">
+        <button class="btn-primary" id="cancelDialog">Cancel</button>
+        <button class="btn-primary main" id="confirmAddAccount">Add</button>
+      </div>
+    `;
+    dialogOverlay.classList.add('active');
+
+    const randomBtn = document.getElementById('randomPassBtn');
+    const customBtn = document.getElementById('customPassBtn');
+    const customPassGroup = document.getElementById('customPassGroup');
+
+    randomBtn.onclick = () => {
+      randomBtn.classList.add('active');
+      customBtn.classList.remove('active');
+      customPassGroup.style.display = 'none';
+    };
+    customBtn.onclick = () => {
+      customBtn.classList.add('active');
+      randomBtn.classList.remove('active');
+      customPassGroup.style.display = 'block';
+    };
+
+    document.getElementById('cancelDialog').onclick = closeDialog;
+    document.getElementById('confirmAddAccount').onclick = async () => {
+      const subUsername = document.getElementById('subUserInput').value.trim();
+      if (!subUsername || !/^[a-zA-Z0-9]+$/.test(subUsername)) {
+        toast('Invalid username. Use only letters and numbers.', 'error');
+        return;
+      }
+
+      const useRandom = randomBtn.classList.contains('active');
+      const customPass = document.getElementById('customPassInput').value;
+
+      try {
+        setStatus('saving');
+        const res = await orgApiCall({
+          action: 'add_account',
+          subUsername,
+          useRandomPassword: useRandom,
+          customPassword: customPass
+        });
+        showSingleCredentialDialog(res.username, res.password);
+        fetchAccounts();
+      } catch(e) {
+        toast(e.message, 'error');
+        setStatus('ready');
+      }
+    };
+  }
+
+  function showSingleCredentialDialog(username, password) {
+    dialogBox.innerHTML = `
+      <div class="dialog-title">Account Created</div>
+      <div class="dialog-text">
+        Please copy the credentials now. For security reasons, the password will not be shown again.
+      </div>
+      <div class="dialog-input-group">
+        <label>Username</label>
+        <input type="text" class="dialog-input mono" readonly value="${username}">
+      </div>
+      <div class="dialog-input-group">
+        <label>Password</label>
+        <input type="text" class="dialog-input mono" id="credPass" readonly value="${password}">
+      </div>
+      <div class="dialog-actions">
+        <button class="btn-primary" id="copyCredsBtn">Copy</button>
+        <button class="btn-primary main" id="acceptCredsBtn">Done</button>
+      </div>
+    `;
+    dialogOverlay.classList.add('active');
+
+    document.getElementById('copyCredsBtn').onclick = () => {
+      const text = `Username: ${username}\nPassword: ${password}`;
+      navigator.clipboard.writeText(text).then(() => {
+        toast('Credentials copied to clipboard');
+      });
+    };
+
+    document.getElementById('acceptCredsBtn').onclick = () => {
+      closeDialog();
+      setStatus('ready');
+    };
+  }
+
   function showBulkCredentialsDialog(createdAccounts) {
     dialogBox.innerHTML = `
       <div class="dialog-title">Accounts Created</div>
@@ -2880,6 +3137,7 @@
 
     document.getElementById('acceptCredsBtn').onclick = () => {
       closeDialog();
+      setStatus('ready');
     };
   }
 
@@ -2891,6 +3149,7 @@
   const dropdownLabel = document.getElementById("dropdownLabel");
 
   function switchTab(target) {
+    currentTab = target;
     // Sync tab active state everywhere
     tabItems.forEach(t => t.classList.toggle("active", t.dataset.tab === target));
     dropdownItems.forEach(d => d.classList.toggle("active", d.dataset.tab === target));
@@ -2901,8 +3160,16 @@
       orgTabContent.classList.add('active');
       editorActions.style.display = 'none';
       orgActions.style.display = 'flex';
-      if (ownerUsername) fetchGroups();
-      else initOrgManager();
+      addGroupBtn.style.display = 'flex';
+      addAccountBtn.style.display = 'flex';
+      bulkDeleteBtn.style.display = 'flex';
+      
+      // Determine what to show based on whether groups exist
+      if (orgGroups && orgGroups.length > 0) {
+        renderGroups(orgGroups);
+      } else {
+        renderEmptyOrgState();
+      }
     } else {
       notesTabContent.style.display = 'block';
       orgTabContent.classList.remove('active');
@@ -2983,7 +3250,7 @@
     return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
   }
   function escapeHtml(s) {
-    return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   }
   function countWords(text) {
     const t = (text || '').trim();
@@ -3514,7 +3781,11 @@
     updateSyncBadge();
   }
   newNoteBtn.addEventListener('click', () => {
-    createNew();
+    if (currentTab === 'Org') {
+      openAddAccountDialog();
+    } else {
+      createNew();
+    }
     if (window.innerWidth <= 860) toggleSidebar(false);
   });
   saveBtn.addEventListener('click', () => saveNote());
