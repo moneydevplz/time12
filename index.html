@@ -482,50 +482,6 @@
     color: var(--text);
   }
 
-  /* Sidebar Tabs */
-  .sidebar-tabs {
-    padding: 0 24px 16px;
-    display: flex;
-    justify-content: center;
-    background: transparent;
-  }
-  .tabs-container {  
-    display: flex;  
-    align-items: center;  
-    gap: 6px;  
-    padding: 6px;  
-    background: var(--surface-2);  
-    border-radius: 999px;  
-    width: 100%;
-    justify-content: center;
-    flex-wrap: nowrap; /* Keeps them on one line on desktop */
-  }  
-
-  .tab-item {  
-    padding: 11px 24px;  
-    border-radius: 999px;  
-    color: var(--text-muted);  
-    cursor: pointer;  
-    font-size: 15px;  
-    font-weight: 500;  
-    transition: 0.2s ease;  
-    user-select: none;
-    text-align: center;
-    flex: 1;
-    white-space: nowrap;
-  }  
-
-  .tab-item.active {  
-    background: var(--bg);  
-    color: var(--text);  
-    font-weight: 600;  
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);  
-  }  
-
-  .tab-item:hover:not(.active) {  
-    color: var(--text);  
-  }  
-
   .theme-toggle {
     width: 32px; height: 32px;
     background: var(--surface-2);
@@ -717,6 +673,49 @@
     background: var(--bg);
     z-index: 10;
     border-bottom: 1px solid var(--border);
+    gap: 12px;
+  }
+
+  /* Sidebar Tabs injected in between */
+  .sidebar-tabs {
+    display: flex;
+    justify-content: center;
+    flex: 1;
+    min-width: 0; /* Crucial for preventing grid/flex blowout */
+    overflow: hidden;
+  }
+  .tabs-container {  
+    display: flex;  
+    align-items: center;  
+    gap: 6px;  
+    padding: 6px;  
+    background: var(--surface-2);  
+    border-radius: 999px;  
+    flex-wrap: nowrap;
+  }  
+
+  .tab-item {  
+    padding: 11px 24px;  
+    border-radius: 999px;  
+    color: var(--text-muted);  
+    cursor: pointer;  
+    font-size: 15px;  
+    font-weight: 500;  
+    transition: 0.2s ease;  
+    user-select: none;
+    text-align: center;
+    white-space: nowrap;
+  }  
+
+  .tab-item.active {  
+    background: var(--bg);  
+    color: var(--text);  
+    font-weight: 600;  
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);  
+  }  
+
+  .tab-item:hover:not(.active) {  
+    color: var(--text);  
   }
 
   .status-indicator {
@@ -727,6 +726,7 @@
     align-items: center;
     gap: 8px;
     letter-spacing: 0.02em;
+    flex-shrink: 0;
   }
   .status-dot {
     width: 6px; height: 6px;
@@ -745,7 +745,7 @@
     50% { opacity: 0.5; transform: scale(0.8); }
   }
 
-  .editor-actions { display: flex; gap: 8px; }
+  .editor-actions { display: flex; gap: 8px; flex-shrink: 0; }
   .btn-action {
     height: 32px;
     padding: 0 12px;
@@ -1157,7 +1157,7 @@
       position: fixed;
       top: 0;
       left: 0;
-      width: 320px; /* Slightly wider to accommodate tabs */
+      width: 340px; /* Made slightly wider to fit tabs comfortably when wrapped */
       z-index: 50;
       transform: translateX(-100%);
       box-shadow: var(--shadow-soft);
@@ -1166,7 +1166,14 @@
       transform: translateX(0);
     }
     .menu-toggle { display: inline-flex; align-items: center; justify-content: center; }
-    .editor-top-bar { padding: 0 20px; }
+    .editor-top-bar { 
+      padding: 0 20px;
+      flex-wrap: wrap; /* Allow graceful wrapping if the screen gets too tight */
+      height: auto;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+    .editor-scroll { padding-top: 70px; }
     .editor-inner { padding: 60px 24px 140px; }
     .editor-title-input { font-size: 32px; }
     .toast-container { left: 50%; right: auto; width: auto; max-width: calc(100% - 48px); }
@@ -1175,12 +1182,14 @@
     .login-shell { padding: 48px 28px 32px; }
     .palette { width: calc(100% - 32px); margin-top: 5vh; }
     .palette-list { max-height: 50vh; }
-    /* Allow tabs to wrap gracefully if they still don't fit */
     .tabs-container {
-      flex-wrap: wrap;
+      flex-wrap: wrap; /* Let the tabs drop to a new line if needed on mobile */
+      justify-content: center;
+      width: 100%;
+      margin-top: 8px;
     }
     .tab-item {
-      flex: 1 1 45%;
+      flex: 1 1 45%; /* Each tab takes nearly half width, allowing wrap */
       padding: 10px 16px;
       font-size: 14px;
     }
@@ -1249,14 +1258,6 @@
       </button>
     </div>
 
-    <div class="sidebar-tabs">
-      <div class="tabs-container">
-        <div class="tab-item active">Notes</div>
-        <div class="tab-item">Tasks</div>
-        <div class="tab-item">Organizations</div>
-      </div>
-    </div>
-
     <div class="sidebar-search">
       <input type="text" class="search-input" id="searchInput" placeholder="Search the shelves..." aria-label="Search notes">
     </div>
@@ -1303,6 +1304,15 @@
         <span class="status-dot"></span>
         <span id="statusText">Ready</span>
       </div>
+
+      <div class="sidebar-tabs">
+        <div class="tabs-container">
+          <div class="tab-item active">Notes</div>
+          <div class="tab-item">Tasks</div>
+          <div class="tab-item">Organizations</div>
+        </div>
+      </div>
+
       <div class="editor-actions">
         <button class="btn-action" id="saveBtn" title="Save (Ctrl+S)">Save</button>
         <button class="btn-action danger" id="deleteBtn" title="Delete (Ctrl+Shift+D)">Delete</button>
