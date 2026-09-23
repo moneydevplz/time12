@@ -695,7 +695,8 @@
   }  
 
   .tab-item {  
-    padding: 11px 24px;  
+    /* Reduced vertical padding for a shorter height, keeping width the same */
+    padding: 7px 24px;  
     border-radius: 999px;  
     color: var(--text-muted);  
     cursor: pointer;  
@@ -1187,11 +1188,13 @@
       justify-content: center;
       width: 100%;
       margin-top: 8px;
+      border-radius: var(--radius); /* Square container on mobile */
     }
     .tab-item {
       flex: 1 1 45%; /* Each tab takes nearly half width, allowing wrap */
       padding: 10px 16px;
       font-size: 14px;
+      border-radius: var(--radius); /* Square tabs on mobile */
     }
   }
 
