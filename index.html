@@ -841,6 +841,15 @@
     color: var(--accent);
     background: var(--accent-soft);
   }
+  .btn-action.primary {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+  .btn-action.primary:hover {
+    background: var(--accent-hover);
+    color: var(--bg);
+  }
   .btn-action.danger:hover {
     border-color: var(--danger);
     color: var(--danger);
@@ -999,6 +1008,172 @@
     0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; }
   }
 
+  /* Organization UI (UniClvrPass) Themed for Time12 */
+  .org-tab-content {
+    display: none;
+    flex: 1;
+    overflow-y: auto;
+    padding-top: 56px;
+    -webkit-overflow-scrolling: touch;
+    animation: fadeInTab 0.3s ease;
+  }
+  .org-tab-content.active {
+    display: block;
+  }
+  @keyframes fadeInTab {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  
+  .org-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 80px 40px 140px;
+  }
+
+  .org-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 24px;
+  }
+
+  .org-title {
+    font-family: var(--serif);
+    font-size: 44px;
+    font-weight: 400;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .org-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 48px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--molding);
+  }
+  .org-meta .dot {
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: var(--text-muted);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--text-muted);
+  }
+  .empty-state svg {
+    width: 48px; height: 48px;
+    margin-bottom: 16px;
+    stroke: var(--border);
+  }
+  .empty-state-title {
+    font-family: var(--serif);
+    font-size: 24px;
+    color: var(--text-soft);
+    margin-bottom: 8px;
+  }
+  .empty-state-text { font-size: 14px; margin-bottom: 24px; }
+
+  /* Accounts Table */
+  .table-wrapper {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  th {
+    text-align: left;
+    padding: 12px 16px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+  }
+  td {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--surface-2); }
+  
+  .td-username { font-weight: 600; }
+  .checkbox-cell {
+    width: 40px;
+    padding-right: 0;
+  }
+  input[type="checkbox"] {
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 1px solid var(--text-muted);
+    border-radius: 3px;
+    cursor: pointer;
+    position: relative;
+    background: transparent;
+    transition: var(--t);
+  }
+  input[type="checkbox"]:checked {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  input[type="checkbox"]:checked::after {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 1px;
+    width: 4px;
+    height: 9px;
+    border: solid var(--bg);
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+  }
+
+  .row-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+  .btn-row {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 10px;
+    font-size: 11px;
+    color: var(--text-soft);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: var(--t);
+  }
+  .btn-row svg { width: 12px; height: 12px; }
+  .btn-row:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .btn-row.danger:hover {
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+
   /* Dialogs */
   .dialog-overlay, .palette-overlay, .shortcuts-overlay {
     position: fixed; inset: 0;
@@ -1055,7 +1230,57 @@
     line-height: 1.6;
     margin-bottom: 24px;
   }
-  .dialog-actions { display: flex; gap: 8px; justify-content: flex-end; }
+  .dialog-input-group {
+    margin-bottom: 16px;
+  }
+  .dialog-input-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+  }
+  .dialog-input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    padding: 10px 12px;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    border-radius: var(--radius);
+    outline: none;
+    transition: var(--t);
+  }
+  .dialog-input:focus { border-color: var(--accent); }
+  .dialog-input.mono { font-family: monospace; letter-spacing: 1px; }
+
+  .toggle-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .toggle-btn {
+    flex: 1;
+    padding: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 600;
+    transition: var(--t);
+  }
+  .toggle-btn.active {
+    background: var(--accent);
+    color: var(--bg);
+    border-color: var(--accent);
+  }
+
+  .dialog-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px; }
   .btn-primary {
     padding: 10px 16px;
     border-radius: var(--radius);
@@ -1075,6 +1300,12 @@
     color: #fff;
   }
   .btn-primary.destructive:hover { opacity: 0.9; }
+  .btn-primary.main {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--bg);
+  }
+  .btn-primary.main:hover { background: var(--accent-hover); }
 
   .palette { max-width: 560px; overflow: hidden; margin-top: 10vh; max-height: 80vh; display: flex; flex-direction: column; }
   .palette-input-wrap {
@@ -1195,6 +1426,7 @@
   .toast svg { width: 14px; height: 14px; flex-shrink: 0; }
   .toast.success svg { color: var(--success); }
   .toast.warn svg { color: var(--warn); }
+  .toast.error svg { color: var(--danger); }
   @keyframes slideIn {
     from { transform: translateY(10px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
@@ -1262,6 +1494,8 @@
     .login-shell { padding: 48px 28px 32px; }
     .palette { width: calc(100% - 32px); margin-top: 5vh; }
     .palette-list { max-height: 50vh; }
+    .org-inner { padding: 60px 24px 140px; }
+    .org-title { font-size: 32px; }
     
     /* Make tabs a custom pill dropdown on mobile */
     .tabs-container {
@@ -1385,9 +1619,9 @@
       <div class="sidebar-tabs">
         <!-- Wider screen pill tabs -->
         <div class="tabs-container">
-          <div class="tab-item active">Notes</div>
-          <div class="tab-item">Tasks</div>
-          <div class="tab-item">Org</div>
+          <div class="tab-item active" data-tab="Notes">Notes</div>
+          <div class="tab-item" data-tab="Tasks">Tasks</div>
+          <div class="tab-item" data-tab="Org">Org</div>
         </div>
         
         <!-- Mobile custom dropdown -->
@@ -1399,20 +1633,26 @@
             </svg>
           </button>
           <div class="dropdown-menu">
-            <div class="dropdown-item active">Notes</div>
-            <div class="dropdown-item">Tasks</div>
-            <div class="dropdown-item">Org</div>
+            <div class="dropdown-item active" data-tab="Notes">Notes</div>
+            <div class="dropdown-item" data-tab="Tasks">Tasks</div>
+            <div class="dropdown-item" data-tab="Org">Org</div>
           </div>
         </div>
       </div>
 
-      <div class="editor-actions">
+      <div class="editor-actions" id="editorActions">
         <button class="btn-action" id="saveBtn" title="Save (Ctrl+S)">Save</button>
         <button class="btn-action danger" id="deleteBtn" title="Delete (Ctrl+Shift+D)">Delete</button>
       </div>
+
+      <!-- Hidden actions for Org Tab -->
+      <div class="editor-actions" id="orgActions" style="display: none;">
+        <button class="btn-action primary" id="addAccountBtn">Add Account</button>
+        <button class="btn-action danger" id="bulkDeleteBtn" style="display:none;">Delete Selected</button>
+      </div>
     </div>
 
-    <div class="editor-scroll">
+    <div class="editor-scroll" id="notesTabContent">
       <div class="editor-inner">
         <input type="text" class="editor-title-input" id="titleInput" placeholder="Untitled" autocomplete="off" spellcheck="false">
         <div class="editor-meta">
@@ -1426,6 +1666,13 @@
           placeholder="The room is quiet. Begin."
           spellcheck="true"
         ></textarea>
+      </div>
+    </div>
+
+    <!-- Organization UI Content -->
+    <div class="org-tab-content" id="orgTabContent">
+      <div class="org-inner" id="orgMainContent">
+        <!-- Dynamic Table/Empty State injected here -->
       </div>
     </div>
 
@@ -1477,19 +1724,8 @@
 
 <!-- Delete dialog -->
 <div class="dialog-overlay" id="dialogOverlay">
-  <div class="dialog-box">
-    <div class="dialog-icon">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <polyline points="3 6 5 6 21 6"/>
-        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
-      </svg>
-    </div>
-    <div class="dialog-title">Delete this note?</div>
-    <div class="dialog-text">This action cannot be undone. The note will be permanently removed from this device and your synced storage.</div>
-    <div class="dialog-actions">
-      <button class="btn-primary" id="cancelBtn">Keep it</button>
-      <button class="btn-primary destructive" id="confirmDeleteBtn">Delete</button>
-    </div>
+  <div class="dialog-box" id="dialogBox">
+    <!-- Dialog content injected dynamically -->
   </div>
 </div>
 
@@ -1539,6 +1775,7 @@
 
   // UniClvrPass auth endpoint
   const AUTH_API_URL = 'https://lbujqhnadkwqgojbhalw.supabase.co/functions/v1/auth';
+  const ORG_API_URL = 'https://lbujqhnadkwqgojbhalw.supabase.co/functions/v1/manage-organizations';
 
   /* ---------- Auth / Session ---------- */
   function getStoredSession() {
@@ -2026,51 +2263,522 @@
   const backdrop = $('backdrop');
   const menuToggle = $('menuToggle');
 
-  // Tab functionality
+  /* ============================================================
+   * Organization Manager Logic (UniClvrPass integration)
+   * ============================================================ */
+  let ownerUsername = ""; 
+  let orgNamespace = "";  
+  let selectedAccounts = new Set();
+  let accountCache = []; 
+  
+  const orgMainContentEl = document.getElementById('orgMainContent');
+  const orgActions = document.getElementById('orgActions');
+  const editorActions = document.getElementById('editorActions');
+  const notesTabContent = document.getElementById('notesTabContent');
+  const orgTabContent = document.getElementById('orgTabContent');
+  const addAccountBtn = document.getElementById('addAccountBtn');
+  const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+  const dialogBox = document.getElementById('dialogBox');
+
+  async function orgApiCall(body) {
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      showLogin();
+      throw new Error("Not authenticated");
+    }
+
+    try {
+      const response = await fetch(ORG_API_URL, {
+        method: 'POST',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(body),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP ${response.status}`);
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Org API Call Failed:', error);
+      throw error;
+    }
+  }
+
+  async function initOrgManager() {
+    const session = getStoredSession();
+    if (!session) return showLogin();
+
+    footerUsername.textContent = session.username;
+    userGlyph.textContent = session.username.charAt(0).toUpperCase();
+
+    ownerUsername = session.username;
+    orgNamespace = ownerUsername + "@";
+
+    fetchAccounts();
+  }
+
+  async function fetchAccounts() {
+    try {
+      setStatus('saving');
+      const res = await orgApiCall({ action: "list_accounts" });
+      
+      if (res.success && Array.isArray(res.accounts)) {
+        accountCache = res.accounts; 
+        renderAccountsTable(accountCache);
+      } else {
+        renderEmptyState();
+      }
+    } catch (error) {
+      toast(error.message, 'error');
+      renderEmptyState();
+    } finally {
+      setStatus('ready');
+    }
+  }
+
+  function renderEmptyState() {
+    orgMainContentEl.innerHTML = `
+      <div class="org-header">
+        <div>
+          <div class="org-title">${ownerUsername}</div>
+        </div>
+      </div>
+      <div class="org-meta">
+        <span>Organization</span>
+        <span class="dot"></span>
+        <span>Active</span>
+      </div>
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <div class="empty-state-title">No Sub-Accounts Yet</div>
+        <div class="empty-state-text">Create your first sub-account to manage access for this organization.</div>
+      </div>
+    `;
+  }
+
+  function renderAccountsTable(accounts) {
+    if (!accounts || accounts.length === 0) {
+      renderEmptyState();
+      return;
+    }
+
+    selectedAccounts.clear();
+    bulkDeleteBtn.style.display = 'none';
+
+    const rowsHtml = accounts.map(acc => `
+      <tr>
+        <td class="checkbox-cell">
+          <input type="checkbox" data-user="${acc.username}" class="row-checkbox">
+        </td>
+        <td class="td-username">${acc.username}</td>
+        <td>
+          <div class="row-actions">
+            <button class="btn-row" data-action="reroll" data-user="${acc.username}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="23 4 23 10 17 10"/>
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+              </svg>
+              Reroll
+            </button>
+            <button class="btn-row danger" data-action="delete" data-user="${acc.username}">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="3 6 5 6 21 6"/>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+              </svg>
+              Delete
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+    orgMainContentEl.innerHTML = `
+      <div class="org-header">
+        <div>
+          <div class="org-title">${ownerUsername}</div>
+        </div>
+      </div>
+      <div class="org-meta">
+        <span>Accounts</span>
+        <span class="dot"></span>
+        <span>${accounts.length} total</span>
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th class="checkbox-cell">
+                <input type="checkbox" id="selectAll">
+              </th>
+              <th>Username</th>
+              <th style="text-align:right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rowsHtml}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    attachTableEventListeners();
+  }
+
+  function attachTableEventListeners() {
+    document.querySelectorAll('.row-checkbox').forEach(cb => {
+      cb.addEventListener('change', (e) => {
+        const user = e.target.dataset.user;
+        if (e.target.checked) selectedAccounts.add(user);
+        else selectedAccounts.delete(user);
+        updateBulkDeleteBtn();
+      });
+    });
+
+    const selectAllCb = document.getElementById('selectAll');
+    if (selectAllCb) {
+      selectAllCb.addEventListener('change', (e) => {
+        document.querySelectorAll('.row-checkbox').forEach(cb => {
+          cb.checked = e.target.checked;
+          if (e.target.checked) selectedAccounts.add(cb.dataset.user);
+          else selectedAccounts.delete(cb.dataset.user);
+        });
+        updateBulkDeleteBtn();
+      });
+    }
+
+    document.querySelectorAll('.btn-row').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = btn.dataset.action;
+        const user = btn.dataset.user;
+        if (action === 'reroll') openRerollDialog(user);
+        else if (action === 'delete') openDeleteDialog([user]);
+      });
+    });
+  }
+
+  function updateBulkDeleteBtn() {
+    if (selectedAccounts.size > 0) {
+      bulkDeleteBtn.style.display = 'flex';
+      bulkDeleteBtn.textContent = `Delete Selected (${selectedAccounts.size})`;
+    } else {
+      bulkDeleteBtn.style.display = 'none';
+    }
+  }
+
+  function closeDialog() {
+    dialogOverlay.classList.remove('active');
+  }
+
+  dialogOverlay.addEventListener('click', (e) => {
+    if (e.target === dialogOverlay) closeDialog();
+  });
+
+  addAccountBtn.addEventListener('click', () => {
+    const dialogHtml = `
+      <div class="dialog-title">Add Sub-Account</div>
+      <div class="dialog-text">Create a new account under the <strong>${ownerUsername}</strong> organization.</div>
+      
+      <div class="dialog-input-group">
+        <label>Username</label>
+        <input type="text" id="subUsernameInput" class="dialog-input" placeholder="name" autocomplete="off">
+        <div style="font-size:11px;color:var(--text-muted);margin-top:6px;">
+          Final username: <span id="fullUsernamePreview">name@${ownerUsername}</span>
+        </div>
+      </div>
+
+      <div class="dialog-input-group">
+        <label>Password Method</label>
+        <div class="toggle-group">
+          <button class="toggle-btn active" id="randomPassBtn">Generate Random</button>
+          <button class="toggle-btn" id="customPassBtn">Custom Password</button>
+        </div>
+      </div>
+
+      <div class="dialog-input-group" id="customPassGroup" style="display:none;">
+        <label>Custom Password</label>
+        <input type="text" id="customPassInput" class="dialog-input" placeholder="Min 6 characters">
+      </div>
+
+      <div class="dialog-actions">
+        <button class="btn-primary" id="cancelDialog">Cancel</button>
+        <button class="btn-primary main" id="confirmAddAccount">Create Account</button>
+      </div>
+    `;
+    dialogBox.innerHTML = dialogHtml;
+    dialogOverlay.classList.add('active');
+
+    const subInput = document.getElementById('subUsernameInput');
+    const preview = document.getElementById('fullUsernamePreview');
+    subInput.addEventListener('input', () => {
+      preview.textContent = `${subInput.value || 'name'}@${ownerUsername}`;
+    });
+
+    const randomBtn = document.getElementById('randomPassBtn');
+    const customBtn = document.getElementById('customPassBtn');
+    const customPassGroup = document.getElementById('customPassGroup');
+
+    randomBtn.onclick = () => {
+      randomBtn.classList.add('active');
+      customBtn.classList.remove('active');
+      customPassGroup.style.display = 'none';
+    };
+    customBtn.onclick = () => {
+      customBtn.classList.add('active');
+      randomBtn.classList.remove('active');
+      customPassGroup.style.display = 'block';
+    };
+
+    document.getElementById('cancelDialog').onclick = closeDialog;
+    document.getElementById('confirmAddAccount').onclick = async () => {
+      const sub = subInput.value.trim();
+      if (!sub || !/^[a-zA-Z0-9]+$/.test(sub)) {
+        toast('Invalid username. Use only letters and numbers.', 'error');
+        return;
+      }
+
+      const useRandom = randomBtn.classList.contains('active');
+      const customPass = document.getElementById('customPassInput').value;
+
+      try {
+        setStatus('saving');
+        
+        try {
+          const res = await orgApiCall({
+            action: 'add_account',
+            subUsername: sub,
+            useRandomPassword: useRandom,
+            customPassword: useRandom ? null : customPass
+          });
+          openCredentialsDialog(res.username, res.password, res.randomGenerated);
+        } catch (err) {
+          if (err.message.includes("You must create an organization first")) {
+            await orgApiCall({ action: 'create_organization' });
+            const res = await orgApiCall({
+              action: 'add_account',
+              subUsername: sub,
+              useRandomPassword: useRandom,
+              customPassword: useRandom ? null : customPass
+            });
+            openCredentialsDialog(res.username, res.password, res.randomGenerated);
+          } else {
+            throw err;
+          }
+        }
+      } catch(e) {
+        toast(e.message, 'error');
+      } finally {
+        setStatus('ready');
+      }
+    };
+  });
+
+  function openCredentialsDialog(username, password, isRandom) {
+    dialogBox.innerHTML = `
+      <div class="dialog-title">Account Created</div>
+      <div class="dialog-text">
+        ${isRandom ? 'A secure random password was generated.' : 'Account is ready.'} 
+        Please copy the credentials now. For security reasons, the password will not be shown again.
+      </div>
+
+      <div class="dialog-input-group">
+        <label>Username</label>
+        <input type="text" class="dialog-input mono" value="${username}" readonly>
+      </div>
+
+      <div class="dialog-input-group">
+        <label>Password</label>
+        <input type="text" class="dialog-input mono" value="${password}" readonly>
+      </div>
+
+      <div class="dialog-actions">
+        <button class="btn-primary" id="copyCredsBtn">Copy Credentials</button>
+        <button class="btn-primary main" id="acceptCredsBtn">I've saved them</button>
+      </div>
+    `;
+    dialogOverlay.classList.add('active');
+
+    document.getElementById('copyCredsBtn').onclick = () => {
+      const text = `Username: ${username}\nPassword: ${password}`;
+      navigator.clipboard.writeText(text).then(() => {
+        toast('Credentials copied to clipboard');
+      });
+    };
+
+    document.getElementById('acceptCredsBtn').onclick = () => {
+      fetchAccounts(); 
+      closeDialog();
+    };
+  }
+
+  function openRerollDialog(username) {
+    dialogBox.innerHTML = `
+      <div class="dialog-title">Reroll Password</div>
+      <div class="dialog-text">
+        Are you sure you want to generate a new password for <strong>${username}</strong>? 
+        The old password will immediately stop working.
+      </div>
+      <div class="dialog-actions">
+        <button class="btn-primary" id="cancelDialog">Cancel</button>
+        <button class="btn-primary main" id="confirmReroll">Generate New Password</button>
+      </div>
+    `;
+    dialogOverlay.classList.add('active');
+
+    document.getElementById('cancelDialog').onclick = closeDialog;
+    document.getElementById('confirmReroll').onclick = async () => {
+      try {
+        setStatus('saving');
+        const res = await orgApiCall({
+          action: 'reroll_password',
+          targetUsername: username
+        });
+        openNewPasswordDialog(res.username, res.newPassword);
+      } catch(e) {
+        toast(e.message, 'error');
+        setStatus('ready');
+      }
+    };
+  }
+
+  function openNewPasswordDialog(username, newPassword) {
+    dialogBox.innerHTML = `
+      <div class="dialog-title">Password Updated</div>
+      <div class="dialog-text">
+        The password for <strong>${username}</strong> has been rerolled. Copy the new password now.
+      </div>
+      <div class="dialog-input-group">
+        <label>New Password</label>
+        <input type="text" class="dialog-input mono" value="${newPassword}" readonly>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn-primary" id="copyPassBtn">Copy Password</button>
+        <button class="btn-primary main" id="closeDialogBtn">Done</button>
+      </div>
+    `;
+    dialogOverlay.classList.add('active');
+    setStatus('ready');
+
+    document.getElementById('copyPassBtn').onclick = () => {
+      navigator.clipboard.writeText(newPassword).then(() => {
+        toast('Password copied to clipboard');
+      });
+    };
+    document.getElementById('closeDialogBtn').onclick = closeDialog;
+  }
+
+  function openDeleteDialog(usernames) {
+    const isMultiple = usernames.length > 1;
+    dialogBox.innerHTML = `
+      <div class="dialog-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        </svg>
+      </div>
+      <div class="dialog-title">Delete ${isMultiple ? 'Accounts' : 'Account'}</div>
+      <div class="dialog-text">
+        You are about to delete ${isMultiple ? `${usernames.length} accounts` : `<strong>${usernames[0]}</strong>`}. 
+        This action cannot be undone.
+      </div>
+      <div class="dialog-actions">
+        <button class="btn-primary" id="cancelDialog">Cancel</button>
+        <button class="btn-primary destructive" id="confirmDelete">Delete</button>
+      </div>
+    `;
+    dialogOverlay.classList.add('active');
+
+    document.getElementById('cancelDialog').onclick = closeDialog;
+    document.getElementById('confirmDelete').onclick = async () => {
+      try {
+        setStatus('saving');
+        if (isMultiple) {
+          const res = await orgApiCall({
+            action: 'delete_multiple',
+            targetUsernames: usernames
+          });
+          toast(`Deleted ${res.deletedCount} accounts`);
+        } else {
+          await orgApiCall({
+            action: 'delete_account',
+            targetUsername: usernames[0]
+          });
+          toast(`Deleted ${usernames[0]}`, 'warn');
+        }
+
+        fetchAccounts(); 
+        closeDialog();
+      } catch(e) {
+        toast(e.message, 'error');
+      } finally {
+        setStatus('ready');
+      }
+    };
+  }
+
+  bulkDeleteBtn.addEventListener('click', () => {
+    const users = Array.from(selectedAccounts);
+    if (users.length > 0) openDeleteDialog(users);
+  });
+
+  /* ---------- Tab Functionality ---------- */
   const tabItems = document.querySelectorAll(".tab-item");
   const dropdownToggle = document.getElementById("dropdownToggle");
   const tabsDropdown = document.getElementById("tabsDropdown");
   const dropdownItems = document.querySelectorAll(".dropdown-item");
   const dropdownLabel = document.getElementById("dropdownLabel");
-  
-  // Wider screen tab clicks
+
+  function switchTab(target) {
+    // Sync tab active state everywhere
+    tabItems.forEach(t => t.classList.toggle("active", t.dataset.tab === target));
+    dropdownItems.forEach(d => d.classList.toggle("active", d.dataset.tab === target));
+    if (dropdownLabel) dropdownLabel.textContent = target;
+
+    if (target === 'Org') {
+      notesTabContent.style.display = 'none';
+      orgTabContent.classList.add('active');
+      editorActions.style.display = 'none';
+      orgActions.style.display = 'flex';
+      if (ownerUsername) fetchAccounts();
+      else initOrgManager();
+    } else {
+      notesTabContent.style.display = 'block';
+      orgTabContent.classList.remove('active');
+      editorActions.style.display = 'flex';
+      orgActions.style.display = 'none';
+    }
+  }
+
   tabItems.forEach(tab => {  
-    tab.addEventListener("click", () => {  
-      const target = tab.textContent.trim();
-      tabItems.forEach(t => t.classList.remove("active"));  
-      tab.classList.add("active");  
-      
-      // Sync custom dropdown state
-      if (dropdownLabel) dropdownLabel.textContent = target;
-      dropdownItems.forEach(d => d.classList.toggle("active", d.textContent.trim() === target));
-    });  
+    tab.addEventListener("click", () => switchTab(tab.dataset.tab));  
   });
 
-  // Mobile custom dropdown logic
   if (dropdownToggle) {
     dropdownToggle.addEventListener("click", (e) => {
       e.stopPropagation();
       tabsDropdown.classList.toggle("open");
     });
 
-    // Close dropdown when clicking outside
     document.addEventListener("click", (e) => {
       if (!tabsDropdown.contains(e.target)) {
         tabsDropdown.classList.remove("open");
       }
     });
 
-    // Handle dropdown item selection
     dropdownItems.forEach(item => {
       item.addEventListener("click", () => {
-        const target = item.textContent.trim();
-        dropdownItems.forEach(d => d.classList.remove("active"));
-        item.classList.add("active");
-        if (dropdownLabel) dropdownLabel.textContent = target;
-        
-        // Sync wider screen tabs
-        tabItems.forEach(t => t.classList.toggle("active", t.textContent.trim() === target));
-        
+        switchTab(item.dataset.tab);
         tabsDropdown.classList.remove("open");
       });
     });
@@ -2096,6 +2804,8 @@
     el.className = `toast ${type}`;
     const icon = type === 'success'
       ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
+      : type === 'warn'
+      ? `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>`
       : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
     el.innerHTML = `${icon}<span>${msg}</span>`;
     toastContainer.appendChild(el);
@@ -2290,17 +3000,16 @@
 
   async function deleteNotePermanently(id) {
     try {
-      // Check if it was ever pushed to Supabase. If it's purely local, just clear it.
-    const note = allNotes.find(n => n.id === id);
-    if (note && !note.synced) {
-      await db.removeFromSyncQueue(id);
-      await db.deleteNote(id);
-    } else {
-      await db.addToSyncQueue(id, 'delete');
-      try { await syncManager.syncNote(id, 'delete'); }
-      catch (e) { console.warn('Auto-sync delete failed, will retry:', e); }
-      await db.deleteNote(id);
-    }
+      const note = allNotes.find(n => n.id === id);
+      if (note && !note.synced) {
+        await db.removeFromSyncQueue(id);
+        await db.deleteNote(id);
+      } else {
+        await db.addToSyncQueue(id, 'delete');
+        try { await syncManager.syncNote(id, 'delete'); }
+        catch (e) { console.warn('Auto-sync delete failed, will retry:', e); }
+        await db.deleteNote(id);
+      }
 
       allNotes = allNotes.filter(n => n.id !== id);
       renderNotesList();
@@ -2383,7 +3092,7 @@
       setLabel('Modified');
       statusIndicator.className = 'status-indicator modified';
     } else if (status === 'saving') {
-      setLabel('Saving…');
+      setLabel('Working…');
       statusIndicator.className = 'status-indicator saving';
     } else if (status === 'saved') {
       setLabel('Saved');
@@ -2397,7 +3106,26 @@
 
   function showDeleteConfirmation(id) {
     deleteConfirmId = id;
+    dialogBox.innerHTML = `
+      <div class="dialog-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="3 6 5 6 21 6"/>
+          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+        </svg>
+      </div>
+      <div class="dialog-title">Delete this note?</div>
+      <div class="dialog-text">This action cannot be undone. The note will be permanently removed from this device and your synced storage.</div>
+      <div class="dialog-actions">
+        <button class="btn-primary" id="cancelBtn">Keep it</button>
+        <button class="btn-primary destructive" id="confirmDeleteBtn">Delete</button>
+      </div>
+    `;
     dialogOverlay.classList.add('active');
+    document.getElementById('cancelBtn').addEventListener('click', () => {
+      dialogOverlay.classList.remove('active');
+      deleteConfirmId = null;
+    });
+    document.getElementById('confirmDeleteBtn').addEventListener('click', confirmDelete);
   }
 
   async function confirmDelete() {
@@ -2676,18 +3404,6 @@
     renderNotesList();
   });
 
-  cancelBtn.addEventListener('click', () => {
-    dialogOverlay.classList.remove('active');
-    deleteConfirmId = null;
-  });
-  confirmDeleteBtn.addEventListener('click', confirmDelete);
-  dialogOverlay.addEventListener('click', (e) => {
-    if (e.target === dialogOverlay) {
-      dialogOverlay.classList.remove('active');
-      deleteConfirmId = null;
-    }
-  });
-
   shortcutsLink.addEventListener('click', () => shortcutsOverlay.classList.add('active'));
   shortcutsClose.addEventListener('click', () => shortcutsOverlay.classList.remove('active'));
   shortcutsOverlay.addEventListener('click', (e) => {
@@ -2764,6 +3480,7 @@
     }
 
     await loadNotes();
+    initOrgManager();
 
     if (!syncManager.syncInterval) {
       syncManager.startAutoSync();
