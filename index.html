@@ -1183,18 +1183,78 @@
     .login-shell { padding: 48px 28px 32px; }
     .palette { width: calc(100% - 32px); margin-top: 5vh; }
     .palette-list { max-height: 50vh; }
+    
+    /* MOBILE DROPDOWN TABS */
     .tabs-container {
-      flex-wrap: wrap; /* Let the tabs drop to a new line if needed on mobile */
-      justify-content: center;
+      position: relative;
       width: 100%;
       margin-top: 8px;
-      border-radius: var(--radius); /* Square container on mobile */
+      border-radius: var(--radius); 
+      flex-direction: column;
+      align-items: stretch;
+      padding: 0;
     }
-    .tab-item {
-      flex: 1 1 45%; /* Each tab takes nearly half width, allowing wrap */
+    .tabs-trigger {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
       padding: 10px 16px;
       font-size: 14px;
-      border-radius: var(--radius); /* Square tabs on mobile */
+      font-weight: 600;
+      color: var(--text);
+      background: var(--surface-2);
+      border-radius: var(--radius);
+      cursor: pointer;
+      width: 100%;
+    }
+    .tabs-trigger svg {
+      width: 14px;
+      height: 14px;
+      transition: transform 0.2s ease;
+    }
+    .tabs-trigger.open svg {
+      transform: rotate(180deg);
+    }
+    .tabs-list {
+      position: absolute;
+      top: calc(100% + 4px); 
+      left: 0;
+      right: 0;
+      background: var(--surface-2);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 0; 
+      padding: 4px;
+      z-index: 20;
+      max-height: 60vh; /* Fallback scrolling safeguard */
+      overflow-y: auto;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-4px) scale(0.98);
+      transform-origin: top center;
+      transition: opacity 0.18s ease, transform 0.18s ease;
+    }
+    /* Auto-open upwards if near bottom edge */
+    .tabs-container.open-up .tabs-list {
+      top: auto;
+      bottom: calc(100% + 4px);
+      transform-origin: bottom center;
+    }
+    .tabs-container.open .tabs-list {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0) scale(1);
+    }
+    .tab-item {
+      width: 100%;
+      padding: 12px 16px;
+      font-size: 14px;
+      border-radius: var(--radius);
+      text-align: center;
     }
   }
 
@@ -1309,10 +1369,18 @@
       </div>
 
       <div class="sidebar-tabs">
-        <div class="tabs-container">
-          <div class="tab-item active">Notes</div>
-          <div class="tab-item">Tasks</div>
-          <div class="tab-item">Organizations</div>
+        <div class="tabs-container" id="tabsContainer">
+          <div class="tabs-trigger" id="tabsTrigger">
+            <span class="tab-trigger-text">Notes</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="pointer-events: none;">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </div>
+          <div class="tabs-list" id="tabsList">
+            <div class="tab-item active">Notes</div>
+            <div class="tab-item">Tasks</div>
+            <div class="tab-item">Organizations</div>
+          </div>
         </div>
       </div>
 
@@ -1937,11 +2005,54 @@
   const menuToggle = $('menuToggle');
 
   // Tab functionality
-  const tabItems = document.querySelectorAll(".tab-item");
+  const tabsContainer = document.getElementById('tabsContainer');
+  const tabsTrigger = document.getElementById('tabsTrigger');
+  const tabTriggerText = tabsTrigger.querySelector('.tab-trigger-text');
+  const tabsList = document.getElementById('tabsList');
+  const tabItems = document.querySelectorAll('.tab-item');
+
+  function closeTabsDropdown() {
+    tabsContainer.classList.remove('open');
+    tabsTrigger.classList.remove('open');
+    tabsContainer.classList.remove('open-up');
+  }
+
+  function openTabsDropdown() {
+    // Safeguard checking if dropdown list hits bottom edge
+    const rect = tabsContainer.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const dropdownHeight = Math.min(tabItems.length * 50, 300); 
+
+    if (spaceBelow < dropdownHeight + 20) {
+      tabsContainer.classList.add('open-up');
+    } else {
+      tabsContainer.classList.remove('open-up');
+    }
+    tabsContainer.classList.add('open');
+    tabsTrigger.classList.add('open');
+  }
+
+  tabsTrigger.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (tabsContainer.classList.contains('open')) {
+      closeTabsDropdown();
+    } else {
+      openTabsDropdown();
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (tabsContainer.classList.contains('open') && !tabsContainer.contains(e.target)) {
+      closeTabsDropdown();
+    }
+  });
+
   tabItems.forEach(tab => {  
-    tab.addEventListener("click", () => {  
-      tabItems.forEach(t => t.classList.remove("active"));  
-      tab.classList.add("active");  
+    tab.addEventListener('click', () => {  
+      tabItems.forEach(t => t.classList.remove('active'));  
+      tab.classList.add('active');  
+      tabTriggerText.textContent = tab.textContent;
+      closeTabsDropdown();
     });  
   });
 
@@ -2607,6 +2718,7 @@
     } else if (e.key === 'Escape') {
       dialogOverlay.classList.remove('active');
       shortcutsOverlay.classList.remove('active');
+      closeTabsDropdown();
       closePalette();
       deleteConfirmId = null;
     }
