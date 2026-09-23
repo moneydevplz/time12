@@ -2564,7 +2564,7 @@
         <div class="group-card-header">
           <div class="group-name">
             ${escapeHtml(group.name)}
-            <span class="group-id-badge">ID: ${group.id.substring(0, 8)}</span>
+            <span class="group-id-badge">ID: ${String(group.id || "").substring(0, 8)}</span>
           </div>
           <div class="group-actions">
             <button class="btn-row" data-action="add-member" data-group-id="${group.id}">
