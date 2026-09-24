@@ -1624,6 +1624,7 @@
   let orgTasks = [];
   let userAssignedTasks = [];
   let currentTab = "Notes"; 
+  let isSubAccount = false; // To adjust view if user is not an org owner
   
   const orgMainContentEl = document.getElementById('orgMainContent');
   const myTasksMainContentEl = document.getElementById('myTasksMainContent');
@@ -1678,6 +1679,17 @@
 
     ownerUsername = session.username;
     orgNamespace = ownerUsername + "@";
+    
+    // A simple way to check if it's a sub-account is if the username contains '@'
+    isSubAccount = ownerUsername.includes('@');
+    if (isSubAccount) {
+      // If it's a sub account, hide Org creation buttons from top bar by default
+      addGroupBtn.style.display = 'none';
+      addAccountBtn.style.display = 'none';
+      bulkDeleteBtn.style.display = 'none';
+      // Also hide the + button in Org tab for sub-accounts
+      // (handled in switchTab but we set the variable here)
+    }
 
     fetchGroups();
     fetchAccounts();
@@ -1694,6 +1706,9 @@
       }
     } catch (error) {
       console.error("Failed to fetch accounts:", error);
+      // Sub-accounts might get an error here if they don't own accounts, that's fine.
+      orgAccounts = [];
+      if (currentTab === 'Org') renderOrgState();
     }
   }
 
@@ -1709,7 +1724,6 @@
       if (currentTab === 'Org') renderOrgState();
     } catch (error) {
       orgGroups = [];
-      toast(error.message, 'error');
       if (currentTab === 'Org') renderOrgState();
     } finally {
       setStatus('ready');
@@ -1749,6 +1763,17 @@
   }
 
   function renderEmptyOrgState() {
+    let title = "Organization";
+    let text = "You don't own any groups and aren't part of any. Create one to get started!";
+    if (isSubAccount) {
+      title = "Member View";
+      text = "You are currently not assigned to any groups or tasks. Please wait for your organization leader to assign you.";
+    } else if (userAssignedTasks.length > 0) {
+      // This case shouldn't strictly hit empty state, but just in case
+      title = "Org Dashboard";
+      text = "You have assigned tasks but no groups created. Check the 'My Tasks' tab!";
+    }
+    
     orgMainContentEl.innerHTML = `
       <div class="org-header">
         <div><div class="org-title">${ownerUsername}</div></div>
@@ -1762,8 +1787,8 @@
           <path d="M8 15s1.5-2 4-2 4 2 4 2"/>
           <line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
         </svg>
-        <div class="empty-state-title">Sad and Lonely :(</div>
-        <div class="empty-state-text">You don't own any groups and aren't part of any. Create one to get started!</div>
+        <div class="empty-state-title">${title}</div>
+        <div class="empty-state-text">${text}</div>
       </div>
     `;
   }
@@ -1772,8 +1797,9 @@
     const hasGroups = orgGroups && orgGroups.length > 0;
     const hasAccounts = orgAccounts && orgAccounts.length > 0;
     const hasTasks = orgTasks && orgTasks.length > 0;
+    const hasUserTasks = userAssignedTasks && userAssignedTasks.length > 0;
 
-    if (!hasGroups && !hasAccounts && !hasTasks) {
+    if (!hasGroups && !hasAccounts && !hasTasks && !hasUserTasks) {
       renderEmptyOrgState();
       return;
     }
@@ -2955,7 +2981,9 @@
         fetchUserTasks();
       } else if (target === 'Org') {
         orgTabContent.classList.add('active');
-        orgActions.style.display = 'flex';
+        if (!isSubAccount) {
+          orgActions.style.display = 'flex';
+        }
         renderOrgState();
       }
     }
@@ -3561,8 +3589,12 @@
     if (currentTab === 'MyTasks') {
       openCreateTaskDialog();
     } else if (currentTab === 'Org') {
-      // No + action in Org tab — button is hidden there
-      toast('Switch to Notes or Tasks to create new items.', 'warn');
+      // No + action in Org tab for sub-accounts
+      if (!isSubAccount) {
+        openCreateGroupDialog(null, null);
+      } else {
+        toast('You do not have permission to create groups.', 'warn');
+      }
     } else {
       createNew();
     }
