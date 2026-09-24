@@ -1810,68 +1810,76 @@
         const dueDate = t.due_date ? new Date(t.due_date).toLocaleDateString() : 'N/A';
         const groupName = t.groups ? t.groups.name : 'Unassigned';
         
-        let statusBadge = `<span style="color: var(--text-muted); font-size: 12px;">Not Started</span>`;
-        if (t.status === 'pending') {
-          statusBadge = `<span style="color: var(--warn); font-size: 12px; font-weight: 600;">Pending Verification</span>`;
-        } else if (t.status === 'completed') {
-          statusBadge = `<span style="color: var(--success); font-size: 12px; font-weight: 600;">Completed</span>`;
-        } else if (t.status === 'rejected') {
-          statusBadge = `<span style="color: var(--danger); font-size: 12px; font-weight: 600;">Rejected</span>`;
-        }
-
-        let actionButtons = '';
-        if (t.status === 'pending') {
-          actionButtons = `
-            <button class="btn-row" data-task-action="verify" data-task-id="${t.id}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
-              Verify
-            </button>
-            <button class="btn-row danger" data-task-action="reject" data-task-id="${t.id}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-              Reject
-            </button>
-          `;
-        }
-        
-        actionButtons += `
-          <button class="btn-row danger" data-task-action="delete" data-task-id="${t.id}">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-            Delete
-          </button>
-        `;
-
-        let detailsHtml = '';
-        
         // 1. Show Original Task Links (Reference Materials)
+        let originalLinksHtml = '';
         const originalLinks = (t.links || []).filter(l => !l.is_submission_link);
         if (originalLinks.length > 0) {
-          detailsHtml += `<div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;"><strong>Task Links:</strong><br>${originalLinks.map(l => `<a href="${l.url}" target="_blank" style="color: var(--accent);">${l.label || l.url}</a>`).join('<br>')}</div>`;
+          originalLinksHtml += `<div style="margin-top: 6px;"><strong style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Reference Materials:</strong><br>${originalLinks.map(l => `<a href="${l.url}" target="_blank" style="color: var(--accent); font-size: 12px;">${l.label || l.url}</a>`).join('<br>')}</div>`;
         }
+
+        // 2. Show Member Progress & Submissions
+        let memberStatusHtml = '<div style="margin-top: 12px; border-top: 1px dashed var(--border); padding-top: 10px;"><strong style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Member Progress</strong><div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">';
         
-        // 2. Show User Submissions (Text & Links)
         if (t.submissions && t.submissions.length > 0) {
           t.submissions.forEach(sub => {
+            const subUser = sub.users?.username || 'Unknown User';
+            let subStatus = sub.status || 'not_started';
+            let statusColor = 'var(--text-muted)';
+            let statusText = subStatus.replace('_', ' ');
+            
+            if (subStatus === 'pending') statusColor = 'var(--warn)';
+            else if (subStatus === 'completed') statusColor = 'var(--success)';
+            else if (subStatus === 'rejected') statusColor = 'var(--danger)';
+            
+            let subDetails = '';
             const userLinks = (t.links || []).filter(l => l.is_submission_link && l.user_id === sub.user_id);
             if (sub.submission_text || userLinks.length > 0) {
-              detailsHtml += `<div style="margin-top: 8px; padding: 8px; background: var(--surface-2); border-radius: 4px; font-size: 12px;">
-                <strong>Submission by ${sub.users?.username || 'User'}:</strong><br>
-                ${sub.submission_text ? escapeHtml(sub.submission_text) : ''}<br>
-                ${userLinks.map(l => `<a href="${l.url}" target="_blank" style="color: var(--accent);">${l.label || l.url}</a>`).join('<br>')}
-              </div>`;
+              subDetails += '<div style="margin-top: 4px; padding: 6px; background: var(--surface-2); border-radius: 4px; border: 1px solid var(--border);">';
+              if (sub.submission_text) subDetails += `<div style="font-size: 12px; color: var(--text-soft); margin-bottom: 4px;">${escapeHtml(sub.submission_text)}</div>`;
+              if (userLinks.length > 0) {
+                subDetails += userLinks.map(l => `<a href="${l.url}" target="_blank" style="font-size: 12px; color: var(--accent); display: block;">🔗 ${l.label || l.url}</a>`).join('');
+              }
+              subDetails += '</div>';
             }
+
+            let memberActions = '';
+            if (sub.status === 'pending') {
+              memberActions = `
+                <button class="btn-row" data-task-action="verify" data-task-id="${t.id}" data-user-id="${sub.user_id}" style="margin-left: 8px;">Verify</button>
+                <button class="btn-row danger" data-task-action="reject" data-task-id="${t.id}" data-user-id="${sub.user_id}">Reject</button>
+              `;
+            }
+
+            memberStatusHtml += `
+              <div style="font-size: 13px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 4px 0;">
+                <div style="flex: 1;">
+                  <div><strong>${subUser}</strong> <span style="color: ${statusColor}; font-weight: 600; text-transform: capitalize; margin-left: 8px; font-size: 11px;">(${statusText})</span></div>
+                  ${subDetails}
+                </div>
+                <div class="row-actions" style="flex-shrink: 0;">${memberActions}</div>
+              </div>
+            `;
           });
+        } else {
+          memberStatusHtml += `<div style="font-size: 12px; color: var(--text-muted);">No members assigned to this task's group yet.</div>`;
         }
+        memberStatusHtml += '</div></div>';
 
         return `
           <tr>
-            <td><strong>${escapeHtml(t.title)}</strong></td>
-            <td>${escapeHtml(t.description || '-')}</td>
+            <td style="min-width: 300px;">
+              <strong style="font-size: 15px;">${escapeHtml(t.title)}</strong>
+              ${t.description ? `<div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">${escapeHtml(t.description)}</div>` : ''}
+              ${originalLinksHtml}
+              ${memberStatusHtml}
+            </td>
             <td>${escapeHtml(groupName)}</td>
             <td>${dueDate}</td>
-            <td>${statusBadge}</td>
-            <td>
-              <div class="row-actions">${actionButtons}</div>
-              ${detailsHtml}
+            <td style="text-align: right;">
+              <button class="btn-row danger" data-task-action="delete" data-task-id="${t.id}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Delete Task
+              </button>
             </td>
           </tr>
         `;
@@ -1882,11 +1890,9 @@
           <table>
             <thead>
               <tr>
-                <th>Title</th>
-                <th>Description</th>
+                <th>Task Details & Member Progress</th>
                 <th>Group</th>
                 <th>Due Date</th>
-                <th>Status</th>
                 <th style="text-align: right;">Actions</th>
               </tr>
             </thead>
@@ -1968,10 +1974,10 @@
 
     if (hasTasks) {
       document.querySelectorAll('[data-task-action="verify"]').forEach(btn => {
-        btn.addEventListener('click', () => handleTaskAction('verify_task', btn.dataset.taskId));
+        btn.addEventListener('click', () => handleTaskAction('verify_task', btn.dataset.taskId, btn.dataset.userId));
       });
       document.querySelectorAll('[data-task-action="reject"]').forEach(btn => {
-        btn.addEventListener('click', () => handleTaskAction('reject_task', btn.dataset.taskId));
+        btn.addEventListener('click', () => handleTaskAction('reject_task', btn.dataset.taskId, btn.dataset.userId));
       });
       document.querySelectorAll('[data-task-action="delete"]').forEach(btn => {
         btn.addEventListener('click', () => handleTaskAction('delete_task', btn.dataset.taskId));
@@ -2096,10 +2102,12 @@
     openBulkDeleteDialog(selected);
   });
 
-  async function handleTaskAction(action, taskId) {
+  async function handleTaskAction(action, taskId, userId = null) {
     try {
       setStatus('saving');
-      await orgApiCall({ action, taskId });
+      const payload = { action, taskId };
+      if (userId) payload.userId = userId;
+      await orgApiCall(payload);
       toast(`Task successfully ${action.includes('verify') ? 'verified' : action.includes('reject') ? 'rejected' : 'deleted'}.`);
       fetchOrgTasks();
     } catch (error) {
