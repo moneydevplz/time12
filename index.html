@@ -3167,7 +3167,7 @@
     }
 
     const taskRows = orgTasks.map(t => {
-      const dueDate = new Date(t.due_date).toLocaleDateString();
+      const dueDate = t.due_date ? new Date(t.due_date).toLocaleDateString() : 'N/A';
       const groupName = t.groups ? t.groups.name : 'Unassigned';
       
       let statusBadge = `<span style="color: var(--text-muted); font-size: 12px;">Not Started</span>`;
@@ -3175,6 +3175,8 @@
         statusBadge = `<span style="color: var(--warn); font-size: 12px; font-weight: 600;">Pending Verification</span>`;
       } else if (t.status === 'completed') {
         statusBadge = `<span style="color: var(--success); font-size: 12px; font-weight: 600;">Completed</span>`;
+      } else if (t.status === 'rejected') {
+        statusBadge = `<span style="color: var(--danger); font-size: 12px; font-weight: 600;">Rejected</span>`;
       }
 
       let actionButtons = '';
@@ -3198,6 +3200,11 @@
         </button>
       `;
 
+      let linksHtml = '';
+      if (t.links && t.links.length > 0) {
+        linksHtml = `<div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">${t.links.length} link(s) attached</div>`;
+      }
+
       return `
         <tr>
           <td><strong>${escapeHtml(t.title)}</strong></td>
@@ -3207,6 +3214,7 @@
           <td>${statusBadge}</td>
           <td>
             <div class="row-actions">${actionButtons}</div>
+            ${linksHtml}
           </td>
         </tr>
       `;
@@ -3297,12 +3305,36 @@
         <input type="date" id="taskDueInput" class="dialog-input" value="${today}">
       </div>
 
+      <div class="dialog-input-group">
+        <label>Attach Links (Optional)</label>
+        <div id="taskLinksContainer">
+          <div style="display:flex; gap:8px; margin-bottom:8px;">
+            <input type="text" class="dialog-input" placeholder="URL" data-link-url style="flex: 2;">
+            <input type="text" class="dialog-input" placeholder="Label" data-link-label style="flex: 1;">
+          </div>
+        </div>
+        <button class="btn-primary" id="addLinkBtn" style="margin-top:8px;">+ Add Link</button>
+      </div>
+
       <div class="dialog-actions">
         <button class="btn-primary" id="cancelDialog">Cancel</button>
         <button class="btn-primary main" id="confirmCreateTask">Create</button>
       </div>
     `;
     dialogOverlay.classList.add('active');
+
+    document.getElementById('addLinkBtn').addEventListener('click', () => {
+      const container = document.getElementById('taskLinksContainer');
+      const linkDiv = document.createElement('div');
+      linkDiv.style.display = 'flex';
+      linkDiv.style.gap = '8px';
+      linkDiv.style.marginBottom = '8px';
+      linkDiv.innerHTML = `
+        <input type="text" class="dialog-input" placeholder="URL" data-link-url style="flex: 2;">
+        <input type="text" class="dialog-input" placeholder="Label" data-link-label style="flex: 1;">
+      `;
+      container.appendChild(linkDiv);
+    });
 
     document.getElementById('cancelDialog').onclick = closeDialog;
     document.getElementById('confirmCreateTask').onclick = async () => {
@@ -3316,9 +3348,16 @@
         return;
       }
 
+      const links = [];
+      document.querySelectorAll('#taskLinksContainer > div').forEach(div => {
+        const url = div.querySelector('[data-link-url]').value.trim();
+        const label = div.querySelector('[data-link-label]').value.trim();
+        if (url) links.push({ url, label });
+      });
+
       try {
         setStatus('saving');
-        await orgApiCall({ action: 'create_task', title, description, groupId, dueDate });
+        await orgApiCall({ action: 'create_task', title, description, groupId, dueDate, links });
         toast('Task created successfully!');
         closeDialog();
         fetchTasks();
