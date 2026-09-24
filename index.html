@@ -309,8 +309,9 @@
   .sidebar {
     background: var(--surface); border-right: 1px solid var(--border);
     display: flex; flex-direction: column; height: 100vh;
-    overflow: hidden; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    overflow: hidden; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), margin 0.3s ease, opacity 0.3s ease, border 0.3s ease;
   }
+  .sidebar.hidden { margin-left: -300px; opacity: 0; border-right: 0; pointer-events: none; }
   .sidebar-header { padding: 24px 24px 20px; display: flex; justify-content: space-between; align-items: center; }
   .brand { display: flex; align-items: baseline; gap: 10px; }
   .brand-glyph { font-family: var(--serif); font-size: 24px; color: var(--accent); line-height: 1; }
@@ -836,6 +837,7 @@
     .app { grid-template-columns: 1fr; }
     .sidebar { position: fixed; top: 0; left: 0; width: 340px; z-index: 50; transform: translateX(-100%); box-shadow: var(--shadow-soft); }
     .sidebar.open { transform: translateX(0); }
+    .sidebar.hidden { margin-left: 0; transform: translateX(-100%); }
     .menu-toggle { display: inline-flex; align-items: center; justify-content: center; }
     
     .editor-top-bar { 
@@ -934,7 +936,7 @@
 
     <div class="sidebar-list-head">
       <span class="sidebar-title" id="notesCountLabel">Notes</span>
-      <button class="btn-new" id="newNoteBtn" title="New note (Ctrl+N)">
+      <button class="btn-new" id="newNoteBtn" title="New note (Ctrl+N)" style="display: none;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 5v14M5 12h14"/>
         </svg>
@@ -1002,11 +1004,14 @@
         <button class="btn-action danger" id="deleteBtn" title="Delete (Ctrl+Shift+D)">Delete</button>
       </div>
 
-      <div class="editor-actions" id="orgActions" style="display: none;">
+      <div class="editor-actions" id="taskActions" style="display: none;">
         <button class="btn-action primary" id="createTaskBtn">Create Task</button>
+      </div>
+
+      <div class="editor-actions" id="orgActions" style="display: none;">
         <button class="btn-action primary" id="addGroupBtn">Add Group</button>
-        <button class="btn-action primary" id="addAccountBtn" style="display:none;">Add Account</button>
-        <button class="btn-action danger" id="bulkDeleteBtn" style="display:none;">Delete Selected</button>
+        <button class="btn-action primary" id="addAccountBtn">Add Account</button>
+        <button class="btn-action danger" id="bulkDeleteBtn">Delete Selected</button>
       </div>
     </div>
 
@@ -1039,7 +1044,7 @@
       </div>
     </div>
 
-    <div class="editor-bottom-bar">
+    <div class="editor-bottom-bar" id="editorBottomBar">
       <div class="editor-toolbar" id="editorToolbar">
         <div class="toolbar-group">
           <button class="btn-toolbar" data-fmt="bold" title="Bold (Ctrl+B)"><span style="font-weight:700">B</span></button>
@@ -1607,6 +1612,7 @@
   const sidebar = $('sidebar');
   const backdrop = $('backdrop');
   const menuToggle = $('menuToggle');
+  const editorBottomBar = $('editorBottomBar');
 
   /* ============================================================
    * Organization & Task Manager Logic
@@ -1615,13 +1621,14 @@
   let orgNamespace = "";  
   let orgGroups = [];
   let orgAccounts = [];
-  let orgTasks = []; // Fixed double equals
+  let orgTasks = [];
   let userAssignedTasks = [];
   let currentTab = "Notes"; 
   
   const orgMainContentEl = document.getElementById('orgMainContent');
   const myTasksMainContentEl = document.getElementById('myTasksMainContent');
   const orgActions = document.getElementById('orgActions');
+  const taskActions = document.getElementById('taskActions');
   const notesTabContent = document.getElementById('notesTabContent');
   const orgTabContent = document.getElementById('orgTabContent');
   const myTasksTabContent = document.getElementById('myTasksTabContent');
@@ -2909,6 +2916,7 @@
   const tabsDropdown = document.getElementById("tabsDropdown");
   const dropdownItems = document.querySelectorAll(".dropdown-item");
   const dropdownLabel = document.getElementById("dropdownLabel");
+  const editorActions = document.getElementById("editorActions");
 
   function switchTab(target) {
     currentTab = target;
@@ -2916,26 +2924,40 @@
     dropdownItems.forEach(d => d.classList.toggle("active", d.dataset.tab === target));
     if (dropdownLabel) dropdownLabel.textContent = target;
 
+    // Hide all tab content
     notesTabContent.style.display = 'none';
     orgTabContent.classList.remove('active');
     myTasksTabContent.classList.remove('active');
+    // Hide all action button groups
     editorActions.style.display = 'none';
+    taskActions.style.display = 'none';
     orgActions.style.display = 'none';
 
-    if (target === 'Org') {
-      orgTabContent.classList.add('active');
-      orgActions.style.display = 'flex';
-      createTaskBtn.style.display = 'flex';
-      addGroupBtn.style.display = 'flex';
-      addAccountBtn.style.display = 'flex';
-      bulkDeleteBtn.style.display = 'flex';
-      renderOrgState();
-    } else if (target === 'MyTasks') {
-      myTasksTabContent.classList.add('active');
-      fetchUserTasks();
-    } else {
+    // Sidebar behavior: show only in Notes tab (desktop view slides it in/out)
+    if (target === 'Notes') {
+      sidebar.classList.remove('hidden');
+      // Show notes-specific UI
       notesTabContent.style.display = 'block';
       editorActions.style.display = 'flex';
+      editorBottomBar.style.display = 'flex';
+      newNoteBtn.style.display = 'grid';
+      notesCountLabel.textContent = `${allNotes.length} ${allNotes.length === 1 ? 'note' : 'notes'}`;
+    } else {
+      // Hide notes sidebar when not in Notes tab
+      sidebar.classList.add('hidden');
+      editorBottomBar.style.display = 'none';
+      newNoteBtn.style.display = 'none';
+      
+      if (target === 'MyTasks') {
+        myTasksTabContent.classList.add('active');
+        newNoteBtn.style.display = 'grid'; // Show + for creating task
+        taskActions.style.display = 'flex';
+        fetchUserTasks();
+      } else if (target === 'Org') {
+        orgTabContent.classList.add('active');
+        orgActions.style.display = 'flex';
+        renderOrgState();
+      }
     }
   }
 
@@ -3534,16 +3556,19 @@
     titleInput.select();
     updateSyncBadge();
   }
+  
   newNoteBtn.addEventListener('click', () => {
-    if (currentTab === 'Org') {
+    if (currentTab === 'MyTasks') {
       openCreateTaskDialog();
-    } else if (currentTab === 'MyTasks') {
-      toast('Task creation is handled by organization leaders.', 'warn');
+    } else if (currentTab === 'Org') {
+      // No + action in Org tab — button is hidden there
+      toast('Switch to Notes or Tasks to create new items.', 'warn');
     } else {
       createNew();
     }
     if (window.innerWidth <= 860) toggleSidebar(false);
   });
+  
   saveBtn.addEventListener('click', () => saveNote());
   deleteBtn.addEventListener('click', () => {
     if (currentNoteId) showDeleteConfirmation(currentNoteId);
@@ -3659,6 +3684,7 @@
 
     await loadNotes();
     initOrgManager();
+    switchTab('Notes'); // Ensure initial tab state is correctly set
 
     if (!syncManager.syncInterval) {
       syncManager.startAutoSync();
