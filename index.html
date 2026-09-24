@@ -1840,9 +1840,26 @@
           </button>
         `;
 
-        let linksHtml = '';
-        if (t.links && t.links.length > 0) {
-          linksHtml = `<div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">${t.links.length} link(s) attached</div>`;
+        let detailsHtml = '';
+        
+        // 1. Show Original Task Links (Reference Materials)
+        const originalLinks = (t.links || []).filter(l => !l.is_submission_link);
+        if (originalLinks.length > 0) {
+          detailsHtml += `<div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;"><strong>Task Links:</strong><br>${originalLinks.map(l => `<a href="${l.url}" target="_blank" style="color: var(--accent);">${l.label || l.url}</a>`).join('<br>')}</div>`;
+        }
+        
+        // 2. Show User Submissions (Text & Links)
+        if (t.submissions && t.submissions.length > 0) {
+          t.submissions.forEach(sub => {
+            const userLinks = (t.links || []).filter(l => l.is_submission_link && l.user_id === sub.user_id);
+            if (sub.submission_text || userLinks.length > 0) {
+              detailsHtml += `<div style="margin-top: 8px; padding: 8px; background: var(--surface-2); border-radius: 4px; font-size: 12px;">
+                <strong>Submission by ${sub.users?.username || 'User'}:</strong><br>
+                ${sub.submission_text ? escapeHtml(sub.submission_text) : ''}<br>
+                ${userLinks.map(l => `<a href="${l.url}" target="_blank" style="color: var(--accent);">${l.label || l.url}</a>`).join('<br>')}
+              </div>`;
+            }
+          });
         }
 
         return `
@@ -1854,7 +1871,7 @@
             <td>${statusBadge}</td>
             <td>
               <div class="row-actions">${actionButtons}</div>
-              ${linksHtml}
+              ${detailsHtml}
             </td>
           </tr>
         `;
@@ -2817,11 +2834,32 @@
       }
 
       let linksHtml = '';
-      const userLinks = (t.links || []).filter(l => l.is_submission_link);
-      if (userLinks.length > 0) {
-        linksHtml = `
+      
+      // 1. Show Original Task Links (Reference Materials)
+      const originalTaskLinks = (t.links || []).filter(l => !l.is_submission_link);
+      if (originalTaskLinks.length > 0) {
+        linksHtml += `
           <div class="task-links">
-            ${userLinks.map(l => `
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Reference Materials</div>
+            ${originalTaskLinks.map(l => `
+              <a href="${escapeHtml(l.url)}" target="_blank" class="task-link-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
+                ${escapeHtml(l.label || l.url)}
+              </a>
+            `).join('')}
+          </div>
+        `;
+      }
+
+      // 2. Show User's Own Submitted Links
+      const userSubmissionLinks = (t.links || []).filter(l => l.is_submission_link);
+      if (userSubmissionLinks.length > 0) {
+        linksHtml += `
+          <div class="task-links" style="margin-top: 12px;">
+            <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Your Submitted Links</div>
+            ${userSubmissionLinks.map(l => `
               <a href="${escapeHtml(l.url)}" target="_blank" class="task-link-item">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
