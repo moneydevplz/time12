@@ -104,8 +104,6 @@
     opacity: 0;
     pointer-events: none;
   }
-  /* Two soft, slowly-drifting light orbs the glass card refracts. Decorative
-     only — sit behind the card and never intercept clicks. */
   .login-screen::before,
   .login-screen::after {
     content: '';
@@ -160,12 +158,7 @@
     transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.4s ease, border-color 0.4s ease;
     animation: loginRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
-  /* Lift real content above the sheen (below) so text stays crisp. */
-  .login-shell > * {
-    position: relative;
-    z-index: 1;
-  }
-  /* Soft highlight that smoothly drifts across the glass like a circular light. */
+  .login-shell > * { position: relative; z-index: 1; }
   .login-shell::before {
     content: '';
     position: absolute;
@@ -178,7 +171,6 @@
     pointer-events: none;
     filter: blur(30px);
   }
-  /* Soft highlight that follows the cursor, as if light is catching the glass. */
   .login-shell::after {
     content: '';
     position: absolute;
@@ -189,9 +181,7 @@
     transition: opacity 0.35s ease;
     pointer-events: none;
   }
-  .login-shell:hover::after {
-    opacity: 1;
-  }
+  .login-shell:hover::after { opacity: 1; }
   @keyframes glassSheen {
     0% { transform: translate(15px, 30px); opacity: 0.5; }
     8% { transform: translate(120px, 15px); opacity: 0.6; }
@@ -329,7 +319,7 @@
     padding: 10px 0;
     color: var(--text);
     font-family: var(--sans);
-    font-size: 16px; /* Prevents iOS zoom on focus */
+    font-size: 16px;
     outline: none;
     transition: var(--t);
   }
@@ -509,7 +499,7 @@
     padding: 8px 0;
     color: var(--text);
     font-family: var(--sans);
-    font-size: 16px; /* Prevents iOS zoom */
+    font-size: 16px;
     outline: none;
     transition: var(--t);
   }
@@ -676,12 +666,11 @@
     gap: 12px;
   }
 
-  /* Sidebar Tabs injected in between */
   .sidebar-tabs {
     display: flex;
     justify-content: center;
     flex: 1;
-    min-width: 0; /* Crucial for preventing grid/flex blowout */
+    min-width: 0;
     overflow: visible;
   }
   .tabs-container {  
@@ -695,7 +684,6 @@
   }  
 
   .tab-item {  
-    /* Reduced vertical padding for a shorter height, keeping width the same */
     padding: 7px 24px;  
     border-radius: 999px;  
     color: var(--text-muted);  
@@ -719,7 +707,6 @@
     color: var(--text);  
   }
 
-  /* Mobile Custom Dropdown version of the tabs */
   .tabs-dropdown {
     display: none;
     position: relative;
@@ -1593,17 +1580,14 @@
       position: fixed;
       top: 0;
       left: 0;
-      width: 340px; /* Made slightly wider to fit tabs comfortably when wrapped */
+      width: 340px;
       z-index: 50;
       transform: translateX(-100%);
       box-shadow: var(--shadow-soft);
     }
-    .sidebar.open {
-      transform: translateX(0);
-    }
+    .sidebar.open { transform: translateX(0); }
     .menu-toggle { display: inline-flex; align-items: center; justify-content: center; }
     
-    /* Grid ensures the dropdown is centered, and actions stay strictly to the right */
     .editor-top-bar { 
       display: grid;
       grid-template-columns: 1fr auto 1fr; 
@@ -1627,13 +1611,8 @@
     .org-inner { padding: 60px 24px 140px; }
     .org-title { font-size: 32px; }
     
-    /* Make tabs a custom pill dropdown on mobile */
-    .tabs-container {
-      display: none; /* Hide the standard pill tabs on mobile */
-    }
-    .tabs-dropdown {
-      display: block; /* Show the custom dropdown pill */
-    }
+    .tabs-container { display: none; }
+    .tabs-dropdown { display: block; }
   }
 
   @media (max-width: 480px) {
@@ -1647,7 +1626,7 @@
 </head>
 <body>
 
-<!-- ============ LOGIN SCREEN (UniClvrPass gateway) ============ -->
+<!-- ============ LOGIN SCREEN ============ -->
 <div class="login-screen" id="loginScreen">
   <div class="login-shell">
     <button class="login-theme-toggle" id="loginThemeToggle" title="Toggle theme">
@@ -1747,14 +1726,12 @@
       </div>
 
       <div class="sidebar-tabs">
-        <!-- Wider screen pill tabs -->
         <div class="tabs-container">
           <div class="tab-item active" data-tab="Notes">Notes</div>
           <div class="tab-item" data-tab="Tasks">Tasks</div>
           <div class="tab-item" data-tab="Org">Org</div>
         </div>
         
-        <!-- Mobile custom dropdown -->
         <div class="tabs-dropdown" id="tabsDropdown">
           <button class="dropdown-toggle" id="dropdownToggle">
             <span id="dropdownLabel">Notes</span>
@@ -1775,11 +1752,14 @@
         <button class="btn-action danger" id="deleteBtn" title="Delete (Ctrl+Shift+D)">Delete</button>
       </div>
 
-      <!-- Hidden actions for Org Tab -->
       <div class="editor-actions" id="orgActions" style="display: none;">
         <button class="btn-action primary" id="addGroupBtn">Add Group</button>
         <button class="btn-action primary" id="addAccountBtn" style="display:none;">Add Account</button>
         <button class="btn-action danger" id="bulkDeleteBtn" style="display:none;">Delete Selected</button>
+      </div>
+
+      <div class="editor-actions" id="taskActions" style="display: none;">
+        <button class="btn-action primary" id="createTaskBtn">Create Task</button>
       </div>
     </div>
 
@@ -1800,7 +1780,12 @@
       </div>
     </div>
 
-    <!-- Organization UI Content -->
+    <div class="org-tab-content" id="tasksTabContent">
+      <div class="org-inner" id="tasksMainContent">
+        <!-- Dynamic Tasks injected here -->
+      </div>
+    </div>
+
     <div class="org-tab-content" id="orgTabContent">
       <div class="org-inner" id="orgMainContent">
         <!-- Dynamic Table/Empty State injected here -->
@@ -1855,9 +1840,7 @@
 
 <!-- Delete dialog -->
 <div class="dialog-overlay" id="dialogOverlay">
-  <div class="dialog-box" id="dialogBox">
-    <!-- Dialog content injected dynamically -->
-  </div>
+  <div class="dialog-box" id="dialogBox"></div>
 </div>
 
 <!-- Command palette -->
@@ -1896,15 +1879,12 @@
 <script type="module">
   /* ============================================================
    * Time12 — Make Time True
-   * Supabase is the source of truth. IndexedDB is only a temporary
-   * buffer for updates that have not yet been confirmed by Supabase.
    * ============================================================ */
 
   const SUPABASE_URL = 'https://bukeabrzlgcwzwtzmwld.supabase.co';
   const EDGE_FUNCTION_NAME = 'sync-notes';
   const AUTO_SYNC_INTERVAL = 5000;
 
-  // UniClvrPass auth endpoint
   const AUTH_API_URL = 'https://lbujqhnadkwqgojbhalw.supabase.co/functions/v1/auth';
   const ORG_API_URL = 'https://lbujqhnadkwqgojbhalw.supabase.co/functions/v1/manage-organizations';
 
@@ -1926,7 +1906,7 @@
     } catch {}
   }
 
-  /* ---------- Theme (shared across login + app) ---------- */
+  /* ---------- Theme ---------- */
   const SUN_ICON = `<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>`;
   const MOON_ICON = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`;
 
@@ -1963,10 +1943,8 @@
     canvas.width = 64;
     canvas.height = 64;
     const ctx = canvas.getContext('2d');
-    // Background
     ctx.fillStyle = theme === 'dark' ? '#000000' : '#F7F3EE';
     ctx.fillRect(0, 0, 64, 64);
-    // Text
     ctx.fillStyle = theme === 'dark' ? '#FD7E14' : '#FD7E14';
     ctx.font = 'bold 36px "DM Serif Display", Georgia, serif';
     ctx.textAlign = 'center';
@@ -1980,7 +1958,6 @@
     if (themeIcon) themeIcon.innerHTML = t === 'dark' ? MOON_ICON : SUN_ICON;
     if (loginThemeIcon) loginThemeIcon.innerHTML = t === 'dark' ? MOON_ICON : SUN_ICON;
     
-    // Apply the dynamically chosen logo based on the active theme
     const logoSrc = t === 'dark' ? 'china.png' : 'taiwan.png';
     if (loginLogo) loginLogo.src = logoSrc;
     if (brandLogo) brandLogo.src = logoSrc;
@@ -2018,7 +1995,6 @@
   function enterApp(isFreshLogin = false) {
     loginScreen.classList.add('hidden');
     Time12App.style.display = 'grid';
-    // Init the editor / data layer
     initTime12(isFreshLogin);
   }
 
@@ -2066,8 +2042,7 @@
         );
         localStorage.setItem('userId', data.userId);
         localStorage.setItem('username', data.username);
-        localStorage.setItem('authToken', data.token); // Save secure token
-        // Fresh login: must clear IndexedDB (temporary buffer) and load from Supabase
+        localStorage.setItem('authToken', data.token);
         setTimeout(() => enterApp(true), 700);
       } else {
         showLoginMessage(data.error || 'Authentication failed');
@@ -2086,7 +2061,7 @@
     if (e.key === 'Enter') { e.preventDefault(); auth('login'); }
   });
 
-  /* ---------- Liquid Glass cursor light (decorative only)---------- */
+  /* ---------- Liquid Glass cursor light ---------- */
   (function initLoginGlassTilt() {
     const shell = document.querySelector('.login-shell');
     if (!shell) return;
@@ -2117,22 +2092,22 @@
     shell.addEventListener('mouseleave', resetTilt);
   })();
 
-  /* ---------- Random RED glow easter egg (1/100 chance every cycle) ---------- */
+  /* ---------- Random RED glow easter egg ---------- */
   (function initGlassColorFlip() {
     const shell = document.querySelector('.login-shell');
     if (!shell) return;
     
     function maybeChangeToRed() {
       const randomChance = Math.random();
-      if (randomChance < 0.01) { // 1/100 chance
+      if (randomChance < 0.01) {
         shell.style.setProperty('--glass-sheen', 'rgba(220, 38, 38, 0.75)');
         setTimeout(() => {
           const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
           const originalColor = isDarkMode ? 'rgba(255, 255, 255, 0.35)' : 'rgba(253, 126, 20, 0.65)';
           shell.style.setProperty('--glass-sheen', originalColor);
-        }, 60000); // 1 minute
+        }, 60000);
       }
-      setTimeout(maybeChangeToRed, 20000); // Check every 20 seconds
+      setTimeout(maybeChangeToRed, 20000);
     }
     maybeChangeToRed();
   })();
@@ -2207,7 +2182,6 @@
         modified: new Date().toISOString(),
         synced: false,
       };
-      // Only save to local IndexedDB buffer. Do not push to Supabase yet.
       await this.saveNote(note);
       return note;
     }
@@ -2262,10 +2236,7 @@
     async callEdgeFunction(action, note = null, noteId = null) {
       const functionUrl = `${SUPABASE_URL}/functions/v1/${EDGE_FUNCTION_NAME}`;
       const token = localStorage.getItem('authToken'); 
-      
-      if (!token) {
-        throw new Error("Not authenticated");
-      }
+      if (!token) throw new Error("Not authenticated");
 
       try {
         const response = await fetch(functionUrl, {
@@ -2284,9 +2255,7 @@
             }`
           );
         }
-
         return await response.json();
-       
       } catch (error) {
         console.error('Edge function call failed:', error);
         throw error;
@@ -2399,16 +2368,21 @@
   let orgNamespace = "";  
   let orgGroups = [];
   let orgAccounts = [];
+  let orgTasks = [];
   let currentTab = "Notes"; 
   
   const orgMainContentEl = document.getElementById('orgMainContent');
+  const tasksMainContentEl = document.getElementById('tasksMainContent');
   const orgActions = document.getElementById('orgActions');
+  const taskActions = document.getElementById('taskActions');
   const editorActions = document.getElementById('editorActions');
   const notesTabContent = document.getElementById('notesTabContent');
   const orgTabContent = document.getElementById('orgTabContent');
+  const tasksTabContent = document.getElementById('tasksTabContent');
   const addGroupBtn = document.getElementById('addGroupBtn');
   const addAccountBtn = document.getElementById('addAccountBtn');
   const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
+  const createTaskBtn = document.getElementById('createTaskBtn');
   const dialogBox = document.getElementById('dialogBox');
 
   async function orgApiCall(body) {
@@ -2454,6 +2428,7 @@
 
     fetchGroups();
     fetchAccounts();
+    fetchTasks();
   }
 
   async function fetchAccounts() {
@@ -2461,9 +2436,7 @@
       const res = await orgApiCall({ action: "list_accounts" });
       if (res.success && Array.isArray(res.accounts)) {
         orgAccounts = res.accounts;
-        if (currentTab === 'Org') {
-          renderOrgState(); // Re-render to show accounts if they were missing
-        }
+        if (currentTab === 'Org') renderOrgState();
       }
     } catch (error) {
       console.error("Failed to fetch accounts:", error);
@@ -2474,44 +2447,47 @@
     try {
       setStatus('saving');
       const res = await orgApiCall({ action: "list_groups" });
-      
       if (res.success && Array.isArray(res.groups)) {
         orgGroups = res.groups; 
       } else {
         orgGroups = [];
       }
-      if (currentTab === 'Org') {
-        renderOrgState();
-      }
+      if (currentTab === 'Org') renderOrgState();
     } catch (error) {
       orgGroups = [];
       toast(error.message, 'error');
-      if (currentTab === 'Org') {
-        renderOrgState();
-      }
+      if (currentTab === 'Org') renderOrgState();
     } finally {
       setStatus('ready');
+    }
+  }
+
+  async function fetchTasks() {
+    try {
+      const res = await orgApiCall({ action: "list_tasks" });
+      if (res.success && Array.isArray(res.tasks)) {
+        orgTasks = res.tasks;
+        if (currentTab === 'Tasks') renderTasksState();
+      }
+    } catch (error) {
+      console.error("Failed to fetch tasks:", error);
+      toast(error.message, 'error');
     }
   }
 
   function renderEmptyOrgState() {
     orgMainContentEl.innerHTML = `
       <div class="org-header">
-        <div>
-          <div class="org-title">${ownerUsername}</div>
-        </div>
+        <div><div class="org-title">${ownerUsername}</div></div>
       </div>
       <div class="org-meta">
-        <span>Organization</span>
-        <span class="dot"></span>
-        <span>Active</span>
+        <span>Organization</span><span class="dot"></span><span>Active</span>
       </div>
       <div class="empty-state">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 64px; height: 64px; color: var(--text-muted); filter: grayscale(1);">
           <circle cx="12" cy="12" r="10"/>
           <path d="M8 15s1.5-2 4-2 4 2 4 2"/>
-          <line x1="9" y1="9" x2="9.01" y2="9"/>
-          <line x1="15" y1="9" x2="15.01" y2="9"/>
+          <line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
         </svg>
         <div class="empty-state-title">Sad and Lonely :(</div>
         <div class="empty-state-text">You don't own any groups and aren't part of any. Create one to get started!</div>
@@ -2559,9 +2535,7 @@
                 <th style="text-align: right;">Actions</th>
               </tr>
             </thead>
-            <tbody id="accountsTbody">
-              ${rows}
-            </tbody>
+            <tbody id="accountsTbody">${rows}</tbody>
           </table>
         </div>
       `;
@@ -2575,15 +2549,11 @@
 
     orgMainContentEl.innerHTML = `
       <div class="org-header">
-        <div>
-          <div class="org-title">${ownerUsername}</div>
-        </div>
+        <div><div class="org-title">${ownerUsername}</div></div>
       </div>
       <div class="org-meta">
-        <span>Organization Overview</span>
-        <span class="dot"></span>
-        <span>${orgAccounts.length} sub-accounts</span>
-        <span class="dot"></span>
+        <span>Organization Overview</span><span class="dot"></span>
+        <span>${orgAccounts.length} sub-accounts</span><span class="dot"></span>
         <span>${orgGroups.length} root groups</span>
       </div>
       ${accountsHtml}
@@ -2666,21 +2636,15 @@
 
   function attachGroupEventListeners() {
     document.querySelectorAll('[data-action="delete-group"]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        openDeleteGroupDialog(btn.dataset.groupId, btn.dataset.groupName);
-      });
+      btn.addEventListener('click', () => openDeleteGroupDialog(btn.dataset.groupId, btn.dataset.groupName));
     });
 
     document.querySelectorAll('[data-action="add-subgroup"]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        openCreateGroupDialog(btn.dataset.groupId, btn.dataset.groupName);
-      });
+      btn.addEventListener('click', () => openCreateGroupDialog(btn.dataset.groupId, btn.dataset.groupName));
     });
 
     document.querySelectorAll('[data-action="add-member"]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        openAddMemberDialog(btn.dataset.groupId);
-      });
+      btn.addEventListener('click', () => openAddMemberDialog(btn.dataset.groupId));
     });
 
     document.querySelectorAll('.btn-member-remove').forEach(btn => {
@@ -2710,6 +2674,7 @@
 
   addGroupBtn.addEventListener('click', () => openCreateGroupDialog(null, null));
   addAccountBtn.addEventListener('click', () => openAddAccountDialog());
+  createTaskBtn.addEventListener('click', () => openCreateTaskDialog());
   
   bulkDeleteBtn.addEventListener('click', () => {
     const selected = Array.from(document.querySelectorAll('.acc-select:checked')).map(cb => cb.dataset.username);
@@ -2849,12 +2814,6 @@
   }
 
   function openAddMemberDialog(groupId) {
-    // Map existing accounts to exclude them from the existing selection list
-    const existingAccountOptions = orgAccounts.map(a => {
-      const usernameOnly = a.username.split('@')[0];
-      return `<option value="${a.id}">${escapeHtml(a.username)}</option>`;
-    }).join('');
-
     dialogBox.innerHTML = `
       <div class="dialog-title">Add Members</div>
       <div class="dialog-text">Choose to add existing accounts to this group or create entirely new accounts and assign them immediately.</div>
@@ -2864,7 +2823,6 @@
         <button class="toggle-btn" id="newTabBtn">Create New</button>
       </div>
 
-      <!-- Existing Accounts Tab -->
       <div id="existingTabContent">
         <div class="dialog-input-group">
           <label>Select Accounts</label>
@@ -2872,7 +2830,6 @@
         </div>
       </div>
 
-      <!-- New Accounts Tab -->
       <div id="newTabContent" style="display:none;">
         <div class="dialog-input-group">
           <label>Bulk Upload (CSV)</label>
@@ -2914,7 +2871,6 @@
     `;
     dialogOverlay.classList.add('active');
 
-    // Populate select dropdown
     const selectEl = document.getElementById('existingAccountsSelect');
     orgAccounts.forEach(acc => {
       const opt = document.createElement('option');
@@ -2923,7 +2879,6 @@
       selectEl.appendChild(opt);
     });
 
-    // Tab Switching Logic
     const existingTabBtn = document.getElementById('existingTabBtn');
     const newTabBtn = document.getElementById('newTabBtn');
     const existingTabContent = document.getElementById('existingTabContent');
@@ -2942,7 +2897,6 @@
       existingTabContent.style.display = 'none';
     };
 
-    // CSV File Reading Logic
     const dropzone = document.getElementById('csvDropzone');
     const fileInput = document.getElementById('csvFileInput');
     const filenameEl = document.getElementById('csvFilename');
@@ -2956,7 +2910,7 @@
           const text = ev.target.result;
           const lines = text.split(/\r?\n/);
           lines.forEach(line => {
-            const val = line.trim().split(',')[0].trim(); // take first column
+            const val = line.trim().split(',')[0].trim();
             if (val) addEmailTag(val);
           });
         };
@@ -2964,7 +2918,6 @@
       }
     });
 
-    // Tag Input Logic
     const emailTagContainer = document.getElementById('emailTagContainer');
     const emailTagInput = document.getElementById('emailTagInput');
 
@@ -2997,7 +2950,6 @@
       }
     });
 
-    // Password Method Toggle
     const randomBtn = document.getElementById('randomPassBtn');
     const customBtn = document.getElementById('customPassBtn');
     const customPassGroup = document.getElementById('customPassGroup');
@@ -3013,17 +2965,14 @@
       customPassGroup.style.display = 'block';
     };
 
-    // Confirm Action Button
     document.getElementById('cancelDialog').onclick = closeDialog;
     document.getElementById('confirmAddMembers').onclick = async () => {
-      // Check which tab is active to decide API call
       const isExistingActive = existingTabBtn.classList.contains('active');
 
       try {
         setStatus('saving');
         
         if (isExistingActive) {
-          // EXISTING ACCOUNTS LOGIC
           const selectedOptions = Array.from(selectEl.selectedOptions);
           if (selectedOptions.length === 0) {
             toast('Please select at least one account.', 'error');
@@ -3042,7 +2991,6 @@
           closeDialog();
           
         } else {
-          // CREATE NEW ACCOUNTS LOGIC
           const tags = emailTagContainer.querySelectorAll('.email-tag span');
           const accounts = Array.from(tags).map(t => {
             const text = t.textContent.trim();
@@ -3074,14 +3022,7 @@
             toast(`Successfully added ${res.addedAccounts.length} members.`);
           }
           
-          if (res.addedAccounts && res.addedAccounts.length > 0) {
-            // Edge function currently only returns usernames for existing adds, if passwords were generated we'd show them. 
-            // However, add_accounts_bulk doesn't return plain passwords. If you need to show passwords, Edge function needs updating.
-            // For now, we just close the dialog.
-            closeDialog();
-          } else {
-            closeDialog();
-          }
+          closeDialog();
         }
         
         fetchGroups();
@@ -3200,33 +3141,191 @@
     };
   }
 
-  function showBulkCredentialsDialog(createdAccounts) {
+  /* ---------- Tasks Logic ---------- */
+  function renderEmptyTasksState() {
+    tasksMainContentEl.innerHTML = `
+      <div class="org-header">
+        <div><div class="org-title">Task Management</div></div>
+      </div>
+      <div class="org-meta">
+        <span>Leader Dashboard</span><span class="dot"></span><span>No tasks created</span>
+      </div>
+      <div class="empty-state">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 64px; height: 64px; color: var(--text-muted); filter: grayscale(1);">
+          <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+        </svg>
+        <div class="empty-state-title">No tasks yet</div>
+        <div class="empty-state-text">Create a new task for your groups to get started!</div>
+      </div>
+    `;
+  }
+
+  function renderTasksState() {
+    if (!orgTasks || orgTasks.length === 0) {
+      renderEmptyTasksState();
+      return;
+    }
+
+    const taskRows = orgTasks.map(t => {
+      const dueDate = new Date(t.due_date).toLocaleDateString();
+      const groupName = t.groups ? t.groups.name : 'Unassigned';
+      
+      let statusBadge = `<span style="color: var(--text-muted); font-size: 12px;">Not Started</span>`;
+      if (t.status === 'pending') {
+        statusBadge = `<span style="color: var(--warn); font-size: 12px; font-weight: 600;">Pending Verification</span>`;
+      } else if (t.status === 'completed') {
+        statusBadge = `<span style="color: var(--success); font-size: 12px; font-weight: 600;">Completed</span>`;
+      }
+
+      let actionButtons = '';
+      if (t.status === 'pending') {
+        actionButtons = `
+          <button class="btn-row" data-task-action="verify" data-task-id="${t.id}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            Verify
+          </button>
+          <button class="btn-row danger" data-task-action="reject" data-task-id="${t.id}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Reject
+          </button>
+        `;
+      }
+      
+      actionButtons += `
+        <button class="btn-row danger" data-task-action="delete" data-task-id="${t.id}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          Delete
+        </button>
+      `;
+
+      return `
+        <tr>
+          <td><strong>${escapeHtml(t.title)}</strong></td>
+          <td>${escapeHtml(t.description || '-')}</td>
+          <td>${escapeHtml(groupName)}</td>
+          <td>${dueDate}</td>
+          <td>${statusBadge}</td>
+          <td>
+            <div class="row-actions">${actionButtons}</div>
+          </td>
+        </tr>
+      `;
+    }).join('');
+
+    tasksMainContentEl.innerHTML = `
+      <div class="org-header">
+        <div><div class="org-title">Task Management</div></div>
+      </div>
+      <div class="org-meta">
+        <span>Leader Dashboard</span><span class="dot"></span>
+        <span>${orgTasks.length} total tasks</span>
+      </div>
+      <div class="table-wrapper" style="margin-bottom: 40px;">
+        <table>
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Description</th>
+              <th>Group</th>
+              <th>Due Date</th>
+              <th>Status</th>
+              <th style="text-align: right;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>${taskRows}</tbody>
+        </table>
+      </div>
+    `;
+
+    // Attach listeners
+    document.querySelectorAll('[data-task-action="verify"]').forEach(btn => {
+      btn.addEventListener('click', () => handleTaskAction('verify_task', btn.dataset.taskId));
+    });
+    document.querySelectorAll('[data-task-action="reject"]').forEach(btn => {
+      btn.addEventListener('click', () => handleTaskAction('reject_task', btn.dataset.taskId));
+    });
+    document.querySelectorAll('[data-task-action="delete"]').forEach(btn => {
+      btn.addEventListener('click', () => handleTaskAction('delete_task', btn.dataset.taskId));
+    });
+  }
+
+  async function handleTaskAction(action, taskId) {
+    try {
+      setStatus('saving');
+      await orgApiCall({ action, taskId });
+      toast(`Task successfully ${action.includes('verify') ? 'verified' : action.includes('reject') ? 'rejected' : 'deleted'}.`);
+      fetchTasks();
+    } catch (error) {
+      toast(error.message, 'error');
+    } finally {
+      setStatus('ready');
+    }
+  }
+
+  function openCreateTaskDialog() {
+    if (!orgGroups || orgGroups.length === 0) {
+      toast('You need to create a group before making a task.', 'warn');
+      return;
+    }
+
+    const groupOptions = orgGroups.map(g => `<option value="${g.id}">${escapeHtml(g.name)}</option>`).join('');
+    const today = new Date().toISOString().split('T')[0];
+
     dialogBox.innerHTML = `
-      <div class="dialog-title">Accounts Created</div>
-      <div class="dialog-text">
-        Please copy the credentials now. For security reasons, the passwords will not be shown again.
-      </div>
+      <div class="dialog-title">Create New Task</div>
+      <div class="dialog-text">Assign a new task to one of your groups.</div>
+      
       <div class="dialog-input-group">
-        <label>Credentials List</label>
-        <textarea class="dialog-input mono" style="min-height: 200px; resize: vertical;" readonly>${createdAccounts.map(a => `${a.username} : ${a.password}`).join('\n')}</textarea>
+        <label>Task Title</label>
+        <input type="text" id="taskTitleInput" class="dialog-input" placeholder="e.g. Finish Q3 Report" autocomplete="off">
       </div>
+
+      <div class="dialog-input-group">
+        <label>Description (Optional)</label>
+        <textarea id="taskDescInput" class="dialog-input" rows="3" placeholder="Provide details..." style="resize: vertical;"></textarea>
+      </div>
+
+      <div class="dialog-input-group">
+        <label>Assign to Group</label>
+        <select id="taskGroupSelect" class="dialog-input">
+          ${groupOptions}
+        </select>
+      </div>
+
+      <div class="dialog-input-group">
+        <label>Due Date</label>
+        <input type="date" id="taskDueInput" class="dialog-input" value="${today}">
+      </div>
+
       <div class="dialog-actions">
-        <button class="btn-primary" id="copyCredsBtn">Copy All</button>
-        <button class="btn-primary main" id="acceptCredsBtn">Done</button>
+        <button class="btn-primary" id="cancelDialog">Cancel</button>
+        <button class="btn-primary main" id="confirmCreateTask">Create</button>
       </div>
     `;
     dialogOverlay.classList.add('active');
 
-    document.getElementById('copyCredsBtn').onclick = () => {
-      const text = createdAccounts.map(a => `Username: ${a.username}\nPassword: ${a.password}`).join('\n\n');
-      navigator.clipboard.writeText(text).then(() => {
-        toast('Credentials copied to clipboard');
-      });
-    };
+    document.getElementById('cancelDialog').onclick = closeDialog;
+    document.getElementById('confirmCreateTask').onclick = async () => {
+      const title = document.getElementById('taskTitleInput').value.trim();
+      const description = document.getElementById('taskDescInput').value.trim();
+      const groupId = document.getElementById('taskGroupSelect').value;
+      const dueDate = document.getElementById('taskDueInput').value;
 
-    document.getElementById('acceptCredsBtn').onclick = () => {
-      closeDialog();
-      setStatus('ready');
+      if (!title || !groupId || !dueDate) {
+        toast('Title, Group, and Due Date are required.', 'error');
+        return;
+      }
+
+      try {
+        setStatus('saving');
+        await orgApiCall({ action: 'create_task', title, description, groupId, dueDate });
+        toast('Task created successfully!');
+        closeDialog();
+        fetchTasks();
+      } catch(e) {
+        toast(e.message, 'error');
+        setStatus('ready');
+      }
     };
   }
 
@@ -3239,27 +3338,31 @@
 
   function switchTab(target) {
     currentTab = target;
-    // Sync tab active state everywhere
     tabItems.forEach(t => t.classList.toggle("active", t.dataset.tab === target));
     dropdownItems.forEach(d => d.classList.toggle("active", d.dataset.tab === target));
     if (dropdownLabel) dropdownLabel.textContent = target;
 
+    notesTabContent.style.display = 'none';
+    orgTabContent.classList.remove('active');
+    tasksTabContent.classList.remove('active');
+    editorActions.style.display = 'none';
+    orgActions.style.display = 'none';
+    taskActions.style.display = 'none';
+
     if (target === 'Org') {
-      notesTabContent.style.display = 'none';
       orgTabContent.classList.add('active');
-      editorActions.style.display = 'none';
       orgActions.style.display = 'flex';
       addGroupBtn.style.display = 'flex';
       addAccountBtn.style.display = 'flex';
       bulkDeleteBtn.style.display = 'flex';
-      
-      // Dynamically render whatever the user has (groups, accounts, both, or none)
       renderOrgState();
+    } else if (target === 'Tasks') {
+      tasksTabContent.classList.add('active');
+      taskActions.style.display = 'flex';
+      renderTasksState();
     } else {
       notesTabContent.style.display = 'block';
-      orgTabContent.classList.remove('active');
       editorActions.style.display = 'flex';
-      orgActions.style.display = 'none';
     }
   }
 
@@ -3387,8 +3490,6 @@
     notes.forEach(n => { n.synced = true; });
     allNotes = notes;
 
-    // Always create a fresh local blank note on page load
-    // It stays entirely local until the user types something
     const freshNote = await db.createNote('');
     allNotes.unshift(freshNote);
 
@@ -3476,8 +3577,6 @@
       await saveNote(true);
     }
 
-    // Automatically delete the current note from local buffer if it is completely blank
-    // so that blank notes never reach Supabase.
     if (currentNoteId && currentNoteId !== id) {
       const currentNote = allNotes.find(n => n.id === currentNoteId);
       if (isNoteBlank(currentNote)) {
@@ -3529,7 +3628,6 @@
     const title = titleInput.value;
     const content = contentInput.value;
 
-    // If the note is entirely blank, do not save or push to Supabase.
     if (!title.trim() && !content.trim()) {
       hasUnsavedChanges = false;
       setStatus('ready');
@@ -3646,14 +3744,12 @@
         hasUnsavedChanges = false;
       }
 
-      // Create a fresh blank local note if we deleted the last one
       if (allNotes.length === 0) {
         const freshNote = await db.createNote('');
         allNotes.unshift(freshNote);
         renderNotesList();
         selectNote(freshNote.id);
       } else {
-        // Select the first available note
         selectNote(allNotes[0].id);
       }
 
@@ -3868,6 +3964,8 @@
   newNoteBtn.addEventListener('click', () => {
     if (currentTab === 'Org') {
       openAddAccountDialog();
+    } else if (currentTab === 'Tasks') {
+      openCreateTaskDialog();
     } else {
       createNew();
     }
@@ -3920,7 +4018,7 @@
   /* ---------- Logout ---------- */
   function doLogout() {
     const finishLogout = () => {
-      syncManager.stopAutoSync?.();
+      syncManager.stopAutoSync();
       db.clearAll().then(() => {
         clearSession();
         currentNoteId = null;
@@ -4001,7 +4099,7 @@
     }
   });
 
-  /* ---------- Boot: pick door ---------- */
+  /* ---------- Boot ---------- */
   (function boot() {
     const session = getStoredSession();
     if (session) {
