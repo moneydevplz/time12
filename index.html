@@ -2408,6 +2408,7 @@
   const orgTabContent = document.getElementById('orgTabContent');
   const addGroupBtn = document.getElementById('addGroupBtn');
   const addAccountBtn = document.getElementById('addAccountBtn');
+  const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
   const dialogBox = document.getElementById('dialogBox');
 
   async function orgApiCall(body) {
@@ -2461,7 +2462,7 @@
       if (res.success && Array.isArray(res.accounts)) {
         orgAccounts = res.accounts;
         if (currentTab === 'Org') {
-          renderAccountsTable();
+          renderOrgState(); // Re-render to show accounts if they were missing
         }
       }
     } catch (error) {
@@ -2476,13 +2477,18 @@
       
       if (res.success && Array.isArray(res.groups)) {
         orgGroups = res.groups; 
-        renderGroups(orgGroups);
       } else {
-        renderEmptyOrgState();
+        orgGroups = [];
+      }
+      if (currentTab === 'Org') {
+        renderOrgState();
       }
     } catch (error) {
+      orgGroups = [];
       toast(error.message, 'error');
-      renderEmptyOrgState();
+      if (currentTab === 'Org') {
+        renderOrgState();
+      }
     } finally {
       setStatus('ready');
     }
@@ -2513,30 +2519,93 @@
     `;
   }
 
-  function renderGroups(groups) {
-    if (!groups || groups.length === 0) {
+  function renderOrgState() {
+    const hasGroups = orgGroups && orgGroups.length > 0;
+    const hasAccounts = orgAccounts && orgAccounts.length > 0;
+
+    if (!hasGroups && !hasAccounts) {
       renderEmptyOrgState();
       return;
     }
 
-    const html = `
+    let accountsHtml = '';
+    if (hasAccounts) {
+      const rows = orgAccounts.map(a => `
+        <tr>
+          <td class="checkbox-cell"><input type="checkbox" class="acc-select" data-username="${a.username}"></td>
+          <td class="td-username">${a.username}</td>
+          <td>
+            <div class="row-actions">
+              <button class="btn-row" data-action="reroll" data-username="${a.username}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                Reroll
+              </button>
+              <button class="btn-row danger" data-action="delete" data-username="${a.username}">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Delete
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+      accountsHtml = `
+        <div class="table-wrapper" style="margin-bottom: 40px;">
+          <table>
+            <thead>
+              <tr>
+                <th class="checkbox-cell"><input type="checkbox" id="selectAllAccounts"></th>
+                <th>Sub-Account Username</th>
+                <th style="text-align: right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="accountsTbody">
+              ${rows}
+            </tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    const groupsHtml = hasGroups ? `
+      <div id="groupsContainer">
+        ${orgGroups.map(g => renderGroupNode(g, 0)).join('')}
+      </div>
+    ` : '';
+
+    orgMainContentEl.innerHTML = `
       <div class="org-header">
         <div>
           <div class="org-title">${ownerUsername}</div>
         </div>
       </div>
       <div class="org-meta">
-        <span>Groups</span>
+        <span>Organization Overview</span>
         <span class="dot"></span>
-        <span>${groups.length} root</span>
+        <span>${orgAccounts.length} sub-accounts</span>
+        <span class="dot"></span>
+        <span>${orgGroups.length} root groups</span>
       </div>
-      <div id="groupsContainer">
-        ${groups.map(g => renderGroupNode(g, 0)).join('')}
-      </div>
+      ${accountsHtml}
+      ${groupsHtml}
     `;
-    
-    orgMainContentEl.innerHTML = html;
-    attachGroupEventListeners();
+
+    if (hasAccounts) {
+      document.getElementById('selectAllAccounts')?.addEventListener('change', (e) => {
+        document.querySelectorAll('.acc-select').forEach(cb => cb.checked = e.target.checked);
+      });
+
+      document.querySelectorAll('[data-action="reroll"]').forEach(btn => {
+        btn.addEventListener('click', () => rerollPassword(btn.dataset.username));
+      });
+      document.querySelectorAll('[data-action="delete"]').forEach(btn => {
+        btn.addEventListener('click', () => deleteSingleAccount(btn.dataset.username));
+      });
+    }
+
+    if (hasGroups) {
+      attachGroupEventListeners();
+    }
   }
 
   function renderGroupNode(group, depth) {
@@ -2595,71 +2664,6 @@
     `;
   }
 
-  function renderAccountsTable() {
-    const accountsHtml = orgAccounts.length > 0 ? orgAccounts.map(a => `
-      <tr>
-        <td class="checkbox-cell"><input type="checkbox" class="acc-select" data-username="${a.username}"></td>
-        <td class="td-username">${a.username}</td>
-        <td>
-          <div class="row-actions">
-            <button class="btn-row" data-action="reroll" data-username="${a.username}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
-              Reroll
-            </button>
-            <button class="btn-row danger" data-action="delete" data-username="${a.username}">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-              Delete
-            </button>
-          </div>
-        </td>
-      </tr>
-    `).join('') : `
-      <tr>
-        <td colspan="3" style="text-align: center; padding: 40px; color: var(--text-muted);">
-          No sub-accounts yet. Click Add Account to create one.
-        </td>
-      </tr>
-    `;
-
-    orgMainContentEl.innerHTML = `
-      <div class="org-header">
-        <div>
-          <div class="org-title">Sub-Accounts</div>
-        </div>
-      </div>
-      <div class="org-meta">
-        <span>Organization</span>
-        <span class="dot"></span>
-        <span>${orgAccounts.length} accounts</span>
-      </div>
-      <div class="table-wrapper">
-        <table>
-          <thead>
-            <tr>
-              <th class="checkbox-cell"><input type="checkbox" id="selectAllAccounts"></th>
-              <th>Username</th>
-              <th style="text-align: right;">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="accountsTbody">
-            ${accountsHtml}
-          </tbody>
-        </table>
-      </div>
-    `;
-
-    document.getElementById('selectAllAccounts')?.addEventListener('change', (e) => {
-      document.querySelectorAll('.acc-select').forEach(cb => cb.checked = e.target.checked);
-    });
-
-    document.querySelectorAll('[data-action="reroll"]').forEach(btn => {
-      btn.addEventListener('click', () => rerollPassword(btn.dataset.username));
-    });
-    document.querySelectorAll('[data-action="delete"]').forEach(btn => {
-      btn.addEventListener('click', () => deleteSingleAccount(btn.dataset.username));
-    });
-  }
-
   function attachGroupEventListeners() {
     document.querySelectorAll('[data-action="delete-group"]').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -2707,7 +2711,7 @@
   addGroupBtn.addEventListener('click', () => openCreateGroupDialog(null, null));
   addAccountBtn.addEventListener('click', () => openAddAccountDialog());
   
-  document.getElementById('bulkDeleteBtn').addEventListener('click', () => {
+  bulkDeleteBtn.addEventListener('click', () => {
     const selected = Array.from(document.querySelectorAll('.acc-select:checked')).map(cb => cb.dataset.username);
     if (selected.length === 0) {
       toast('Select at least one account to delete.', 'warn');
@@ -3164,12 +3168,8 @@
       addAccountBtn.style.display = 'flex';
       bulkDeleteBtn.style.display = 'flex';
       
-      // Determine what to show based on whether groups exist
-      if (orgGroups && orgGroups.length > 0) {
-        renderGroups(orgGroups);
-      } else {
-        renderEmptyOrgState();
-      }
+      // Dynamically render whatever the user has (groups, accounts, both, or none)
+      renderOrgState();
     } else {
       notesTabContent.style.display = 'block';
       orgTabContent.classList.remove('active');
