@@ -1761,38 +1761,6 @@
       toast(error.message, 'error');
     }
   }
-
-  function renderEmptyOrgState() {
-    let title = "Organization";
-    let text = "You don't own any groups and aren't part of any. Create one to get started!";
-    if (isSubAccount) {
-      title = "Member View";
-      text = "You are currently not assigned to any groups or tasks. Please wait for your organization leader to assign you.";
-    } else if (userAssignedTasks.length > 0) {
-      // This case shouldn't strictly hit empty state, but just in case
-      title = "Org Dashboard";
-      text = "You have assigned tasks but no groups created. Check the 'My Tasks' tab!";
-    }
-    
-    orgMainContentEl.innerHTML = `
-      <div class="org-header">
-        <div><div class="org-title">${ownerUsername}</div></div>
-      </div>
-      <div class="org-meta">
-        <span>Organization</span><span class="dot"></span><span>Active</span>
-      </div>
-      <div class="empty-state">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 64px; height: 64px; color: var(--text-muted); filter: grayscale(1);">
-          <circle cx="12" cy="12" r="10"/>
-          <path d="M8 15s1.5-2 4-2 4 2 4 2"/>
-          <line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/>
-        </svg>
-        <div class="empty-state-title">${title}</div>
-        <div class="empty-state-text">${text}</div>
-      </div>
-    `;
-  }
-
   function renderOrgState() {
     const hasGroups = orgGroups && orgGroups.length > 0;
     const hasAccounts = orgAccounts && orgAccounts.length > 0;
@@ -1817,23 +1785,40 @@
           originalLinksHtml += `<div style="margin-top: 6px;"><strong style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Reference Materials:</strong><br>${originalLinks.map(l => `<a href="${l.url}" target="_blank" style="color: var(--accent); font-size: 12px;">${l.label || l.url}</a>`).join('<br>')}</div>`;
         }
 
-        // 2. Show Member Progress & Submissions
+        // ============================================================
+        // FIX: Show ALL group members (from t.groupMembers) with their
+        // submission status looked up from t.submissions. Previously
+        // this only iterated over t.submissions, so members who hadn't
+        // submitted yet were invisible — and if no one had submitted,
+        // it showed "No members assigned" even when members existed.
+        // ============================================================
         let memberStatusHtml = '<div style="margin-top: 12px; border-top: 1px dashed var(--border); padding-top: 10px;"><strong style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Member Progress</strong><div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">';
         
-        if (t.submissions && t.submissions.length > 0) {
-          t.submissions.forEach(sub => {
-            const subUser = sub.users?.username || 'Unknown User';
-            let subStatus = sub.status || 'not_started';
+        // Build a lookup map of submissions by user_id for quick access
+        const submissionsByUser = {};
+        (t.submissions || []).forEach(sub => {
+          submissionsByUser[sub.user_id] = sub;
+        });
+
+        // Use groupMembers (ALL members of the group) instead of just submissions
+        const allMembers = t.groupMembers || [];
+
+        if (allMembers.length > 0) {
+          allMembers.forEach(member => {
+            const sub = submissionsByUser[member.user_id];
+            const memberUser = member.users?.username || 'Unknown User';
+            let subStatus = sub?.status || 'not_started';
             let statusColor = 'var(--text-muted)';
-            let statusText = subStatus.replace('_', ' ');
+            let statusText = subStatus.replace(/_/g, ' ');
             
             if (subStatus === 'pending') statusColor = 'var(--warn)';
             else if (subStatus === 'completed') statusColor = 'var(--success)';
             else if (subStatus === 'rejected') statusColor = 'var(--danger)';
             
+            // Build submission details (text + links) if the member has submitted
             let subDetails = '';
-            const userLinks = (t.links || []).filter(l => l.is_submission_link && l.user_id === sub.user_id);
-            if (sub.submission_text || userLinks.length > 0) {
+            const userLinks = (t.links || []).filter(l => l.is_submission_link && l.user_id === member.user_id);
+            if (sub && (sub.submission_text || userLinks.length > 0)) {
               subDetails += '<div style="margin-top: 4px; padding: 6px; background: var(--surface-2); border-radius: 4px; border: 1px solid var(--border);">';
               if (sub.submission_text) subDetails += `<div style="font-size: 12px; color: var(--text-soft); margin-bottom: 4px;">${escapeHtml(sub.submission_text)}</div>`;
               if (userLinks.length > 0) {
@@ -1842,18 +1827,19 @@
               subDetails += '</div>';
             }
 
+            // Show Verify/Reject buttons only for pending submissions
             let memberActions = '';
-            if (sub.status === 'pending') {
+            if (sub?.status === 'pending') {
               memberActions = `
-                <button class="btn-row" data-task-action="verify" data-task-id="${t.id}" data-user-id="${sub.user_id}" style="margin-left: 8px;">Verify</button>
-                <button class="btn-row danger" data-task-action="reject" data-task-id="${t.id}" data-user-id="${sub.user_id}">Reject</button>
+                <button class="btn-row" data-task-action="verify" data-task-id="${t.id}" data-user-id="${member.user_id}" style="margin-left: 8px;">Verify</button>
+                <button class="btn-row danger" data-task-action="reject" data-task-id="${t.id}" data-user-id="${member.user_id}">Reject</button>
               `;
             }
 
             memberStatusHtml += `
               <div style="font-size: 13px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 4px 0;">
                 <div style="flex: 1;">
-                  <div><strong>${subUser}</strong> <span style="color: ${statusColor}; font-weight: 600; text-transform: capitalize; margin-left: 8px; font-size: 11px;">(${statusText})</span></div>
+                  <div><strong>${escapeHtml(memberUser)}</strong> <span style="color: ${statusColor}; font-weight: 600; text-transform: capitalize; margin-left: 8px; font-size: 11px;">(${statusText})</span></div>
                   ${subDetails}
                 </div>
                 <div class="row-actions" style="flex-shrink: 0;">${memberActions}</div>
@@ -1861,7 +1847,8 @@
             `;
           });
         } else {
-          memberStatusHtml += `<div style="font-size: 12px; color: var(--text-muted);">No members assigned to this task's group yet.</div>`;
+          // Only show this when the group genuinely has no members
+          memberStatusHtml += `<div style="font-size: 12px; color: var(--text-muted);">No members in this group yet. Add members to the group first.</div>`;
         }
         memberStatusHtml += '</div></div>';
 
