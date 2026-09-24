@@ -6,8 +6,8 @@
 <title>Time12 — Make Time True</title>
 <link id="favicon" rel="icon" type="image/png" href="china.png" />
 <link rel="apple-touch-icon" href="china.png" />
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="fonts.googleapis.com">
+<link rel="preconnect" href="fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -2849,40 +2849,62 @@
   }
 
   function openAddMemberDialog(groupId) {
+    // Map existing accounts to exclude them from the existing selection list
+    const existingAccountOptions = orgAccounts.map(a => {
+      const usernameOnly = a.username.split('@')[0];
+      return `<option value="${a.id}">${escapeHtml(a.username)}</option>`;
+    }).join('');
+
     dialogBox.innerHTML = `
       <div class="dialog-title">Add Members</div>
-      <div class="dialog-text">Upload a CSV or type email addresses/username and press Enter to lock them in. Then click Add.</div>
+      <div class="dialog-text">Choose to add existing accounts to this group or create entirely new accounts and assign them immediately.</div>
       
-      <div class="dialog-input-group">
-        <label>Bulk Upload (CSV)</label>
-        <label class="csv-dropzone" id="csvDropzone">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; margin-bottom: 8px;">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
-          </svg>
-          <div>Click to browse or drag & drop</div>
-          <div class="csv-filename" id="csvFilename"></div>
-          <input type="file" id="csvFileInput" accept=".csv" />
-        </label>
+      <div class="toggle-group">
+        <button class="toggle-btn active" id="existingTabBtn">Add Existing</button>
+        <button class="toggle-btn" id="newTabBtn">Create New</button>
       </div>
 
-      <div class="dialog-input-group">
-        <label>Manual Entry</label>
-        <div class="tag-input-container" id="emailTagContainer">
-          <input type="text" id="emailTagInput" placeholder="user@synapse or username..." />
+      <!-- Existing Accounts Tab -->
+      <div id="existingTabContent">
+        <div class="dialog-input-group">
+          <label>Select Accounts</label>
+          <select id="existingAccountsSelect" class="dialog-input" multiple style="height: 120px; background: var(--bg);"></select>
         </div>
       </div>
 
-      <div class="dialog-input-group">
-        <label>Password Method</label>
-        <div class="toggle-group">
-          <button class="toggle-btn active" id="randomPassBtn">Generate Random</button>
-          <button class="toggle-btn" id="customPassBtn">Custom Password</button>
+      <!-- New Accounts Tab -->
+      <div id="newTabContent" style="display:none;">
+        <div class="dialog-input-group">
+          <label>Bulk Upload (CSV)</label>
+          <label class="csv-dropzone" id="csvDropzone">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; margin-bottom: 8px;">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <div>Click to browse or drag & drop</div>
+            <div class="csv-filename" id="csvFilename"></div>
+            <input type="file" id="csvFileInput" accept=".csv" />
+          </label>
         </div>
-      </div>
 
-      <div class="dialog-input-group" id="customPassGroup" style="display:none;">
-        <label>Custom Password</label>
-        <input type="text" id="customPassInput" class="dialog-input" placeholder="Min 6 characters">
+        <div class="dialog-input-group">
+          <label>Manual Entry</label>
+          <div class="tag-input-container" id="emailTagContainer">
+            <input type="text" id="emailTagInput" placeholder="username..." />
+          </div>
+        </div>
+
+        <div class="dialog-input-group">
+          <label>Password Method</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" id="randomPassBtn">Generate Random</button>
+            <button class="toggle-btn" id="customPassBtn">Custom Password</button>
+          </div>
+        </div>
+
+        <div class="dialog-input-group" id="customPassGroup" style="display:none;">
+          <label>Custom Password</label>
+          <input type="text" id="customPassInput" class="dialog-input" placeholder="Min 6 characters">
+        </div>
       </div>
 
       <div class="dialog-actions">
@@ -2892,6 +2914,35 @@
     `;
     dialogOverlay.classList.add('active');
 
+    // Populate select dropdown
+    const selectEl = document.getElementById('existingAccountsSelect');
+    orgAccounts.forEach(acc => {
+      const opt = document.createElement('option');
+      opt.value = acc.id;
+      opt.textContent = acc.username;
+      selectEl.appendChild(opt);
+    });
+
+    // Tab Switching Logic
+    const existingTabBtn = document.getElementById('existingTabBtn');
+    const newTabBtn = document.getElementById('newTabBtn');
+    const existingTabContent = document.getElementById('existingTabContent');
+    const newTabContent = document.getElementById('newTabContent');
+
+    existingTabBtn.onclick = () => {
+      existingTabBtn.classList.add('active');
+      newTabBtn.classList.remove('active');
+      existingTabContent.style.display = 'block';
+      newTabContent.style.display = 'none';
+    };
+    newTabBtn.onclick = () => {
+      newTabBtn.classList.add('active');
+      existingTabBtn.classList.remove('active');
+      newTabContent.style.display = 'block';
+      existingTabContent.style.display = 'none';
+    };
+
+    // CSV File Reading Logic
     const dropzone = document.getElementById('csvDropzone');
     const fileInput = document.getElementById('csvFileInput');
     const filenameEl = document.getElementById('csvFilename');
@@ -2913,6 +2964,7 @@
       }
     });
 
+    // Tag Input Logic
     const emailTagContainer = document.getElementById('emailTagContainer');
     const emailTagInput = document.getElementById('emailTagInput');
 
@@ -2945,6 +2997,7 @@
       }
     });
 
+    // Password Method Toggle
     const randomBtn = document.getElementById('randomPassBtn');
     const customBtn = document.getElementById('customPassBtn');
     const customPassGroup = document.getElementById('customPassGroup');
@@ -2960,47 +3013,79 @@
       customPassGroup.style.display = 'block';
     };
 
+    // Confirm Action Button
     document.getElementById('cancelDialog').onclick = closeDialog;
     document.getElementById('confirmAddMembers').onclick = async () => {
-      const tags = emailTagContainer.querySelectorAll('.email-tag span');
-      const accounts = Array.from(tags).map(t => {
-        const text = t.textContent.trim();
-        const parts = text.split('@');
-        const username = parts[0];
-        const domain = parts.length > 1 ? parts[1] : '';
-        return { username, password: domain ? null : document.getElementById('customPassInput').value || null };
-      });
-
-      if (accounts.length === 0) {
-        toast('Please add at least one account.', 'error');
-        return;
-      }
-
-      const useRandom = randomBtn.classList.contains('active');
-      const customPass = document.getElementById('customPassInput').value;
+      // Check which tab is active to decide API call
+      const isExistingActive = existingTabBtn.classList.contains('active');
 
       try {
         setStatus('saving');
-        const res = await orgApiCall({
-          action: 'add_accounts_bulk',
-          accounts,
-          groupId,
-          useRandomPassword: useRandom
-        });
         
-        if (res.errors && res.errors.length > 0) {
-          toast(`Created ${res.createdAccounts.length} accounts with ${res.errors.length} errors.`, 'warn');
-        } else {
-          toast(`Successfully added ${res.createdAccounts.length} members.`);
-        }
-        
-        if (res.createdAccounts && res.createdAccounts.length > 0) {
-          showBulkCredentialsDialog(res.createdAccounts);
-        } else {
+        if (isExistingActive) {
+          // EXISTING ACCOUNTS LOGIC
+          const selectedOptions = Array.from(selectEl.selectedOptions);
+          if (selectedOptions.length === 0) {
+            toast('Please select at least one account.', 'error');
+            setStatus('ready');
+            return;
+          }
+          const targetUserIds = selectedOptions.map(opt => opt.value);
+          
+          await orgApiCall({
+            action: 'add_to_group',
+            groupId,
+            targetUserIds
+          });
+          
+          toast(`Successfully added ${targetUserIds.length} members.`);
           closeDialog();
+          
+        } else {
+          // CREATE NEW ACCOUNTS LOGIC
+          const tags = emailTagContainer.querySelectorAll('.email-tag span');
+          const accounts = Array.from(tags).map(t => {
+            const text = t.textContent.trim();
+            const parts = text.split('@');
+            const username = parts[0];
+            const domain = parts.length > 1 ? parts[1] : '';
+            return { username, password: domain ? null : document.getElementById('customPassInput').value || null };
+          });
+
+          if (accounts.length === 0) {
+            toast('Please add at least one account.', 'error');
+            setStatus('ready');
+            return;
+          }
+
+          const useRandom = randomBtn.classList.contains('active');
+          const customPass = document.getElementById('customPassInput').value;
+
+          const res = await orgApiCall({
+            action: 'add_accounts_bulk',
+            accounts,
+            groupId,
+            useRandomPassword: useRandom
+          });
+          
+          if (res.errors && res.errors.length > 0) {
+            toast(`Created ${res.addedAccounts.length} accounts with ${res.errors.length} errors.`, 'warn');
+          } else {
+            toast(`Successfully added ${res.addedAccounts.length} members.`);
+          }
+          
+          if (res.addedAccounts && res.addedAccounts.length > 0) {
+            // Edge function currently only returns usernames for existing adds, if passwords were generated we'd show them. 
+            // However, add_accounts_bulk doesn't return plain passwords. If you need to show passwords, Edge function needs updating.
+            // For now, we just close the dialog.
+            closeDialog();
+          } else {
+            closeDialog();
+          }
         }
         
         fetchGroups();
+        fetchAccounts();
       } catch(e) {
         toast(e.message, 'error');
         setStatus('ready');
