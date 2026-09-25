@@ -81,6 +81,60 @@
     transition: background 0.4s ease, color 0.4s ease;
   }
 
+  /* Refined scrollbars, app-wide */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; transition: background 0.2s ease; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+  ::-webkit-scrollbar-track { background: transparent; }
+  * { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+
+  /* Magnetic glow — small cursor-reactive highlight for buttons, applied via JS */
+  .magnetic {
+    position: relative; overflow: hidden;
+  }
+  .magnetic::before {
+    content: ''; position: absolute; z-index: 0;
+    left: var(--mgx, 50%); top: var(--mgy, 50%);
+    width: 140px; height: 140px; margin: -70px 0 0 -70px;
+    background: radial-gradient(circle, var(--accent-soft) 0%, transparent 70%);
+    opacity: 0; transition: opacity 0.25s ease; pointer-events: none;
+  }
+  .magnetic:hover::before { opacity: 0.9; }
+  .magnetic > * { position: relative; z-index: 1; }
+
+  /* ---------- Unified interactive polish (Stripe-esque) ---------- */
+  button, .btn-auth, .btn-primary, .btn-new, .theme-toggle, .toggle-btn,
+  .footer-link, .shortcuts-close, .palette-item, .tab-item, .note-item-delete {
+    transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.16s ease,
+      background 0.16s ease, border-color 0.16s ease, color 0.16s ease, opacity 0.16s ease;
+  }
+  button:focus-visible, .btn-auth:focus-visible, .btn-primary:focus-visible,
+  .btn-new:focus-visible, .theme-toggle:focus-visible, .toggle-btn:focus-visible,
+  .dialog-input:focus-visible, input:focus-visible, .search-input:focus-visible {
+    outline: none; box-shadow: 0 0 0 3px var(--accent-soft), 0 0 0 1px var(--accent);
+    border-radius: var(--radius);
+  }
+  .btn-primary, .btn-new, .theme-toggle, .toggle-btn, .btn-auth {
+    box-shadow: var(--shadow-md);
+  }
+  .btn-primary:hover, .toggle-btn:hover, .btn-new:hover, .theme-toggle:hover {
+    transform: translateY(-1px); box-shadow: var(--shadow-soft);
+  }
+  .btn-primary:active, .toggle-btn:active, .btn-new:active, .theme-toggle:active, .btn-auth:active {
+    transform: translateY(0) scale(0.96); box-shadow: var(--shadow-md);
+  }
+  .btn-primary.main:hover, .btn-primary.destructive:hover { transform: translateY(-1px); }
+
+  /* ---------- Top progress bar ---------- */
+  .top-progress {
+    position: fixed; top: 0; left: 0; height: 3px; width: 0%;
+    background: linear-gradient(90deg, var(--accent), var(--accent-hover));
+    box-shadow: 0 0 10px var(--accent);
+    z-index: 3000; opacity: 0;
+    transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease;
+  }
+  .top-progress.active { opacity: 1; }
+
   /* ============================================================
      LOGIN SCREEN
      ============================================================ */
@@ -96,7 +150,13 @@
     overflow: hidden;
     transition: background 0.4s ease, opacity 0.4s ease;
   }
-  .login-screen.hidden { opacity: 0; pointer-events: none; }
+  .login-screen.hidden { opacity: 0; pointer-events: none; transform: scale(1.02); }
+  .login-webgl {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    z-index: 0; opacity: 0.65; pointer-events: none;
+    transition: opacity 0.8s ease;
+  }
+  .login-screen.webgl-active::before, .login-screen.webgl-active::after { opacity: 0.12; }
   .login-screen::before, .login-screen::after {
     content: '';
     position: absolute;
@@ -306,6 +366,11 @@
      APP LAYOUT
      ============================================================ */
   .app { display: grid; grid-template-columns: 300px 1fr; height: 100vh; }
+  .app.app-enter { animation: appFadeIn 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  @keyframes appFadeIn {
+    from { opacity: 0; transform: scale(0.985) translateY(6px); filter: blur(4px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+  }
   .sidebar {
     background: var(--surface); border-right: 1px solid var(--border);
     display: flex; flex-direction: column; height: 100vh;
@@ -355,15 +420,17 @@
   .notes-list::-webkit-scrollbar-track { background: transparent; }
 
   .note-item {
-    padding: 16px 24px; border-bottom: 1px solid var(--border);
-    cursor: pointer; transition: background 0.15s ease;
+    padding: 16px 24px; border-bottom: 1px solid transparent;
+    cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease;
     position: relative; display: flex; align-items: center; gap: 12px;
   }
+  .notes-list .note-item + .note-item { border-top: 1px solid var(--border); }
   .note-item:hover { background: var(--surface-2); }
   .note-item.active { background: var(--surface-2); }
   .note-item.active::before {
     content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent);
   }
+  .note-item { animation: fadeInTab 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 
   .note-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-muted); flex-shrink: 0; }
   .note-item.active .note-dot { background: var(--accent); }
@@ -539,9 +606,13 @@
 
   /* Skeletons */
   .skeleton-note { padding: 16px 24px; border-bottom: 1px solid var(--border); }
-  .skeleton-line { height: 12px; background: var(--surface-2); border-radius: 4px; margin-bottom: 8px; animation: shimmer 1.5s infinite; }
+  .skeleton-line {
+    height: 12px; border-radius: 4px; margin-bottom: 8px;
+    background: linear-gradient(90deg, var(--surface-2) 25%, var(--border) 50%, var(--surface-2) 75%);
+    background-size: 200% 100%; animation: shimmer 1.4s ease-in-out infinite;
+  }
   .skeleton-line.short { width: 40%; }
-  @keyframes shimmer { 0% { opacity: 0.5; } 50% { opacity: 1; } 100% { opacity: 0.5; } }
+  @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
 
   /* Tasks & Org UI */
   .org-tab-content {
@@ -665,10 +736,11 @@
   .dialog-box, .palette, .shortcuts-box {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: var(--radius-lg); box-shadow: var(--shadow-soft);
-    width: 100%; max-width: 480px; transform: translateY(10px);
-    transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    width: 100%; max-width: 480px; transform: translateY(14px) scale(0.97);
+    opacity: 0;
+    transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
   }
-  .dialog-overlay.active .dialog-box, .palette-overlay.active .palette, .shortcuts-overlay.active .shortcuts-box { transform: translateY(0); }
+  .dialog-overlay.active .dialog-box, .palette-overlay.active .palette, .shortcuts-overlay.active .shortcuts-box { transform: translateY(0) scale(1); opacity: 1; }
 
   .dialog-box { padding: 32px; max-width: 420px; }
   .dialog-icon {
@@ -760,14 +832,14 @@
     padding: 10px 16px; border-radius: var(--radius); box-shadow: var(--shadow-soft);
     display: flex; align-items: center; gap: 10px;
     font-size: 13px; font-weight: 500; color: var(--text);
-    animation: slideIn 0.3s ease; pointer-events: auto;
+    animation: slideIn 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); pointer-events: auto;
   }
   .toast.exit { animation: slideOut 0.25s ease forwards; }
   .toast svg { width: 14px; height: 14px; flex-shrink: 0; }
   .toast.success svg { color: var(--success); }
   .toast.warn svg { color: var(--warn); }
   .toast.error svg { color: var(--danger); }
-  @keyframes slideIn { from { transform: translateY(10px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  @keyframes slideIn { from { transform: translateY(16px) scale(0.92); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
   @keyframes slideOut { to { transform: translateY(10px); opacity: 0; } }
 
   .empty-list { padding: 40px 24px; text-align: center; color: var(--text-muted); }
@@ -877,11 +949,13 @@
 </style>
 </head>
 <body>
+<div class="top-progress" id="topProgressBar"></div>
 
 <!-- ============ LOGIN SCREEN ============ -->
 <div class="login-screen" id="loginScreen">
+  <canvas id="loginWebGL" class="login-webgl"></canvas>
   <div class="login-shell">
-    <button class="login-theme-toggle" id="loginThemeToggle" title="Toggle theme">
+    <button class="login-theme-toggle magnetic" id="loginThemeToggle" title="Toggle theme">
       <svg id="loginThemeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
     </button>
 
@@ -903,8 +977,8 @@
       </div>
 
       <div class="login-button-group">
-        <button type="button" class="btn-auth btn-auth-primary" id="registerBtn">Register</button>
-        <button type="button" class="btn-auth btn-auth-secondary" id="loginBtn">Login</button>
+        <button type="button" class="btn-auth btn-auth-primary magnetic" id="registerBtn">Register</button>
+        <button type="button" class="btn-auth btn-auth-secondary magnetic" id="loginBtn">Login</button>
       </div>
 
       <div class="login-message" id="message"></div>
@@ -925,7 +999,7 @@
         <img class="brand-glyph" id="brandLogo" alt="Time12" style="width:24px;height:24px;object-fit:contain;" />
         <span class="brand-name">Time12</span>
       </div>
-      <button class="theme-toggle" id="themeToggle" title="Toggle theme (Ctrl+J)">
+      <button class="theme-toggle magnetic" id="themeToggle" title="Toggle theme (Ctrl+J)">
         <svg id="themeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
       </button>
     </div>
@@ -936,7 +1010,7 @@
 
     <div class="sidebar-list-head">
       <span class="sidebar-title" id="notesCountLabel">Notes</span>
-      <button class="btn-new" id="newNoteBtn" title="New note (Ctrl+N)" style="display: none;">
+      <button class="btn-new magnetic" id="newNoteBtn" title="New note (Ctrl+N)" style="display: none;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 5v14M5 12h14"/>
         </svg>
@@ -1247,6 +1321,9 @@
   function enterApp(isFreshLogin = false) {
     loginScreen.classList.add('hidden');
     Time12App.style.display = 'grid';
+    Time12App.classList.remove('app-enter');
+    void Time12App.offsetWidth; // restart animation
+    Time12App.classList.add('app-enter');
     initTime12(isFreshLogin);
   }
 
@@ -1345,6 +1422,197 @@
   })();
 
   /* ---------- Random RED glow easter egg ---------- */
+  /* ---------- WebGL aurora backdrop (login screen) ---------- */
+  (function initLoginWebGL() {
+    const canvas = document.getElementById('loginWebGL');
+    if (!canvas) return;
+    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (!gl) return; // CSS orb fallback remains visible
+
+    const vsSrc = `
+      attribute vec2 a_pos;
+      void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }
+    `;
+    const fsSrc = `
+      precision highp float;
+      uniform vec2 u_resolution;
+      uniform float u_time;
+      uniform vec2 u_mouse;
+      uniform vec3 u_colorA;
+      uniform vec3 u_colorB;
+      uniform vec3 u_colorC;
+
+      vec3 mod289(vec3 x){return x-floor(x*(1.0/289.0))*289.0;}
+      vec2 mod289(vec2 x){return x-floor(x*(1.0/289.0))*289.0;}
+      vec3 permute(vec3 x){return mod289(((x*34.0)+1.0)*x);}
+      float snoise(vec2 v){
+        const vec4 C=vec4(0.211324865405187,0.366025403784439,-0.577350269189626,0.024390243902439);
+        vec2 i=floor(v+dot(v,C.yy));
+        vec2 x0=v-i+dot(i,C.xx);
+        vec2 i1=(x0.x>x0.y)?vec2(1.0,0.0):vec2(0.0,1.0);
+        vec4 x12=x0.xyxy+C.xxzz;
+        x12.xy-=i1;
+        i=mod289(i);
+        vec3 p=permute(permute(i.y+vec3(0.0,i1.y,1.0))+i.x+vec3(0.0,i1.x,1.0));
+        vec3 m=max(0.5-vec3(dot(x0,x0),dot(x12.xy,x12.xy),dot(x12.zw,x12.zw)),0.0);
+        m=m*m; m=m*m;
+        vec3 x=2.0*fract(p*C.www)-1.0;
+        vec3 h=abs(x)-0.5;
+        vec3 ox=floor(x+0.5);
+        vec3 a0=x-ox;
+        m*=1.79284291400159-0.85373472095314*(a0*a0+h*h);
+        vec3 g;
+        g.x=a0.x*x0.x+h.x*x0.y;
+        g.yz=a0.yz*x12.xz+h.yz*x12.yw;
+        return 130.0*dot(m,g);
+      }
+
+      void main(){
+        vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+        vec2 p = uv * 2.0 - 1.0;
+        p.x *= u_resolution.x / u_resolution.y;
+
+        float t = u_time * 0.045;
+
+        // the whole flow field gets pulled gently toward the pointer,
+        // like the aurora is orbiting a warm, glowing "ball"
+        vec2 pw = p + (u_mouse - p) * 0.22;
+
+        float n1 = snoise(pw * 1.1 + vec2(t, -t * 0.8));
+        float n2 = snoise(pw * 1.7 + vec2(-t * 0.6, t * 1.1) + 4.0);
+        float n3 = snoise(pw * 0.75 + vec2(t * 0.35, t * 0.28) + 8.0);
+
+        float mixVal = smoothstep(-0.6, 0.9, n1 + n2 * 0.5);
+        vec3 col = mix(u_colorA, u_colorB, mixVal);
+        float glow = smoothstep(0.25, 1.0, n3);
+        col = mix(col, u_colorC, glow * 0.45);
+
+        // the ball itself: a soft warm core that tracks the pointer
+        float distToMouse = length(p - u_mouse);
+        float ball = smoothstep(0.55, 0.0, distToMouse);
+        col = mix(col, u_colorC, ball * 0.55);
+        col += u_colorC * smoothstep(0.12, 0.0, distToMouse) * 0.4;
+
+        float vign = 1.0 - smoothstep(0.45, 1.35, length(p));
+        col *= mix(0.72, 1.0, vign);
+
+        gl_FragColor = vec4(col, 1.0);
+      }
+    `;
+
+    function compile(type, src) {
+      const sh = gl.createShader(type);
+      gl.shaderSource(sh, src);
+      gl.compileShader(sh);
+      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
+        console.warn('Shader compile error:', gl.getShaderInfoLog(sh));
+        gl.deleteShader(sh);
+        return null;
+      }
+      return sh;
+    }
+
+    const vs = compile(gl.VERTEX_SHADER, vsSrc);
+    const fs = compile(gl.FRAGMENT_SHADER, fsSrc);
+    if (!vs || !fs) return;
+
+    const program = gl.createProgram();
+    gl.attachShader(program, vs);
+    gl.attachShader(program, fs);
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+      console.warn('Program link error:', gl.getProgramInfoLog(program));
+      return;
+    }
+    gl.useProgram(program);
+
+    const posBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const posLoc = gl.getAttribLocation(program, 'a_pos');
+    gl.enableVertexAttribArray(posLoc);
+    gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+    const uRes = gl.getUniformLocation(program, 'u_resolution');
+    const uTime = gl.getUniformLocation(program, 'u_time');
+    const uMouse = gl.getUniformLocation(program, 'u_mouse');
+    const uColorA = gl.getUniformLocation(program, 'u_colorA');
+    const uColorB = gl.getUniformLocation(program, 'u_colorB');
+    const uColorC = gl.getUniformLocation(program, 'u_colorC');
+
+    const targetMouse = [0, 0.15];
+    const currentMouse = [0, 0.15];
+    function updateMouseFromClient(clientX, clientY) {
+      const rect = canvas.getBoundingClientRect();
+      const nx = ((clientX - rect.left) / rect.width) * 2 - 1;
+      const ny = -(((clientY - rect.top) / rect.height) * 2 - 1);
+      targetMouse[0] = nx * (rect.width / rect.height);
+      targetMouse[1] = ny;
+    }
+    loginScreen.addEventListener('pointermove', (e) => updateMouseFromClient(e.clientX, e.clientY), { passive: true });
+    loginScreen.addEventListener('touchmove', (e) => {
+      if (e.touches && e.touches[0]) updateMouseFromClient(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: true });
+
+    const PALETTES = {
+      light: { a: [0.973, 0.953, 0.933], b: [1.0, 0.89, 0.75], c: [0.992, 0.494, 0.078] },
+      dark:  { a: [0.02, 0.02, 0.02],   b: [0.13, 0.07, 0.02], c: [0.992, 0.494, 0.078] }
+    };
+    function currentPalette() {
+      return document.documentElement.getAttribute('data-theme') === 'dark' ? PALETTES.dark : PALETTES.light;
+    }
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const w = Math.floor(canvas.clientWidth * dpr);
+      const h = Math.floor(canvas.clientHeight * dpr);
+      if (canvas.width !== w || canvas.height !== h) {
+        canvas.width = w; canvas.height = h;
+        gl.viewport(0, 0, w, h);
+      }
+    }
+
+    let rafId = null;
+    let startTime = performance.now();
+    function frame(now) {
+      rafId = requestAnimationFrame(frame);
+      if (loginScreen.classList.contains('hidden') || document.hidden) return;
+      resize();
+      const t = (now - startTime) / 1000;
+      const pal = currentPalette();
+      currentMouse[0] += (targetMouse[0] - currentMouse[0]) * 0.06;
+      currentMouse[1] += (targetMouse[1] - currentMouse[1]) * 0.06;
+      gl.uniform2f(uRes, canvas.width, canvas.height);
+      gl.uniform1f(uTime, t);
+      gl.uniform2f(uMouse, currentMouse[0], currentMouse[1]);
+      gl.uniform3fv(uColorA, pal.a);
+      gl.uniform3fv(uColorB, pal.b);
+      gl.uniform3fv(uColorC, pal.c);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+    loginScreen.classList.add('webgl-active');
+    rafId = requestAnimationFrame(frame);
+  })();
+
+  /* ---------- Magnetic glow for buttons ---------- */
+  (function initMagneticGlow() {
+    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+    document.addEventListener('pointermove', (e) => {
+      const el = e.target.closest && e.target.closest('.magnetic');
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      el.style.setProperty('--mgx', `${e.clientX - rect.left}px`);
+      el.style.setProperty('--mgy', `${e.clientY - rect.top}px`);
+    }, { passive: true });
+  })();
+
   (function initGlassColorFlip() {
     const shell = document.querySelector('.login-shell');
     if (!shell) return;
@@ -3728,8 +3996,36 @@
     }
   });
 
+  /* ---------- Top progress bar helpers ---------- */
+  const topProgress = document.getElementById('topProgressBar');
+  let progressTimer = null;
+  function startProgress() {
+    if (!topProgress) return;
+    clearInterval(progressTimer);
+    topProgress.style.transition = 'none';
+    topProgress.style.width = '0%';
+    void topProgress.offsetWidth;
+    topProgress.style.transition = 'width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease';
+    topProgress.classList.add('active');
+    let w = 0;
+    progressTimer = setInterval(() => {
+      w += (90 - w) * 0.12;
+      topProgress.style.width = Math.min(w, 90) + '%';
+    }, 180);
+  }
+  function doneProgress() {
+    if (!topProgress) return;
+    clearInterval(progressTimer);
+    topProgress.style.width = '100%';
+    setTimeout(() => {
+      topProgress.classList.remove('active');
+      setTimeout(() => { topProgress.style.width = '0%'; }, 300);
+    }, 200);
+  }
+
   /* ---------- Init ---------- */
   async function initTime12(isFreshLogin = false) {
+    startProgress();
     const session = getStoredSession();
     if (session) {
       footerUsername.textContent = session.username;
@@ -3755,6 +4051,7 @@
       syncManager.startAutoSync();
       setInterval(updateSyncBadge, 8000);
     }
+    doneProgress();
   }
 
   window.addEventListener('beforeunload', async () => {
