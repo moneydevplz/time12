@@ -386,6 +386,9 @@
     transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), margin 0.3s ease, opacity 0.3s ease, border 0.3s ease;
   }
   .sidebar.hidden { margin-left: -300px; opacity: 0; border-right: 0; pointer-events: none; }
+  .sidebar.notes-collapsed .sidebar-search,
+  .sidebar.notes-collapsed .sidebar-list-head,
+  .sidebar.notes-collapsed .notes-list { display: none; }
   .sidebar-header {
     padding: 24px 24px 20px; display: flex; justify-content: space-between; align-items: center;
     position: relative; overflow: hidden;
@@ -3399,9 +3402,10 @@
     taskActions.style.display = 'none';
     orgActions.style.display = 'none';
 
-    // Sidebar behavior: show only in Notes tab (desktop view slides it in/out)
+    // Sidebar behavior: notes list only shows in Notes tab; the header
+    // and footer (incl. Sign out) stay visible and usable in every tab.
     if (target === 'Notes') {
-      sidebar.classList.remove('hidden');
+      sidebar.classList.remove('hidden', 'notes-collapsed');
       // Show notes-specific UI
       notesTabContent.style.display = 'block';
       editorActions.style.display = 'flex';
@@ -3409,8 +3413,9 @@
       newNoteBtn.style.display = 'grid';
       notesCountLabel.textContent = `${allNotes.length} ${allNotes.length === 1 ? 'note' : 'notes'}`;
     } else {
-      // Hide notes sidebar when not in Notes tab
-      sidebar.classList.add('hidden');
+      // Collapse only the notes list/search — keep sidebar header & footer visible
+      sidebar.classList.remove('hidden');
+      sidebar.classList.add('notes-collapsed');
       editorBottomBar.style.display = 'none';
       newNoteBtn.style.display = 'none';
       
