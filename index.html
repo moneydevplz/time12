@@ -101,6 +101,8 @@
   }
   .magnetic:hover::before { opacity: 0.9; }
   .magnetic > * { position: relative; z-index: 1; }
+  .btn-action.primary.magnetic::before,
+  .btn-auth-primary.magnetic::before { background: radial-gradient(circle, rgba(255, 255, 255, 0.55) 0%, transparent 70%); }
 
   /* ---------- Unified interactive polish (Stripe-esque) ---------- */
   button, .btn-auth, .btn-primary, .btn-new, .theme-toggle, .toggle-btn,
@@ -365,7 +367,7 @@
   /* ============================================================
      APP LAYOUT
      ============================================================ */
-  .app { display: grid; grid-template-columns: 300px 1fr; height: 100vh; }
+  .app { display: grid; grid-template-columns: 300px 1fr; height: 100vh; height: 100dvh; }
   .app.app-enter { animation: appFadeIn 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
   @keyframes appFadeIn {
     from { opacity: 0; transform: scale(0.985) translateY(6px); filter: blur(4px); }
@@ -373,13 +375,33 @@
   }
   .sidebar {
     background: var(--surface); border-right: 1px solid var(--border);
-    display: flex; flex-direction: column; height: 100vh;
-    overflow: hidden; transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), margin 0.3s ease, opacity 0.3s ease, border 0.3s ease;
+    display: flex; flex-direction: column; height: 100vh; height: 100dvh;
+    overflow-y: auto; overflow-x: hidden;
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), margin 0.3s ease, opacity 0.3s ease, border 0.3s ease;
   }
   .sidebar.hidden { margin-left: -300px; opacity: 0; border-right: 0; pointer-events: none; }
-  .sidebar-header { padding: 24px 24px 20px; display: flex; justify-content: space-between; align-items: center; }
-  .brand { display: flex; align-items: baseline; gap: 10px; }
-  .brand-glyph { font-family: var(--serif); font-size: 24px; color: var(--accent); line-height: 1; }
+  .sidebar-header {
+    padding: 24px 24px 20px; display: flex; justify-content: space-between; align-items: center;
+    position: relative; overflow: hidden;
+  }
+  .sidebar-header::before {
+    content: ''; position: absolute; z-index: 0; pointer-events: none;
+    width: 220px; height: 220px; top: -140px; left: -80px; border-radius: 50%;
+    background: radial-gradient(circle, var(--accent) 0%, transparent 72%);
+    opacity: 0.14; filter: blur(6px);
+    animation: headerGlowDrift 14s ease-in-out infinite;
+  }
+  html[data-theme="dark"] .sidebar-header::before { opacity: 0.22; }
+  @keyframes headerGlowDrift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(18px, 14px) scale(1.18); }
+  }
+  .brand { display: flex; align-items: baseline; gap: 10px; position: relative; z-index: 1; }
+  .brand-glyph {
+    font-family: var(--serif); font-size: 24px; line-height: 1;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
   .brand-name { font-family: var(--sans); font-weight: 700; font-size: 16px; letter-spacing: -0.02em; color: var(--text); }
 
   .theme-toggle {
@@ -387,6 +409,7 @@
     background: var(--surface-2); border: 1px solid var(--border);
     border-radius: var(--radius); cursor: pointer; color: var(--text-soft);
     display: grid; place-items: center; transition: var(--t); flex-shrink: 0;
+    position: relative; z-index: 1;
   }
   .theme-toggle:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
   .theme-toggle svg { width: 14px; height: 14px; }
@@ -414,21 +437,24 @@
   .btn-new:hover { background: var(--accent-hover); transform: translateY(-1px); }
   .btn-new svg { width: 14px; height: 14px; }
 
-  .notes-list { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .notes-list { flex: 1; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .sidebar-header, .sidebar-search, .sidebar-list-head, .sidebar-footer { flex-shrink: 0; }
   .notes-list::-webkit-scrollbar { width: 4px; }
   .notes-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
   .notes-list::-webkit-scrollbar-track { background: transparent; }
 
   .note-item {
     padding: 16px 24px; border-bottom: 1px solid transparent;
-    cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease;
+    cursor: pointer; transition: background 0.15s ease, border-color 0.15s ease, padding-left 0.2s ease;
     position: relative; display: flex; align-items: center; gap: 12px;
   }
   .notes-list .note-item + .note-item { border-top: 1px solid var(--border); }
-  .note-item:hover { background: var(--surface-2); }
+  .note-item:hover { background: var(--surface-2); padding-left: 27px; }
   .note-item.active { background: var(--surface-2); }
   .note-item.active::before {
-    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent);
+    content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: linear-gradient(180deg, var(--accent), var(--accent-hover));
+    box-shadow: 0 0 10px var(--accent);
   }
   .note-item { animation: fadeInTab 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 
@@ -462,8 +488,11 @@
   .sync-status { display: flex; align-items: center; gap: 6px; }
   .footer-stat-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--success); }
   .footer-stat-dot.pending { background: var(--warn); }
-  .footer-link { cursor: pointer; transition: var(--t); text-decoration: none; color: var(--text-muted); }
-  .footer-link:hover { color: var(--accent); }
+  .footer-link {
+    cursor: pointer; transition: var(--t); text-decoration: none; color: var(--text-muted);
+    padding: 3px 8px; margin: -3px -8px; border-radius: 999px;
+  }
+  .footer-link:hover { color: var(--accent); background: var(--accent-soft); }
   .footer-user { display: flex; align-items: center; gap: 8px; color: var(--text-soft); font-weight: 500; }
   .footer-user .user-glyph {
     width: 18px; height: 18px; border-radius: 50%; background: var(--accent); color: var(--bg);
@@ -471,7 +500,7 @@
   }
 
   /* ========== Editor ========== */
-  .editor-area { position: relative; display: flex; flex-direction: column; height: 100vh; background: var(--bg); }
+  .editor-area { position: relative; display: flex; flex-direction: column; height: 100vh; height: 100dvh; background: var(--bg); }
   .editor-top-bar {
     position: absolute; top: 0; left: 0; right: 0; height: 56px;
     display: flex; justify-content: space-between; align-items: center;
@@ -536,7 +565,9 @@
   @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
   @keyframes statusSettle { 0% { transform: scale(1.8); } 100% { transform: scale(1); } }
 
-  .editor-actions { display: flex; gap: 8px; flex-shrink: 0; }
+  .editor-actions { display: flex; gap: 8px; flex-shrink: 0; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .editor-actions::-webkit-scrollbar { display: none; }
+  .editor-actions .btn-action { flex-shrink: 0; }
   .btn-action {
     height: 32px; padding: 0 12px; background: var(--surface);
     border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer;
@@ -650,12 +681,17 @@
   .empty-state svg { width: 48px; height: 48px; margin-bottom: 16px; stroke: var(--border); animation: emptyFloat 4s ease-in-out infinite; }
   .empty-state-title { font-family: var(--serif); font-size: 24px; color: var(--text-soft); margin-bottom: 8px; }
   .empty-state-text { font-size: 14px; margin-bottom: 24px; }
+  .empty-state-org { max-width: 420px; margin: 0 auto; }
+  .empty-state-org svg { animation: emptyFloat 4s ease-in-out infinite; }
+  .empty-state-org .btn-action { display: inline-flex; }
   @keyframes emptyFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 
   .table-wrapper {
     background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
     overflow: hidden; box-shadow: var(--shadow-md); animation: fadeInTab 0.4s ease;
+    transition: box-shadow 0.25s ease;
   }
+  .table-wrapper:hover { box-shadow: var(--shadow-soft); }
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
   th {
     text-align: left; padding: 12px 16px; font-size: 11px;
@@ -777,6 +813,8 @@
     border-radius: var(--radius-lg); box-shadow: var(--shadow-soft);
     width: 100%; max-width: 480px; transform: translateY(14px) scale(0.97);
     opacity: 0;
+    max-height: calc(100vh - 48px); max-height: calc(100dvh - 48px);
+    overflow-y: auto; -webkit-overflow-scrolling: touch;
     transition: transform 0.38s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.25s ease;
   }
   .dialog-overlay.active .dialog-box, .palette-overlay.active .palette, .shortcuts-overlay.active .shortcuts-box { transform: translateY(0) scale(1); opacity: 1; }
@@ -996,6 +1034,26 @@
     .status-indicator { font-size: 11px; }
     .sidebar { width: 100%; }
   }
+
+  /* Very narrow screens: give the action buttons (Create Task, Add Group,
+     Sign out, etc.) room to breathe instead of being squeezed off-screen. */
+  @media (max-width: 360px) {
+    .editor-top-bar { padding: 8px 12px; }
+    .editor-actions { gap: 6px; }
+    .btn-action { padding: 0 8px; font-size: 10px; height: 30px; }
+  }
+
+  /* Short viewports (landscape phones, small windows): make sure the
+     sidebar footer — Sign out included — is always reachable by letting
+     the note list shrink and the whole sidebar scroll as a fallback. */
+  @media (max-height: 560px) {
+    .sidebar-header { padding: 14px 24px 10px; }
+    .sidebar-search { padding: 0 24px 10px; }
+    .sidebar-list-head { padding: 10px 24px; }
+    .sidebar-footer { padding: 10px 24px; }
+    .editor-top-bar { height: auto; min-height: 48px; padding: 8px 20px; flex-wrap: wrap; }
+    .editor-scroll { padding-top: 96px; }
+  }
 </style>
 </head>
 <body>
@@ -1124,17 +1182,17 @@
       </div>
 
       <div class="editor-actions" id="editorActions">
-        <button class="btn-action" id="saveBtn" title="Save (Ctrl+S)">Save</button>
+        <button class="btn-action magnetic" id="saveBtn" title="Save (Ctrl+S)">Save</button>
         <button class="btn-action danger" id="deleteBtn" title="Delete (Ctrl+Shift+D)">Delete</button>
       </div>
 
       <div class="editor-actions" id="taskActions" style="display: none;">
-        <button class="btn-action primary" id="createTaskBtn">Create Task</button>
+        <button class="btn-action primary magnetic" id="createTaskBtn">Create Task</button>
       </div>
 
       <div class="editor-actions" id="orgActions" style="display: none;">
-        <button class="btn-action primary" id="addGroupBtn">Add Group</button>
-        <button class="btn-action primary" id="addAccountBtn">Add Account</button>
+        <button class="btn-action primary magnetic" id="addGroupBtn">Add Group</button>
+        <button class="btn-action primary magnetic" id="addAccountBtn">Add Account</button>
         <button class="btn-action danger" id="bulkDeleteBtn">Delete Selected</button>
       </div>
     </div>
@@ -1267,18 +1325,18 @@
   /* ---------- Auth / Session ---------- */
   function getStoredSession() {
     try {
-      const userId = localStorage.getItem('userId');
-      const username = localStorage.getItem('username');
-      const authToken = localStorage.getItem('authToken');
+      const userId = sessionStorage.getItem('userId');
+      const username = sessionStorage.getItem('username');
+      const authToken = sessionStorage.getItem('authToken');
       if (userId && username && authToken) return { userId, username, authToken };
     } catch {}
     return null;
   }
   function clearSession() {
     try {
-      localStorage.removeItem('userId');
-      localStorage.removeItem('username');
-      localStorage.removeItem('authToken');
+      sessionStorage.removeItem('userId');
+      sessionStorage.removeItem('username');
+      sessionStorage.removeItem('authToken');
     } catch {}
   }
 
@@ -1419,9 +1477,9 @@
           action === 'register' ? 'Account created — welcome to Time12' : 'Welcome back to Time12',
           'success'
         );
-        localStorage.setItem('userId', data.userId);
-        localStorage.setItem('username', data.username);
-        localStorage.setItem('authToken', data.token);
+        sessionStorage.setItem('userId', data.userId);
+        sessionStorage.setItem('username', data.username);
+        sessionStorage.setItem('authToken', data.token);
         setTimeout(() => enterApp(true), 700);
       } else {
         showLoginMessage(data.error || 'Authentication failed');
@@ -1444,8 +1502,6 @@
   (function initLoginGlassTilt() {
     const shell = document.querySelector('.login-shell');
     if (!shell) return;
-    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) return;
 
     let raf = null;
     function handleMove(e) {
@@ -1476,8 +1532,6 @@
   (function initLoginWebGL() {
     const canvas = document.getElementById('loginWebGL');
     if (!canvas) return;
-    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) return;
 
     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
     if (!gl) return; // CSS orb fallback remains visible
@@ -1652,8 +1706,6 @@
 
   /* ---------- Magnetic glow for buttons ---------- */
   (function initMagneticGlow() {
-    const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (prefersReducedMotion) return;
     document.addEventListener('pointermove', (e) => {
       const el = e.target.closest && e.target.closest('.magnetic');
       if (!el) return;
@@ -1805,7 +1857,7 @@
     }
     async callEdgeFunction(action, note = null, noteId = null) {
       const functionUrl = `${SUPABASE_URL}/functions/v1/${EDGE_FUNCTION_NAME}`;
-      const token = localStorage.getItem('authToken'); 
+      const token = sessionStorage.getItem('authToken'); 
       if (!token) throw new Error("Not authenticated");
 
       try {
@@ -1958,7 +2010,7 @@
   const dialogBox = document.getElementById('dialogBox');
 
   async function orgApiCall(body) {
-    const token = localStorage.getItem('authToken');
+    const token = sessionStorage.getItem('authToken');
     if (!token) {
       showLogin();
       throw new Error("Not authenticated");
@@ -2079,6 +2131,25 @@
       toast(error.message, 'error');
     }
   }
+  function renderEmptyOrgState() {
+    orgMainContentEl.innerHTML = `
+      <div class="empty-state empty-state-org">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 64px; height: 64px; color: var(--text-muted);">
+          <circle cx="12" cy="12" r="9.5"/>
+          <path d="M8.5 15.5c1-1.3 2.2-2 3.5-2s2.5.7 3.5 2"/>
+          <line x1="8.75" y1="9.25" x2="8.75" y2="10.25"/>
+          <line x1="15.25" y1="9.25" x2="15.25" y2="10.25"/>
+        </svg>
+        <div class="empty-state-title">You're not part of a group</div>
+        <div class="empty-state-text">${isSubAccount ? 'Ask whoever manages your organization to add you to a group so tasks and teammates show up here.' : 'Create sub-accounts and groups to start building your organization — it gets lonely in here otherwise.'}</div>
+        ${!isSubAccount ? `<button class="btn-action primary magnetic" id="emptyOrgAddGroupBtn" style="margin: 0 auto;">Add your first group</button>` : ''}
+      </div>
+    `;
+    if (!isSubAccount) {
+      document.getElementById('emptyOrgAddGroupBtn')?.addEventListener('click', () => openCreateGroupDialog());
+    }
+  }
+
   function renderOrgState() {
     const hasGroups = orgGroups && orgGroups.length > 0;
     const hasAccounts = orgAccounts && orgAccounts.length > 0;
