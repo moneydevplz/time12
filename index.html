@@ -514,16 +514,16 @@
   .editor-top-bar {
     position: absolute; top: 0; left: 0; right: 0; height: 56px;
     display: grid;
-    grid-template-columns: 1fr 2fr 1fr; 
+    grid-template-columns: 1fr auto 1fr; 
     align-items: center;
     padding: 0 32px; background: var(--bg); z-index: 10;
     border-bottom: 1px solid var(--border); gap: 12px;
   }
 
-  .sidebar-tabs { justify-self: center; width: 100%; max-width: 360px; overflow: visible; }
+  .sidebar-tabs { display: flex; justify-content: center; flex: 1; min-width: 0; overflow: visible; justify-self: center; width: 100%; max-width: 360px; }
   .tabs-container {  
     display: flex; align-items: center; gap: 6px; padding: 6px; background: var(--surface-2);
-    border-radius: 999px; flex-wrap: nowrap;
+    border-radius: 999px; flex-wrap: nowrap; width: 100%; justify-content: center;
   }  
   .tab-item {  
     padding: 7px 24px; border-radius: 999px; color: var(--text-muted);
@@ -578,7 +578,7 @@
   @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(0.8); } }
   @keyframes statusSettle { 0% { transform: scale(1.8); } 100% { transform: scale(1); } }
 
-  .editor-actions { display: flex; gap: 8px; flex-shrink: 0; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; justify-self: end; }
+  .editor-actions { display: flex; gap: 8px; flex-shrink: 0; max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; justify-self: end; align-items: center; }
   .editor-actions::-webkit-scrollbar { display: none; }
   .editor-actions .btn-action { flex-shrink: 0; }
   .btn-action {
@@ -591,6 +591,53 @@
   .btn-action.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); }
   .btn-action.primary:hover { background: var(--accent-hover); color: var(--bg); }
   .btn-action.danger:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* Custom Dropdowns */
+  .custom-dropdown-wrapper { position: relative; display: inline-flex; }
+  .custom-dropdown-menu {
+    position: absolute; top: calc(100% + 6px); right: 0; min-width: 160px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-soft);
+    z-index: 50; display: none; flex-direction: column; padding: 4px;
+  }
+  .custom-dropdown-wrapper.open .custom-dropdown-menu { display: flex; }
+  .custom-dropdown-item {
+    padding: 8px 14px; border-radius: var(--radius); color: var(--text-soft);
+    cursor: pointer; font-size: 13px; white-space: nowrap; transition: 0.15s ease;
+  }
+  .custom-dropdown-item:hover { background: var(--surface-2); color: var(--accent); }
+
+  .custom-select-wrapper { position: relative; width: 100%; display: flex; }
+  .custom-select-toggle {
+    width: 100%; padding: 10px 12px; background: var(--bg); border: 1px solid var(--border);
+    color: var(--text); font-family: var(--sans); font-size: 14px;
+    border-radius: var(--radius); outline: none; transition: var(--t);
+    display: flex; justify-content: space-between; align-items: center;
+    cursor: pointer; caret-color: var(--accent);
+  }
+  .custom-select-toggle svg { width: 14px; height: 14px; transition: transform 0.2s; color: var(--text-muted); }
+  .custom-select-wrapper.open .custom-select-toggle,
+  .custom-select-toggle:hover { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .custom-select-wrapper.open .custom-select-toggle svg { transform: rotate(180deg); color: var(--accent); }
+  
+  .custom-select-menu {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-soft);
+    z-index: 100; display: none; flex-direction: column; padding: 4px;
+    max-height: 200px; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  }
+  .custom-select-wrapper.open .custom-select-menu { display: flex; }
+  .custom-select-option {
+    padding: 8px 12px; border-radius: var(--radius); cursor: pointer;
+    font-size: 14px; color: var(--text-soft); transition: 0.15s ease; white-space: nowrap;
+  }
+  .custom-select-option:hover { background: var(--surface-2); color: var(--accent); }
+  .custom-select-option.selected { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  .custom-select-option.custom-multiselect { display: flex; align-items: center; gap: 8px; }
+  .custom-select-option.custom-multiselect:hover { background: var(--surface-2); }
+  .custom-multiselect input[type="checkbox"] { width: 16px; height: 16px; }
+  .custom-multiselect label { flex: 1; cursor: pointer; color: var(--text); font-size: 14px; display: flex; align-items: center; }
 
   .editor-scroll { flex: 1; overflow-y: auto; padding-top: 56px; -webkit-overflow-scrolling: touch; }
   .editor-scroll::-webkit-scrollbar { width: 8px; }
@@ -855,6 +902,15 @@
   }
   .dialog-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
   .dialog-input.mono { font-family: monospace; letter-spacing: 1px; }
+  
+  /* Custom Date Input Styling */
+  .dialog-input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    filter: var(--icon-filter, none);
+  }
+  html[data-theme="dark"] .dialog-input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+  }
 
   .toggle-group { display: flex; gap: 8px; margin-bottom: 16px; }
   .toggle-btn {
@@ -910,201 +966,6 @@
     font-family: var(--sans); font-size: 13px; font-weight: 500; color: var(--text); transition: var(--t);
   }
   .shortcuts-close:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
-
-  /* Custom Dropdowns & Date Pickers */
-  .custom-select {
-    position: relative;
-    width: 100%;
-  }
-  .custom-select .cs-toggle {
-    width: 100%;
-    padding: 10px 12px;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    color: var(--text);
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 8px;
-    font-family: var(--sans);
-    font-size: 14px;
-    transition: var(--t);
-  }
-  .custom-select .cs-toggle:hover,
-  .custom-select.open .cs-toggle {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-soft);
-  }
-  .custom-select .cs-toggle svg {
-    width: 16px; height: 16px;
-    transition: transform 0.2s ease;
-    color: var(--text-muted);
-  }
-  .custom-select.open .cs-toggle svg {
-    transform: rotate(180deg);
-  }
-  .cs-menu {
-    position: absolute;
-    top: calc(100% + 6px);
-    left: 0; right: 0;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-soft);
-    z-index: 30;
-    display: none;
-    flex-direction: column;
-    overflow: hidden;
-    padding: 4px;
-    max-height: 220px;
-    overflow-y: auto;
-    animation: fadeInTab 0.2s ease;
-  }
-  .custom-select.open .cs-menu {
-    display: flex;
-  }
-  .cs-item {
-    padding: 10px 12px;
-    border-radius: var(--radius);
-    color: var(--text-muted);
-    cursor: pointer;
-    font-size: 14px;
-    transition: background 0.15s, color 0.15s;
-    text-align: left;
-  }
-  .cs-item:hover {
-    background: var(--surface-2);
-    color: var(--text);
-  }
-  .cs-item.active {
-    background: var(--accent-soft);
-    color: var(--accent);
-  }
-  .cs-item.cs-danger {
-    color: var(--danger);
-  }
-  .cs-item.cs-danger:hover {
-    background: rgba(162, 59, 42, 0.08);
-  }
-
-  /* Top bar Org Actions specific styling */
-  #orgActions {
-    position: relative;
-  }
-  #orgActions .cs-toggle {
-    height: 32px;
-    padding: 0 12px;
-    background: var(--accent);
-    color: var(--bg);
-    border: 1px solid var(--accent);
-    font-size: 12px;
-    font-weight: 500;
-    border-radius: var(--radius);
-    box-shadow: var(--shadow-md);
-    width: auto;
-    transition: var(--t);
-  }
-  #orgActions .cs-toggle:hover {
-    background: var(--accent-hover);
-    border-color: var(--accent-hover);
-    transform: translateY(-1px);
-    box-shadow: var(--shadow-soft);
-  }
-  #orgActions .cs-toggle:active {
-    transform: translateY(0) scale(0.96);
-  }
-  #orgActions .cs-toggle svg {
-    color: var(--bg);
-  }
-  #orgActions .cs-menu {
-    right: 0;
-    left: auto;
-    min-width: 180px;
-  }
-
-  /* Custom Multi-Select */
-  .custom-multi-select {
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 4px;
-    min-height: 120px;
-    max-height: 200px;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    transition: var(--t);
-  }
-  .custom-multi-select:focus-within,
-  .custom-multi-select:hover {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-soft);
-  }
-  .cms-item {
-    padding: 8px 12px;
-    border-radius: var(--radius);
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    cursor: pointer;
-    font-size: 14px;
-    color: var(--text);
-    transition: background 0.15s;
-    user-select: none;
-  }
-  .cms-item:hover {
-    background: var(--surface-2);
-  }
-  .cms-checkbox {
-    width: 16px;
-    height: 16px;
-    border: 1px solid var(--text-muted);
-    border-radius: 3px;
-    display: grid; place-items: center;
-    transition: var(--t);
-    flex-shrink: 0;
-  }
-  .cms-item.active .cms-checkbox {
-    background: var(--accent);
-    border-color: var(--accent);
-    transform: scale(1.08);
-  }
-  .cms-item.active .cms-checkbox::after {
-    content: '';
-    width: 4px; height: 9px;
-    border: solid var(--bg);
-    border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
-    margin-bottom: 2px;
-  }
-
-  /* Native Date Input styling */
-  input[type="date"] {
-    appearance: none;
-    -webkit-appearance: none;
-    width: 100%;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 10px 12px;
-    color: var(--text);
-    font-family: var(--sans);
-    font-size: 14px;
-    outline: none;
-    transition: var(--t);
-    cursor: pointer;
-  }
-  input[type="date"]:hover {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px var(--accent-soft);
-  }
-  html[data-theme="dark"] input[type="date"]::-webkit-calendar-picker-indicator {
-    filter: invert(0.8);
-  }
 
   /* Toast */
   .toast-container {
@@ -1209,12 +1070,12 @@
     .menu-toggle { display: inline-flex; align-items: center; justify-content: center; }
     
     .editor-top-bar { 
-      display: grid;
-      grid-template-columns: 1fr auto 1fr; 
       padding: 10px 20px;
       height: auto;
-      gap: 12px;
     }
+    .status-indicator { justify-self: start; }
+    .sidebar-tabs { justify-self: center; width: 100%; }
+    .editor-actions { justify-self: end; flex-wrap: wrap; overflow-x: visible; justify-content: flex-end; row-gap: 8px; }
     
     .editor-scroll { padding-top: 70px; }
     .editor-inner { padding: 60px 24px 140px; }
@@ -1396,18 +1257,18 @@
         <button class="btn-action primary magnetic" id="createTaskBtn">Create Task</button>
       </div>
 
-      <div class="editor-actions" id="orgActions" style="display: none;">
-        <div class="custom-select" id="orgActionsSelect">
-          <button class="cs-toggle magnetic" type="button">
-            <span class="cs-label">Manage</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      <div class="editor-actions" id="orgActions" style="display: none; align-items: center; gap: 8px;">
+        <div class="custom-dropdown-wrapper" id="orgAddWrapper">
+          <button class="btn-action primary magnetic" id="orgAddBtn">
+            Add 
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="width:12px; height:12px; margin-left:4px;"><polyline points="6 9 12 15 18 9"/></svg>
           </button>
-          <div class="cs-menu">
-            <div class="cs-item" data-org-action="add-group">Add Group</div>
-            <div class="cs-item" data-org-action="add-account">Add Account</div>
-            <div class="cs-item cs-danger" data-org-action="bulk-delete">Delete Selected</div>
+          <div class="custom-dropdown-menu" id="orgAddMenu">
+            <div class="custom-dropdown-item" id="dropdownAddGroup">Add Group</div>
+            <div class="custom-dropdown-item" id="dropdownAddAccount">Add Account</div>
           </div>
         </div>
+        <button class="btn-action danger magnetic" id="bulkDeleteBtn">Delete Selected</button>
       </div>
     </div>
 
@@ -1958,6 +1819,8 @@
       this.syncQueueStore = 'syncQueue';
     }
     async init(scopeKey) {
+      // Namespace the local cache per logged-in user, so different tabs
+      // signed into different accounts never read or overwrite each other's notes.
       const wantedName = scopeKey ? `Time12DB_${scopeKey}` : 'Time12DB';
       if (this.db && this.dbName !== wantedName) {
         this.db.close();
@@ -2216,7 +2079,7 @@
   let orgTasks = [];
   let userAssignedTasks = [];
   let currentTab = "Notes"; 
-  let isSubAccount = false;
+  let isSubAccount = false; // To adjust view if user is not an org owner
   
   const orgMainContentEl = document.getElementById('orgMainContent');
   const myTasksMainContentEl = document.getElementById('myTasksMainContent');
@@ -2226,6 +2089,11 @@
   const orgTabContent = document.getElementById('orgTabContent');
   const myTasksTabContent = document.getElementById('myTasksTabContent');
   const createTaskBtn = document.getElementById('createTaskBtn');
+  const orgAddWrapper = document.getElementById('orgAddWrapper');
+  const orgAddBtn = document.getElementById('orgAddBtn');
+  const dropdownAddGroup = document.getElementById('dropdownAddGroup');
+  const dropdownAddAccount = document.getElementById('dropdownAddAccount');
+  const bulkDeleteBtn = document.getElementById('bulkDeleteBtn');
   const dialogBox = document.getElementById('dialogBox');
 
   async function orgApiCall(body) {
@@ -2269,9 +2137,12 @@
     ownerUsername = session.username;
     orgNamespace = ownerUsername + "@";
     
+    // A simple way to check if it's a sub-account is if the username contains '@'
     isSubAccount = ownerUsername.includes('@');
     if (isSubAccount) {
-      orgActions.style.display = 'none';
+      // If it's a sub account, hide Org creation buttons from top bar by default
+      orgAddWrapper.style.display = 'none';
+      bulkDeleteBtn.style.display = 'none';
     }
 
     fetchGroups();
@@ -2288,6 +2159,8 @@
         if (currentTab === 'Org') renderOrgState();
       }
     } catch (error) {
+      console.error("Failed to fetch accounts:", error);
+      // Sub-accounts might get an error here if they don't own accounts, that's fine.
       orgAccounts = [];
       if (currentTab === 'Org') renderOrgState();
     }
@@ -2342,7 +2215,6 @@
       toast(error.message, 'error');
     }
   }
-
   function renderEmptyOrgState() {
     orgMainContentEl.innerHTML = `
       <div class="empty-state empty-state-org">
@@ -2379,19 +2251,29 @@
         const dueDate = t.due_date ? new Date(t.due_date).toLocaleDateString() : 'N/A';
         const groupName = t.groups ? t.groups.name : 'Unassigned';
         
+        // 1. Show Original Task Links (Reference Materials)
         let originalLinksHtml = '';
         const originalLinks = (t.links || []).filter(l => !l.is_submission_link);
         if (originalLinks.length > 0) {
           originalLinksHtml += `<div style="margin-top: 6px;"><strong style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Reference Materials:</strong><br>${originalLinks.map(l => `<a href="${l.url}" target="_blank" style="color: var(--accent); font-size: 12px;">${l.label || l.url}</a>`).join('<br>')}</div>`;
         }
 
+        // ============================================================
+        // FIX: Show ALL group members (from t.groupMembers) with their
+        // submission status looked up from t.submissions. Previously
+        // this only iterated over t.submissions, so members who hadn't
+        // submitted yet were invisible — and if no one had submitted,
+        // it showed "No members assigned" even when members existed.
+        // ============================================================
         let memberStatusHtml = '<div style="margin-top: 12px; border-top: 1px dashed var(--border); padding-top: 10px;"><strong style="font-size: 11px; color: var(--text-muted); text-transform: uppercase;">Member Progress</strong><div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">';
         
+        // Build a lookup map of submissions by user_id for quick access
         const submissionsByUser = {};
         (t.submissions || []).forEach(sub => {
           submissionsByUser[sub.user_id] = sub;
         });
 
+        // Use groupMembers (ALL members of the group) instead of just submissions
         const allMembers = t.groupMembers || [];
 
         if (allMembers.length > 0) {
@@ -2406,6 +2288,7 @@
             else if (subStatus === 'completed') statusColor = 'var(--success)';
             else if (subStatus === 'rejected') statusColor = 'var(--danger)';
             
+            // Build submission details (text + links) if the member has submitted
             let subDetails = '';
             const userLinks = (t.links || []).filter(l => l.is_submission_link && l.user_id === member.user_id);
             if (sub && (sub.submission_text || userLinks.length > 0)) {
@@ -2417,6 +2300,7 @@
               subDetails += '</div>';
             }
 
+            // Show Verify/Reject buttons only for pending submissions
             let memberActions = '';
             if (sub?.status === 'pending') {
               memberActions = `
@@ -2436,6 +2320,7 @@
             `;
           });
         } else {
+          // Only show this when the group genuinely has no members
           memberStatusHtml += `<div style="font-size: 12px; color: var(--text-muted);">No members in this group yet. Add members to the group first.</div>`;
         }
         memberStatusHtml += '</div></div>';
@@ -2665,70 +2550,37 @@
     if (e.target === dialogOverlay) closeDialog();
   });
 
-  /* ---------- Custom Dropdown Global Listener ---------- */
-  document.addEventListener('click', (e) => {
-    const toggle = e.target.closest('.cs-toggle');
-    if (toggle) {
-      const select = toggle.closest('.custom-select');
-      const menu = select.querySelector('.cs-menu');
-      const isOpen = menu.style.display === 'flex';
-      document.querySelectorAll('.cs-menu').forEach(m => {
-        m.style.display = 'none';
-        m.closest('.custom-select')?.classList.remove('open');
-      });
-      if (!isOpen) {
-        menu.style.display = 'flex';
-        select.classList.add('open');
-      }
-      e.stopPropagation();
+  orgAddBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    orgAddWrapper.classList.toggle('open');
+  });
+  dropdownAddGroup.addEventListener('click', () => {
+    orgAddWrapper.classList.remove('open');
+    openCreateGroupDialog(null, null);
+  });
+  dropdownAddAccount.addEventListener('click', () => {
+    orgAddWrapper.classList.remove('open');
+    openAddAccountDialog();
+  });
+  createTaskBtn.addEventListener('click', () => openCreateTaskDialog());
+  bulkDeleteBtn.addEventListener('click', () => {
+    const selected = Array.from(document.querySelectorAll('.acc-select:checked')).map(cb => cb.dataset.username);
+    if (selected.length === 0) {
+      toast('Select at least one account to delete.', 'warn');
       return;
     }
-
-    const item = e.target.closest('.custom-select .cs-item');
-    if (item) {
-      const select = item.closest('.custom-select');
-      const items = select.querySelectorAll('.cs-item');
-      items.forEach(i => i.classList.remove('active'));
-      item.classList.add('active');
-      select.dataset.value = item.dataset.value;
-      const label = select.querySelector('.cs-label');
-      if (label) label.textContent = item.textContent;
-
-      if (select.id === 'orgActionsSelect') {
-        const action = item.dataset.orgAction;
-        if (action === 'add-group') openCreateGroupDialog(null, null);
-        else if (action === 'add-account') openAddAccountDialog();
-        else if (action === 'bulk-delete') {
-          const selected = Array.from(document.querySelectorAll('.acc-select:checked')).map(cb => cb.dataset.username);
-          if (selected.length === 0) {
-            toast('Select at least one account to delete.', 'warn');
-          } else {
-            openBulkDeleteDialog(selected);
-          }
-        }
-        label.textContent = 'Manage';
-        select.dataset.value = '';
-      }
-
-      select.querySelector('.cs-menu').style.display = 'none';
-      select.classList.remove('open');
-    }
-
-    const multiItem = e.target.closest('.cms-item');
-    if (multiItem) {
-      multiItem.classList.toggle('active');
-      e.stopPropagation();
-    }
-
-    if (!e.target.closest('.custom-select')) {
-      document.querySelectorAll('.cs-menu').forEach(m => {
-        m.style.display = 'none';
-        m.closest('.custom-select')?.classList.remove('open');
-      });
-    }
+    openBulkDeleteDialog(selected);
   });
 
-  createTaskBtn.addEventListener('click', () => openCreateTaskDialog());
+  // Global listener to close custom dropdowns when clicking outside
+  document.addEventListener("click", (e) => {
+    if (orgAddWrapper && !orgAddWrapper.contains(e.target)) {
+      orgAddWrapper.classList.remove("open");
+    }
+    document.querySelectorAll('.custom-select-wrapper.open').forEach(w => {
+      if (!w.contains(e.target)) w.classList.remove('open');
+    });
+  });
 
   async function handleTaskAction(action, taskId, userId = null) {
     try {
@@ -2751,7 +2603,7 @@
       return;
     }
 
-    const groupOptionsHtml = orgGroups.map(g => `<div class="cs-item" data-value="${g.id}">${escapeHtml(g.name)}</div>`).join('');
+    const groupOptions = orgGroups.map(g => `<div class="custom-select-option" data-value="${g.id}">${escapeHtml(g.name)}</div>`).join('');
     const today = new Date().toISOString().split('T')[0];
 
     dialogBox.innerHTML = `
@@ -2770,18 +2622,19 @@
 
       <div class="dialog-input-group">
         <label>Assign to Group</label>
-        <div class="custom-select" id="taskGroupSelect">
-          <button class="cs-toggle" type="button">
-            <span class="cs-label">Select a group...</span>
+        <div class="custom-select-wrapper" id="taskGroupSelectWrapper">
+          <div class="custom-select-toggle" id="taskGroupToggle">
+            <span id="taskGroupLabel">Select a group</span>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
-          </button>
-          <div class="cs-menu">${groupOptionsHtml}</div>
+          </div>
+          <div class="custom-select-menu" id="taskGroupMenu">${groupOptions}</div>
         </div>
+        <input type="hidden" id="taskGroupValue">
       </div>
 
       <div class="dialog-input-group">
         <label>Due Date</label>
-        <input type="date" id="taskDueInput" value="${today}">
+        <input type="date" id="taskDueInput" class="dialog-input" value="${today}">
       </div>
 
       <div class="dialog-input-group">
@@ -2802,6 +2655,24 @@
     `;
     dialogOverlay.classList.add('active');
 
+    const taskGroupToggle = document.getElementById('taskGroupToggle');
+    const taskGroupWrapper = document.getElementById('taskGroupSelectWrapper');
+    const taskGroupLabel = document.getElementById('taskGroupLabel');
+    const taskGroupValue = document.getElementById('taskGroupValue');
+
+    taskGroupToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      taskGroupWrapper.classList.toggle('open');
+    });
+    
+    document.querySelectorAll('#taskGroupMenu .custom-select-option').forEach(opt => {
+      opt.addEventListener('click', () => {
+        taskGroupLabel.textContent = opt.textContent;
+        taskGroupValue.value = opt.dataset.value;
+        taskGroupWrapper.classList.remove('open');
+      });
+    });
+
     document.getElementById('addLinkBtn').addEventListener('click', () => {
       const container = document.getElementById('taskLinksContainer');
       const linkDiv = document.createElement('div');
@@ -2819,7 +2690,7 @@
     document.getElementById('confirmCreateTask').onclick = async () => {
       const title = document.getElementById('taskTitleInput').value.trim();
       const description = document.getElementById('taskDescInput').value.trim();
-      const groupId = document.getElementById('taskGroupSelect').dataset.value;
+      const groupId = document.getElementById('taskGroupValue').value;
       const dueDate = document.getElementById('taskDueInput').value;
 
       if (!title || !groupId || !dueDate) {
@@ -2976,10 +2847,6 @@
   }
 
   function openAddMemberDialog(groupId) {
-    const existingAccountsHtml = orgAccounts.length > 0 
-      ? orgAccounts.map(acc => `<div class="cms-item" data-value="${acc.id}"><div class="cms-checkbox"></div><span>${escapeHtml(acc.username)}</span></div>`).join('')
-      : `<div style="padding: 16px; text-align: center; color: var(--text-muted); font-size: 13px;">No existing accounts available. Use the "Create New" tab.</div>`;
-
     dialogBox.innerHTML = `
       <div class="dialog-title">Add Members</div>
       <div class="dialog-text">Choose to add existing accounts to this group or create entirely new accounts and assign them immediately.</div>
@@ -2992,7 +2859,13 @@
       <div id="existingTabContent">
         <div class="dialog-input-group">
           <label>Select Accounts</label>
-          <div class="custom-multi-select" id="existingAccountsSelect">${existingAccountsHtml}</div>
+          <div class="custom-select-wrapper" id="existingAccountsWrapper">
+            <div class="custom-select-toggle" id="existingAccountsToggle">
+              <span id="existingAccountsLabel">Select accounts</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="custom-select-menu" id="existingAccountsMenu" style="max-height: 150px; overflow-y: auto;"></div>
+          </div>
         </div>
       </div>
 
@@ -3036,6 +2909,33 @@
       </div>
     `;
     dialogOverlay.classList.add('active');
+
+    const existingAccountsMenu = document.getElementById('existingAccountsMenu');
+    const existingAccountsToggle = document.getElementById('existingAccountsToggle');
+    const existingAccountsWrapper = document.getElementById('existingAccountsWrapper');
+    const existingAccountsLabel = document.getElementById('existingAccountsLabel');
+    const selectedExistingAccounts = new Set();
+
+    orgAccounts.forEach(acc => {
+      const opt = document.createElement('div');
+      opt.className = 'custom-select-option custom-multiselect';
+      opt.innerHTML = `<input type="checkbox" class="custom-multiselect-checkbox" data-id="${acc.id}" id="acc-${acc.id}"><label for="acc-${acc.id}">${escapeHtml(acc.username)}</label>`;
+      existingAccountsMenu.appendChild(opt);
+      
+      const cb = opt.querySelector('input');
+      cb.addEventListener('change', () => {
+        if (cb.checked) selectedExistingAccounts.add(acc.id);
+        else selectedExistingAccounts.delete(acc.id);
+        
+        const count = selectedExistingAccounts.size;
+        existingAccountsLabel.textContent = count > 0 ? `${count} selected` : 'Select accounts';
+      });
+    });
+
+    existingAccountsToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      existingAccountsWrapper.classList.toggle('open');
+    });
 
     const existingTabBtn = document.getElementById('existingTabBtn');
     const newTabBtn = document.getElementById('newTabBtn');
@@ -3131,13 +3031,12 @@
         setStatus('saving');
         
         if (isExistingActive) {
-          const selectedOptions = Array.from(document.querySelectorAll('#existingAccountsSelect .cms-item.active'));
-          if (selectedOptions.length === 0) {
+          const targetUserIds = Array.from(selectedExistingAccounts);
+          if (targetUserIds.length === 0) {
             toast('Please select at least one account.', 'error');
             setStatus('ready');
             return;
           }
-          const targetUserIds = selectedOptions.map(opt => opt.dataset.value);
           
           await orgApiCall({
             action: 'add_to_group',
@@ -3470,6 +3369,8 @@
       }
 
       let linksHtml = '';
+      
+      // 1. Show Original Task Links (Reference Materials)
       const originalTaskLinks = (t.links || []).filter(l => !l.is_submission_link);
       if (originalTaskLinks.length > 0) {
         linksHtml += `
@@ -3487,6 +3388,7 @@
         `;
       }
 
+      // 2. Show User's Own Submitted Links
       const userSubmissionLinks = (t.links || []).filter(l => l.is_submission_link);
       if (userSubmissionLinks.length > 0) {
         linksHtml += `
@@ -3621,21 +3523,27 @@
     dropdownItems.forEach(d => d.classList.toggle("active", d.dataset.tab === target));
     if (dropdownLabel) dropdownLabel.textContent = target;
 
+    // Hide all tab content
     notesTabContent.style.display = 'none';
     orgTabContent.classList.remove('active');
     myTasksTabContent.classList.remove('active');
+    // Hide all action button groups
     editorActions.style.display = 'none';
     taskActions.style.display = 'none';
     orgActions.style.display = 'none';
 
+    // Sidebar behavior: notes list only shows in Notes tab; the header
+    // and footer (incl. Sign out) stay visible and usable in every tab.
     if (target === 'Notes') {
       sidebar.classList.remove('hidden', 'notes-collapsed');
+      // Show notes-specific UI
       notesTabContent.style.display = 'block';
       editorActions.style.display = 'flex';
       editorBottomBar.style.display = 'flex';
       newNoteBtn.style.display = 'grid';
       notesCountLabel.textContent = `${allNotes.length} ${allNotes.length === 1 ? 'note' : 'notes'}`;
     } else {
+      // Collapse only the notes list/search — keep sidebar header & footer visible
       sidebar.classList.remove('hidden');
       sidebar.classList.add('notes-collapsed');
       editorBottomBar.style.display = 'none';
@@ -3643,7 +3551,7 @@
       
       if (target === 'MyTasks') {
         myTasksTabContent.classList.add('active');
-        newNoteBtn.style.display = 'grid';
+        newNoteBtn.style.display = 'grid'; // Show + for creating task
         taskActions.style.display = 'flex';
         fetchUserTasks();
       } else if (target === 'Org') {
@@ -4256,6 +4164,7 @@
     if (currentTab === 'MyTasks') {
       openCreateTaskDialog();
     } else if (currentTab === 'Org') {
+      // No + action in Org tab for sub-accounts
       if (!isSubAccount) {
         openCreateGroupDialog(null, null);
       } else {
@@ -4357,11 +4266,7 @@
       shortcutsOverlay.classList.remove('active');
       closePalette();
       deleteConfirmId = null;
-      tabsDropdown.classList.remove("open");
-      document.querySelectorAll('.cs-menu').forEach(m => {
-        m.style.display = 'none';
-        m.closest('.custom-select')?.classList.remove('open');
-      });
+      tabsDropdown.classList.remove('open');
     }
   });
 
@@ -4415,10 +4320,30 @@
 
     await loadNotes();
     initOrgManager();
-    switchTab('Notes');
+    switchTab('Notes'); // Ensure initial tab state is correctly set
 
     if (!syncManager.syncInterval) {
       syncManager.startAutoSync();
       setInterval(updateSyncBadge, 8000);
     }
-    doneProgress
+    doneProgress();
+  }
+
+  window.addEventListener('beforeunload', async () => {
+    if (hasUnsavedChanges) {
+      await saveNote(true);
+    }
+  });
+
+  /* ---------- Boot ---------- */
+  (function boot() {
+    const session = getStoredSession();
+    if (session) {
+      enterApp(false);
+    } else {
+      showLogin();
+    }
+  })();
+</script>
+</body>
+</html>
