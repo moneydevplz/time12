@@ -1993,7 +1993,7 @@
         } else if (action === 'delete') {
           await this.callEdgeFunction('delete', null, noteId);
           await this.db.removeFromSyncQueue(noteId);
-          success = true;
+            success = true;
         }
       } catch (error) {
         console.error(`Failed to sync note ${noteId}:`, error);
@@ -2877,6 +2877,7 @@
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
             <div>Click to browse or drag & drop</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Format: <code>username,password</code> or just <code>username</code> (one per line)</div>
             <div class="csv-filename" id="csvFilename"></div>
             <input type="file" id="csvFileInput" accept=".csv" />
           </label>
@@ -2968,8 +2969,14 @@
           const text = ev.target.result;
           const lines = text.split(/\r?\n/);
           lines.forEach(line => {
-            const val = line.trim().split(',')[0].trim();
-            if (val) addEmailTag(val);
+            const trimmedLine = line.trim();
+            if (!trimmedLine) return;
+            const parts = trimmedLine.split(',');
+            const username = parts[0].trim();
+            const password = parts.length > 1 ? parts[1].trim() : '';
+            if (username) {
+              addEmailTag(password ? `${username},${password}` : username);
+            }
           });
         };
         reader.readAsText(file);
@@ -3051,10 +3058,11 @@
           const tags = emailTagContainer.querySelectorAll('.email-tag span');
           const accounts = Array.from(tags).map(t => {
             const text = t.textContent.trim();
-            const parts = text.split('@');
+            // Support both '@' and ',' as separators for manual and CSV entry
+            const parts = text.split(/[@,]/);
             const username = parts[0];
-            const domain = parts.length > 1 ? parts[1] : '';
-            return { username, password: domain ? null : document.getElementById('customPassInput').value || null };
+            const pass = parts.length > 1 ? parts[1] : '';
+            return { username, password: pass || document.getElementById('customPassInput').value || null };
           });
 
           if (accounts.length === 0) {
