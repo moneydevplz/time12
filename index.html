@@ -35,10 +35,10 @@
     --serif: 'DM Serif Display', Georgia, serif;
     --sans: 'DM Sans', -apple-system, sans-serif;
 
-    --glass-bg: rgba(255, 255, 255, 0.62);
-    --glass-border: rgba(255, 255, 255, 0.55);
-    --glass-sheen: rgba(253, 126, 20, 0.65);
-    --glass-highlight: rgba(255, 255, 255, 0.4);
+    --glass-bg: rgba(255, 250, 244, 0.92);
+    --glass-border: rgba(24, 18, 14, 0.16);
+    --glass-sheen: rgba(230, 90, 10, 0.55);
+    --glass-highlight: rgba(255, 255, 255, 0.5);
     --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.65), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
   }
 
@@ -158,7 +158,12 @@
     z-index: 0; opacity: 0.65; pointer-events: none;
     transition: opacity 0.8s ease;
   }
-  .login-screen.webgl-active::before, .login-screen.webgl-active::after { opacity: 0.12; }
+  .app-webgl {
+    position: fixed; inset: 0; width: 100%; height: 100%;
+    z-index: 0; opacity: 0.06; pointer-events: none;
+  }
+  html[data-theme="dark"] .app-webgl { opacity: 0.1; }
+  .sidebar, .editor-area, .backdrop { position: relative; z-index: 1; }
   .login-screen::before, .login-screen::after {
     content: '';
     position: absolute;
@@ -167,7 +172,7 @@
     height: 60vmax;
     border-radius: 50%;
     filter: blur(70px);
-    opacity: 0.32;
+    opacity: 0.5;
     pointer-events: none;
   }
   .login-screen::before {
@@ -180,6 +185,7 @@
     bottom: -26%; right: -14%;
     animation: orbFloatB 22s ease-in-out infinite;
   }
+  .login-screen.webgl-active::before, .login-screen.webgl-active::after { opacity: 0.3; }
   @keyframes orbFloatA { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(6%, 8%) scale(1.15); } }
   @keyframes orbFloatB { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-7%, -6%) scale(1.1); } }
 
@@ -483,6 +489,7 @@
     padding: 14px 24px; border-top: 2px solid var(--molding);
     display: flex; flex-direction: column; gap: 10px;
     font-size: 11px; color: var(--text-muted);
+    position: sticky; bottom: 0; background: var(--surface); z-index: 2;
   }
   .footer-row { display: flex; justify-content: space-between; align-items: center; }
   .sync-status { display: flex; align-items: center; gap: 6px; }
@@ -1009,7 +1016,7 @@
     }
     .status-indicator { justify-self: start; }
     .sidebar-tabs { justify-self: center; width: 100%; }
-    .editor-actions { justify-self: end; }
+    .editor-actions { justify-self: end; flex-wrap: wrap; overflow-x: visible; justify-content: flex-end; row-gap: 8px; }
     
     .editor-scroll { padding-top: 70px; }
     .editor-inner { padding: 60px 24px 140px; }
@@ -1039,7 +1046,7 @@
      Sign out, etc.) room to breathe instead of being squeezed off-screen. */
   @media (max-width: 360px) {
     .editor-top-bar { padding: 8px 12px; }
-    .editor-actions { gap: 6px; }
+    .editor-actions { gap: 6px; flex-wrap: wrap; overflow-x: visible; justify-content: flex-end; row-gap: 8px; }
     .btn-action { padding: 0 8px; font-size: 10px; height: 30px; }
   }
 
@@ -1100,6 +1107,7 @@
 
 <!-- ============ APP ============ -->
 <div class="app" id="Time12App" style="display:none;">
+  <canvas id="appWebGL" class="app-webgl"></canvas>
   <div class="backdrop" id="backdrop"></div>
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
@@ -1529,9 +1537,8 @@
 
   /* ---------- Random RED glow easter egg ---------- */
   /* ---------- WebGL aurora backdrop (login screen) ---------- */
-  (function initLoginWebGL() {
-    const canvas = document.getElementById('loginWebGL');
-    if (!canvas) return;
+  function initAuroraWebGL(canvas, hostEl, onReady) {
+    if (!canvas || !hostEl) return;
 
     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
     if (!gl) return; // CSS orb fallback remains visible
@@ -1656,13 +1663,13 @@
       targetMouse[0] = nx * (rect.width / rect.height);
       targetMouse[1] = ny;
     }
-    loginScreen.addEventListener('pointermove', (e) => updateMouseFromClient(e.clientX, e.clientY), { passive: true });
-    loginScreen.addEventListener('touchmove', (e) => {
+    hostEl.addEventListener('pointermove', (e) => updateMouseFromClient(e.clientX, e.clientY), { passive: true });
+    hostEl.addEventListener('touchmove', (e) => {
       if (e.touches && e.touches[0]) updateMouseFromClient(e.touches[0].clientX, e.touches[0].clientY);
     }, { passive: true });
 
     const PALETTES = {
-      light: { a: [0.973, 0.953, 0.933], b: [1.0, 0.89, 0.75], c: [0.992, 0.494, 0.078] },
+      light: { a: [0.85, 0.78, 0.66], b: [0.98, 0.6, 0.24], c: [0.85, 0.3, 0.02] },
       dark:  { a: [0.02, 0.02, 0.02],   b: [0.13, 0.07, 0.02], c: [0.992, 0.494, 0.078] }
     };
     function currentPalette() {
@@ -1683,7 +1690,7 @@
     let startTime = performance.now();
     function frame(now) {
       rafId = requestAnimationFrame(frame);
-      if (loginScreen.classList.contains('hidden') || document.hidden) return;
+      if (document.hidden || canvas.offsetParent === null) return;
       resize();
       const t = (now - startTime) / 1000;
       const pal = currentPalette();
@@ -1700,9 +1707,12 @@
 
     resize();
     window.addEventListener('resize', resize);
-    loginScreen.classList.add('webgl-active');
+    if (onReady) onReady();
     rafId = requestAnimationFrame(frame);
-  })();
+  }
+
+  initAuroraWebGL(document.getElementById('loginWebGL'), loginScreen, () => loginScreen.classList.add('webgl-active'));
+  initAuroraWebGL(document.getElementById('appWebGL'), document.getElementById('Time12App'));
 
   /* ---------- Magnetic glow for buttons ---------- */
   (function initMagneticGlow() {
@@ -1741,7 +1751,15 @@
       this.storeName = 'notes';
       this.syncQueueStore = 'syncQueue';
     }
-    async init() {
+    async init(scopeKey) {
+      // Namespace the local cache per logged-in user, so different tabs
+      // signed into different accounts never read or overwrite each other's notes.
+      const wantedName = scopeKey ? `Time12DB_${scopeKey}` : 'Time12DB';
+      if (this.db && this.dbName !== wantedName) {
+        this.db.close();
+        this.db = null;
+      }
+      this.dbName = wantedName;
       return new Promise((resolve, reject) => {
         const request = indexedDB.open(this.dbName, 2);
         request.onerror = () => reject(request.error);
@@ -4153,9 +4171,10 @@
       userGlyph.textContent = session.username.charAt(0).toUpperCase();
     }
 
-    if (!Time12Initialized) {
+    const scopeKey = session ? session.userId : null;
+    if (!Time12Initialized || db.dbName !== (scopeKey ? `Time12DB_${scopeKey}` : 'Time12DB')) {
       Time12Initialized = true;
-      await db.init();
+      await db.init(scopeKey);
     }
 
     if (isFreshLogin) {
