@@ -1407,6 +1407,7 @@
 
 <div class="toast-container" id="toastContainer"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
   /* ============================================================
    * Time12 — Make Time True
@@ -3142,25 +3143,82 @@
 
   function openAddAccountDialog() {
     dialogBox.innerHTML = `
-      <div class="dialog-title">Add Sub-Account</div>
-      <div class="dialog-text">Create a new account under your organization namespace (${orgNamespace}).</div>
-      
-      <div class="dialog-input-group">
-        <label>Username (no domain)</label>
-        <input type="text" id="subUserInput" class="dialog-input" placeholder="e.g. john.doe" autocomplete="off">
+      <div class="dialog-title">Add Account</div>
+      <div class="dialog-text">Create a new account under your organization namespace (${orgNamespace}), or import many at once from a CSV/Excel file.</div>
+
+      <div class="toggle-group">
+        <button class="toggle-btn active" id="addSingleTabBtn">Single Account</button>
+        <button class="toggle-btn" id="addImportTabBtn">Import CSV/Excel</button>
       </div>
 
-      <div class="dialog-input-group">
-        <label>Password Method</label>
-        <div class="toggle-group">
-          <button class="toggle-btn active" id="randomPassBtn">Generate Random</button>
-          <button class="toggle-btn" id="customPassBtn">Custom Password</button>
+      <div id="addSingleContent">
+        <div class="dialog-input-group">
+          <label>Username (no domain)</label>
+          <input type="text" id="subUserInput" class="dialog-input" placeholder="e.g. john.doe" autocomplete="off">
+        </div>
+
+        <div class="dialog-input-group">
+          <label>Password Method</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" id="randomPassBtn">Generate Random</button>
+            <button class="toggle-btn" id="customPassBtn">Custom Password</button>
+          </div>
+        </div>
+
+        <div class="dialog-input-group" id="customPassGroup" style="display:none;">
+          <label>Custom Password</label>
+          <input type="text" id="customPassInput" class="dialog-input" placeholder="Min 6 characters">
         </div>
       </div>
 
-      <div class="dialog-input-group" id="customPassGroup" style="display:none;">
-        <label>Custom Password</label>
-        <input type="text" id="customPassInput" class="dialog-input" placeholder="Min 6 characters">
+      <div id="addImportContent" style="display:none;">
+        <div class="dialog-input-group">
+          <label>File Format</label>
+          <div style="font-size: 12px; color: var(--text-muted); line-height: 1.6; background: var(--surface-2); border-radius: var(--radius); padding: 10px 12px;">
+            Three columns, one row per user: <code>group,username,password</code><br>
+            &bull; <strong>group</strong>: required. If a group with this name doesn't exist yet, it's created automatically.<br>
+            &bull; <strong>username</strong>: required. Existing accounts are just added to the group; new usernames get a new account.<br>
+            &bull; <strong>password</strong>: optional &mdash; leave blank and a random password is generated (new accounts only).<br>
+            Works with a <code>.csv</code> or an Excel <code>.xlsx</code>/<code>.xls</code> file. An optional header row is fine.
+          </div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 8px; font-family: monospace; background: var(--surface-2); border-radius: var(--radius); padding: 8px 10px; white-space: pre;">group,username,password
+Engineering,john.doe,
+Engineering,jane.smith,Secure123
+Marketing,alex99,</div>
+        </div>
+
+        <div class="dialog-input-group">
+          <label>Upload File</label>
+          <label class="csv-dropzone" id="bulkFileDropzone">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; margin-bottom: 8px;">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+            <div>Click to browse or drag & drop (.csv, .xlsx, .xls)</div>
+            <div class="csv-filename" id="bulkFileFilename"></div>
+            <input type="file" id="bulkFileInput" accept=".csv,.xlsx,.xls" />
+          </label>
+        </div>
+
+        <div class="dialog-input-group">
+          <label>Or Paste CSV Text</label>
+          <textarea id="bulkCsvTextarea" class="dialog-input" rows="5" style="font-family: monospace; font-size: 12px; resize: vertical;" placeholder="group,username,password"></textarea>
+        </div>
+
+        <div class="dialog-input-group">
+          <label>Password Method (rows without a password)</label>
+          <div class="toggle-group">
+            <button class="toggle-btn active" id="bulkRandomPassBtn">Generate Random</button>
+            <button class="toggle-btn" id="bulkCustomPassBtn">Custom Password</button>
+          </div>
+        </div>
+        <div class="dialog-input-group" id="bulkCustomPassGroup" style="display:none;">
+          <label>Custom Password</label>
+          <input type="text" id="bulkCustomPassInput" class="dialog-input" placeholder="Min 6 characters">
+        </div>
+
+        <div class="dialog-input-group">
+          <div id="bulkImportPreview" style="font-size: 12px; color: var(--text-muted);">Upload a file or paste rows above to see a preview.</div>
+        </div>
       </div>
 
       <div class="dialog-actions">
@@ -3170,10 +3228,32 @@
     `;
     dialogOverlay.classList.add('active');
 
+    // ---- Tabs: Single vs Import ----
+    const singleTabBtn = document.getElementById('addSingleTabBtn');
+    const importTabBtn = document.getElementById('addImportTabBtn');
+    const singleContent = document.getElementById('addSingleContent');
+    const importContent = document.getElementById('addImportContent');
+    const confirmBtn = document.getElementById('confirmAddAccount');
+
+    singleTabBtn.onclick = () => {
+      singleTabBtn.classList.add('active');
+      importTabBtn.classList.remove('active');
+      singleContent.style.display = 'block';
+      importContent.style.display = 'none';
+      confirmBtn.textContent = 'Add';
+    };
+    importTabBtn.onclick = () => {
+      importTabBtn.classList.add('active');
+      singleTabBtn.classList.remove('active');
+      importContent.style.display = 'block';
+      singleContent.style.display = 'none';
+      confirmBtn.textContent = 'Import';
+    };
+
+    // ---- Single account password toggle ----
     const randomBtn = document.getElementById('randomPassBtn');
     const customBtn = document.getElementById('customPassBtn');
     const customPassGroup = document.getElementById('customPassGroup');
-
     randomBtn.onclick = () => {
       randomBtn.classList.add('active');
       customBtn.classList.remove('active');
@@ -3185,31 +3265,354 @@
       customPassGroup.style.display = 'block';
     };
 
+    // ---- Bulk import wiring ----
+    const fileInput = document.getElementById('bulkFileInput');
+    const filenameEl = document.getElementById('bulkFileFilename');
+    const textarea = document.getElementById('bulkCsvTextarea');
+    const previewEl = document.getElementById('bulkImportPreview');
+    let currentBulkRows = [];
+
+    function refreshPreview() {
+      if (currentBulkRows.length === 0) {
+        previewEl.textContent = 'Upload a file or paste rows above to see a preview.';
+        return;
+      }
+      const s = summarizeBulkImportRows(currentBulkRows);
+      previewEl.innerHTML = `<strong>${s.totalRows}</strong> row(s) across <strong>${s.groupCount}</strong> group(s) &mdash; `
+        + `${s.newGroups} new group${s.newGroups === 1 ? '' : 's'}, ${s.existingGroups} existing group${s.existingGroups === 1 ? '' : 's'}; `
+        + `${s.newUsers} new user${s.newUsers === 1 ? '' : 's'} to create, ${s.existingUsers} existing user${s.existingUsers === 1 ? '' : 's'} to add.`;
+    }
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length === 0) return;
+      const file = e.target.files[0];
+      filenameEl.textContent = file.name;
+      const ext = file.name.split('.').pop().toLowerCase();
+
+      if (ext === 'xlsx' || ext === 'xls') {
+        if (typeof XLSX === 'undefined') {
+          toast('Excel support failed to load; try a CSV file instead.', 'error');
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          try {
+            const data = new Uint8Array(ev.target.result);
+            const wb = XLSX.read(data, { type: 'array' });
+            const sheet = wb.Sheets[wb.SheetNames[0]];
+            const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1, raw: false, defval: '' });
+            textarea.value = '';
+            currentBulkRows = parseBulkImportRowsFromAoa(aoa);
+            refreshPreview();
+          } catch (err) {
+            toast('Could not read that Excel file.', 'error');
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          textarea.value = ev.target.result;
+          currentBulkRows = parseBulkImportCsv(textarea.value);
+          refreshPreview();
+        };
+        reader.readAsText(file);
+      }
+    });
+
+    textarea.addEventListener('input', () => {
+      currentBulkRows = parseBulkImportCsv(textarea.value);
+      refreshPreview();
+    });
+
+    const bulkRandomBtn = document.getElementById('bulkRandomPassBtn');
+    const bulkCustomBtn = document.getElementById('bulkCustomPassBtn');
+    const bulkCustomPassGroup = document.getElementById('bulkCustomPassGroup');
+    bulkRandomBtn.onclick = () => {
+      bulkRandomBtn.classList.add('active');
+      bulkCustomBtn.classList.remove('active');
+      bulkCustomPassGroup.style.display = 'none';
+    };
+    bulkCustomBtn.onclick = () => {
+      bulkCustomBtn.classList.add('active');
+      bulkRandomBtn.classList.remove('active');
+      bulkCustomPassGroup.style.display = 'block';
+    };
+
     document.getElementById('cancelDialog').onclick = closeDialog;
-    document.getElementById('confirmAddAccount').onclick = async () => {
-      const subUsername = document.getElementById('subUserInput').value.trim();
-      if (!subUsername || !/^[a-zA-Z0-9]+$/.test(subUsername)) {
-        toast('Invalid username. Use only letters and numbers.', 'error');
+    confirmBtn.onclick = async () => {
+      const isImportActive = importTabBtn.classList.contains('active');
+
+      if (!isImportActive) {
+        const subUsername = document.getElementById('subUserInput').value.trim();
+        if (!subUsername || !/^[a-zA-Z0-9]+$/.test(subUsername)) {
+          toast('Invalid username. Use only letters and numbers.', 'error');
+          return;
+        }
+
+        const useRandom = randomBtn.classList.contains('active');
+        const customPass = document.getElementById('customPassInput').value;
+
+        try {
+          setStatus('saving');
+          const res = await orgApiCall({
+            action: 'add_account',
+            subUsername,
+            useRandomPassword: useRandom,
+            customPassword: customPass
+          });
+          showSingleCredentialDialog(res.username, res.password);
+          fetchAccounts();
+        } catch(e) {
+          toast(e.message, 'error');
+          setStatus('ready');
+        }
         return;
       }
 
-      const useRandom = randomBtn.classList.contains('active');
-      const customPass = document.getElementById('customPassInput').value;
+      if (currentBulkRows.length === 0) {
+        toast('Add at least one row first — upload a file or paste rows.', 'error');
+        return;
+      }
+      const useRandom = bulkRandomBtn.classList.contains('active');
+      const fallbackPassword = document.getElementById('bulkCustomPassInput').value || null;
 
       try {
         setStatus('saving');
-        const res = await orgApiCall({
-          action: 'add_account',
-          subUsername,
-          useRandomPassword: useRandom,
-          customPassword: customPass
-        });
-        showSingleCredentialDialog(res.username, res.password);
-        fetchAccounts();
-      } catch(e) {
+        await runBulkImport(currentBulkRows, useRandom, fallbackPassword);
+        closeDialog();
+      } catch (e) {
         toast(e.message, 'error');
+      } finally {
         setStatus('ready');
       }
+    };
+  }
+
+  /* ---------- Bulk import helpers: users into existing or brand-new groups, via CSV or Excel ---------- */
+  function flattenGroups(groups, acc = []) {
+    (groups || []).forEach(g => {
+      acc.push(g);
+      if (g.sub_groups && g.sub_groups.length) flattenGroups(g.sub_groups, acc);
+    });
+    return acc;
+  }
+
+  function findGroupByNameLoose(name) {
+    const flat = flattenGroups(orgGroups);
+    const target = name.trim().toLowerCase();
+    return flat.find(g => (g.name || '').trim().toLowerCase() === target) || null;
+  }
+
+  function findAccountByUsernameLoose(username) {
+    const target = username.trim().toLowerCase();
+    return (orgAccounts || []).find(a => (a.username || '').trim().toLowerCase() === target) || null;
+  }
+
+  function parseBulkImportRowsFromAoa(aoa) {
+    const rows = [];
+    (aoa || []).forEach(line => {
+      if (!line || line.length === 0) return;
+      const group = (line[0] === undefined || line[0] === null) ? '' : line[0].toString().trim();
+      const username = (line[1] === undefined || line[1] === null) ? '' : line[1].toString().trim();
+      const password = (line[2] === undefined || line[2] === null) ? '' : line[2].toString().trim();
+      if (!group || !username) return;
+      // Skip an optional header row, e.g. "group,username,password"
+      if (group.toLowerCase() === 'group' && username.toLowerCase() === 'username') return;
+      rows.push({ group, username, password });
+    });
+    return rows;
+  }
+
+  function parseBulkImportCsv(text) {
+    const lines = (text || '').split(/\r?\n/);
+    const aoa = lines.map(line => line.split(','));
+    return parseBulkImportRowsFromAoa(aoa);
+  }
+
+  function summarizeBulkImportRows(rows) {
+    const groupNames = new Set(rows.map(r => r.group));
+    let newGroups = 0, existingGroups = 0, newUsers = 0, existingUsers = 0;
+    groupNames.forEach(gn => {
+      if (findGroupByNameLoose(gn)) existingGroups++; else newGroups++;
+    });
+    const seenUsers = new Set();
+    rows.forEach(r => {
+      const key = r.username.toLowerCase();
+      if (seenUsers.has(key)) return;
+      seenUsers.add(key);
+      if (findAccountByUsernameLoose(r.username)) existingUsers++; else newUsers++;
+    });
+    return { totalRows: rows.length, groupCount: groupNames.size, newGroups, existingGroups, newUsers, existingUsers };
+  }
+
+  async function runBulkImport(rows, useRandom, fallbackPassword) {
+    const errors = [];
+    const createdAccounts = []; // {username, password}
+
+    // 1. Create any groups that don't exist yet (top-level).
+    const uniqueGroupNames = Array.from(new Set(rows.map(r => r.group)));
+    const groupsToCreate = uniqueGroupNames.filter(gn => !findGroupByNameLoose(gn));
+    for (const gn of groupsToCreate) {
+      try {
+        await orgApiCall({ action: 'create_group', name: gn, parentId: null });
+      } catch (e) {
+        errors.push(`Group "${gn}": ${e.message}`);
+      }
+    }
+    if (groupsToCreate.length > 0) {
+      await fetchGroups(); // refresh orgGroups so new groups + ids are known
+    }
+
+    // 2. Bucket rows by resolved groupId, deduping usernames (a new user is
+    //    created once, in the first group it appears in; later group rows
+    //    for that same new user are queued as secondary adds).
+    const existingAddsByGroup = {}; // groupId -> Set of userIds
+    const newAccountsByGroup = {};  // groupId -> [{username, password}]
+    const secondaryAdds = [];       // {username, groupId} for new users needing extra groups
+    const seenNewUsernames = new Map(); // username(lower) -> creation groupId
+
+    for (const row of rows) {
+      const group = findGroupByNameLoose(row.group);
+      if (!group) {
+        errors.push(`Row "${row.group},${row.username}": group could not be resolved.`);
+        continue;
+      }
+      const existingAccount = findAccountByUsernameLoose(row.username);
+      if (existingAccount) {
+        if (!existingAddsByGroup[group.id]) existingAddsByGroup[group.id] = new Set();
+        existingAddsByGroup[group.id].add(existingAccount.id);
+        continue;
+      }
+      const key = row.username.toLowerCase();
+      if (seenNewUsernames.has(key)) {
+        const creationGroupId = seenNewUsernames.get(key);
+        if (creationGroupId !== group.id) {
+          secondaryAdds.push({ username: row.username, groupId: group.id });
+        }
+        continue;
+      }
+      seenNewUsernames.set(key, group.id);
+      if (!newAccountsByGroup[group.id]) newAccountsByGroup[group.id] = [];
+      newAccountsByGroup[group.id].push({ username: row.username, password: row.password || fallbackPassword || null });
+    }
+
+    // 3. Create new accounts, grouped by their target group.
+    for (const groupId of Object.keys(newAccountsByGroup)) {
+      const accounts = newAccountsByGroup[groupId];
+      try {
+        const res = await orgApiCall({
+          action: 'add_accounts_bulk',
+          accounts,
+          groupId,
+          useRandomPassword: useRandom
+        });
+        if (res.addedAccounts) createdAccounts.push(...res.addedAccounts);
+        if (res.errors && res.errors.length) {
+          res.errors.forEach(err => errors.push(typeof err === 'string' ? err : JSON.stringify(err)));
+        }
+      } catch (e) {
+        errors.push(`Creating accounts for a group: ${e.message}`);
+      }
+    }
+
+    // 4. Add any brand-new users to their secondary groups (needs fresh ids).
+    if (secondaryAdds.length > 0) {
+      await fetchAccounts();
+      for (const add of secondaryAdds) {
+        const acc = findAccountByUsernameLoose(add.username);
+        if (!acc) { errors.push(`Could not add "${add.username}" to an additional group.`); continue; }
+        if (!existingAddsByGroup[add.groupId]) existingAddsByGroup[add.groupId] = new Set();
+        existingAddsByGroup[add.groupId].add(acc.id);
+      }
+    }
+
+    // 5. Add existing accounts (and newly-created secondary adds) to their groups.
+    for (const groupId of Object.keys(existingAddsByGroup)) {
+      const targetUserIds = Array.from(existingAddsByGroup[groupId]);
+      try {
+        await orgApiCall({ action: 'add_to_group', groupId, targetUserIds });
+      } catch (e) {
+        errors.push(`Adding existing members to a group: ${e.message}`);
+      }
+    }
+
+    fetchGroups();
+    fetchAccounts();
+
+    if (createdAccounts.length > 0) {
+      showBulkImportResultsDialog(createdAccounts, errors);
+    } else if (errors.length > 0) {
+      toast(`Import finished with ${errors.length} error(s).`, 'warn');
+    } else {
+      toast('Bulk import complete.');
+    }
+  }
+
+  function showBulkImportResultsDialog(createdAccounts, errors) {
+    const rowsHtml = createdAccounts.map(a => `
+      <tr>
+        <td class="mono">${escapeHtml(a.username || '')}</td>
+        <td class="mono">${escapeHtml(a.password || '')}</td>
+      </tr>
+    `).join('');
+
+    const errorsHtml = errors.length > 0 ? `
+      <div class="dialog-input-group">
+        <label>${errors.length} issue${errors.length === 1 ? '' : 's'}</label>
+        <div style="font-size: 12px; color: var(--danger); max-height: 120px; overflow-y: auto;">
+          ${errors.map(e => `<div>${escapeHtml(e)}</div>`).join('')}
+        </div>
+      </div>
+    ` : '';
+
+    dialogBox.innerHTML = `
+      <div class="dialog-title">Import Complete</div>
+      <div class="dialog-text">
+        ${createdAccounts.length} new account${createdAccounts.length === 1 ? '' : 's'} created. Copy these credentials now — passwords won't be shown again.
+      </div>
+      <div class="dialog-input-group" style="max-height: 240px; overflow-y: auto;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+          <thead><tr><th style="text-align:left; padding: 4px 8px;">Username</th><th style="text-align:left; padding: 4px 8px;">Password</th></tr></thead>
+          <tbody>${rowsHtml}</tbody>
+        </table>
+      </div>
+      ${errorsHtml}
+      <div class="dialog-actions">
+        <button class="btn-primary" id="downloadCredsCsvBtn">Download CSV</button>
+        <button class="btn-primary" id="downloadCredsXlsxBtn">Download Excel</button>
+        <button class="btn-primary main" id="acceptBulkResultsBtn">Done</button>
+      </div>
+    `;
+    dialogOverlay.classList.add('active');
+
+    document.getElementById('downloadCredsCsvBtn').onclick = () => {
+      const csv = 'username,password\n' + createdAccounts.map(a => `${a.username},${a.password}`).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'time12-bulk-import-credentials.csv';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    };
+
+    document.getElementById('downloadCredsXlsxBtn').onclick = () => {
+      if (typeof XLSX === 'undefined') {
+        toast('Excel support failed to load; use Download CSV instead.', 'error');
+        return;
+      }
+      const ws = XLSX.utils.aoa_to_sheet([['username', 'password'], ...createdAccounts.map(a => [a.username, a.password])]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Credentials');
+      XLSX.writeFile(wb, 'time12-bulk-import-credentials.xlsx');
+    };
+
+    document.getElementById('acceptBulkResultsBtn').onclick = () => {
+      closeDialog();
+      setStatus('ready');
     };
   }
 
