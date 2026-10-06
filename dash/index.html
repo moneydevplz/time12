@@ -5006,6 +5006,10 @@ Marketing,alex99,</div>
   }
 
   function anGo(type, id) {
+    // data-attributes are always strings; restore the real id type (e.g. numeric) so Map lookups and === comparisons match
+    const src = type === 'user' ? [...an.users.keys()] : type === 'group' ? [...an.groupById.keys()] : an.tasks.map(t => t.id);
+    const real = src.find(k => String(k) === String(id));
+    if (real !== undefined) id = real;
     const searchEl = document.getElementById('anSearch');
     if (an.q) { an.q = ''; an.stack = []; if (searchEl) searchEl.value = ''; }
     const top = an.stack[an.stack.length - 1];
