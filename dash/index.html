@@ -619,7 +619,7 @@
     border-bottom: 1px solid var(--app-glass-border); gap: 12px;
   }
 
-  .sidebar-tabs { display: flex; justify-content: center; flex: 1; min-width: 0; overflow: visible; justify-self: center; width: 100%; max-width: 360px; }
+  .sidebar-tabs { display: flex; justify-content: center; flex: 1; min-width: 0; overflow: visible; justify-self: center; width: 100%; max-width: 460px; }
   .tabs-container {  
     display: flex; align-items: center; gap: 6px; padding: 6px;
     background: var(--liquid-sheen), var(--app-glass-bg);
@@ -631,7 +631,7 @@
     transition: background 0.4s ease, border-color 0.4s ease;
   }  
   .tab-item {  
-    padding: 7px 24px; border-radius: 999px; color: var(--text-muted);
+    padding: 7px 20px; border-radius: 999px; color: var(--text-muted);
     cursor: pointer; font-size: 15px; font-weight: 500; transition: 0.2s ease;
     user-select: none; text-align: center; white-space: nowrap;
   }  
@@ -1026,7 +1026,6 @@
   .graph-area { fill: var(--accent-soft); opacity: 0.6; }
 
   /* ---------- Performance table (per-user check/fail history) ---------- */
-  .dialog-box.perf-dialog { max-width: 720px; width: 100%; }
   .perf-tabs {
     display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px;
   }
@@ -1072,6 +1071,75 @@
   .perf-mark.fail { color: var(--danger); }
   .perf-mark.na { color: var(--text-muted); }
   .perf-empty { padding: 32px 16px; text-align: center; color: var(--text-muted); font-size: 13px; }
+
+  /* ---------- Analytics tab ---------- */
+  .an-toolbar { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+  .an-search { flex: 1 1 280px; min-width: 0; }
+  .an-controls { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 32px; }
+  .an-controls .perf-tabs { margin-bottom: 0; }
+  .an-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; font-size: 13px; color: var(--text-muted); margin-bottom: 20px; }
+  .an-crumb { background: none; border: none; padding: 2px 0; font: inherit; color: var(--text-soft); cursor: pointer; }
+  .an-crumb:hover { color: var(--accent); }
+  .an-crumb.current { color: var(--text); font-weight: 600; cursor: default; }
+  .an-crumbs .sep { opacity: 0.5; }
+  .an-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+  .an-name { font-family: var(--serif); font-size: 34px; line-height: 1.15; letter-spacing: -0.02em; color: var(--text); word-break: break-word; }
+  .an-sub { font-size: 13px; color: var(--text-muted); margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px 14px; }
+  .an-link { background: none; border: none; padding: 0; font: inherit; color: var(--accent); cursor: pointer; text-align: left; }
+  .an-link:hover { color: var(--accent-hover); text-decoration: underline; }
+  .an-toggle { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-soft); cursor: pointer; }
+  .an-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 14px; }
+  .an-stat { background: var(--bg); padding: 16px 18px; }
+  .an-stat b { display: block; font-family: var(--serif); font-weight: 400; font-size: 30px; line-height: 1; color: var(--text); font-variant-numeric: tabular-nums; }
+  .an-stat b small { font-family: var(--sans); font-size: 12px; color: var(--text-muted); margin-left: 4px; }
+  .an-stat b.bad { color: var(--danger); }
+  .an-stat span { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 12px; color: var(--text-muted); }
+  .an-dot { width: 7px; height: 7px; border-radius: 50%; flex: none; }
+  .an-seg { display: flex; height: 6px; border-radius: 999px; overflow: hidden; background: var(--surface-2); min-width: 60px; }
+  .an-seg i { display: block; height: 100%; }
+  .an-seg.big { height: 10px; margin-bottom: 32px; }
+  .an-sec { margin-top: 40px; }
+  .an-sec-title { display: flex; align-items: baseline; gap: 10px; font-family: var(--serif); font-size: 24px; color: var(--text); margin-bottom: 12px; }
+  .an-sec-title small { font-family: var(--sans); font-size: 12px; color: var(--text-muted); }
+  .an-sec .list-overflow-toggle { margin-top: 10px; }
+  .an-list { border: 1px solid var(--app-glass-border); border-radius: var(--radius-lg); background: var(--app-glass-bg); overflow: hidden; }
+  .an-row { display: grid; grid-template-columns: minmax(0, 1fr) 96px 48px 14px; align-items: center; gap: 14px; width: 100%; padding: 12px 16px; background: transparent; border: none; border-bottom: 1px solid var(--border); text-align: left; font-family: var(--sans); color: var(--text); cursor: pointer; transition: background 0.15s ease; }
+  .an-row:last-child { border-bottom: none; }
+  .an-row:hover { background: var(--accent-soft); }
+  .an-row.person { grid-template-columns: minmax(0, 1fr) auto 14px; }
+  .an-row-main { min-width: 0; display: block; }
+  .an-row-name { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 14px; font-weight: 600; }
+  .an-row-name .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .an-row-sub { display: block; font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .an-row-sub .bad { color: var(--danger); font-weight: 600; }
+  .an-org { color: var(--text-muted); font-weight: 400; }
+  .an-chip { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; background: var(--surface-2); color: var(--text-soft); flex: none; }
+  .an-rate { font-size: 13px; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; color: var(--text-soft); }
+  .an-chev { width: 14px; height: 14px; color: var(--text-muted); }
+  .an-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; background: var(--surface-2); color: var(--text-muted); }
+  .an-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .an-badge.done { background: rgba(95, 122, 58, 0.15); color: var(--success); }
+  .an-badge.late { background: rgba(176, 136, 50, 0.15); color: var(--warn); }
+  .an-badge.review { background: var(--accent-soft); color: var(--accent); }
+  .an-badge.missed { background: rgba(162, 59, 42, 0.15); color: var(--danger); }
+  .an-trend { display: flex; align-items: flex-end; gap: 6px; height: 88px; }
+  .an-wk { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; }
+  .an-wk-bar { display: flex; flex-direction: column; height: 100%; border-radius: 3px; overflow: hidden; }
+  .an-wk-bar i { display: block; min-height: 2px; }
+  .an-wk-bar.empty { height: 8%; background: var(--surface-2); }
+  .an-trend-labels { display: flex; gap: 6px; margin-top: 6px; font-size: 10.5px; color: var(--text-muted); }
+  .an-trend-labels span { flex: 1; min-width: 0; white-space: nowrap; overflow: visible; }
+  .an-ring { position: relative; width: 150px; height: 150px; flex: none; }
+  .an-ring svg { width: 100%; height: 100%; }
+  .an-ring b { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; font: 400 34px/1 var(--serif); }
+  .an-ring b small { display: block; font: 500 11px var(--sans); color: var(--text-muted); margin-top: 4px; }
+  .an-task-top { display: flex; gap: 28px; align-items: center; flex-wrap: wrap; margin-bottom: 24px; }
+  .an-note { font-size: 13px; color: var(--text-muted); padding: 24px 4px; }
+  @media (max-width: 600px) {
+    .an-row { grid-template-columns: minmax(0, 1fr) 44px 14px; }
+    .an-row .an-seg { display: none; }
+    .an-name { font-size: 26px; }
+  }
 
   /* Dialogs */
   .dialog-overlay, .palette-overlay, .shortcuts-overlay {
@@ -1274,7 +1342,6 @@
     padding: 8px 12px; background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius);
     transition: 0.2s;
   }
-  .member-item:hover { border-color: var(--accent); cursor: pointer; background: var(--accent-soft); transform: translateX(2px); }
   .member-name { font-size: 14px; font-weight: 500; }
   .btn-member-remove {
     background: transparent; border: none; cursor: pointer;
@@ -1622,6 +1689,7 @@
           <div class="tab-item active" data-tab="Notes">Notes</div>
           <div class="tab-item" data-tab="MyTasks">My Tasks</div>
           <div class="tab-item" data-tab="Org">Org</div>
+          <div class="tab-item" data-tab="Analytics">Analytics</div>
         </div>
         
         <div class="tabs-dropdown" id="tabsDropdown">
@@ -1635,6 +1703,7 @@
             <div class="dropdown-item active" data-tab="Notes">Notes</div>
             <div class="dropdown-item" data-tab="MyTasks">My Tasks</div>
             <div class="dropdown-item" data-tab="Org">Org</div>
+            <div class="dropdown-item" data-tab="Analytics">Analytics</div>
           </div>
         </div>
       </div>
@@ -1694,6 +1763,10 @@
       <div class="org-inner" id="orgMainContent">
         <!-- Dynamic Table/Empty State injected here -->
       </div>
+    </div>
+
+    <div class="org-tab-content" id="analyticsTabContent">
+      <div class="org-inner" id="analyticsMainContent"></div>
     </div>
 
     <div class="editor-bottom-bar" id="editorBottomBar">
@@ -2054,6 +2127,7 @@
   }
 
   function showLogin() {
+    try { anReset(); } catch {}
     Time12App.style.display = 'none';
     loginScreen.classList.remove('hidden');
     usernameInput.value = '';
@@ -2740,6 +2814,8 @@
   const notesTabContent = document.getElementById('notesTabContent');
   const orgTabContent = document.getElementById('orgTabContent');
   const myTasksTabContent = document.getElementById('myTasksTabContent');
+  const analyticsTabContent = document.getElementById('analyticsTabContent');
+  const analyticsMainContent = document.getElementById('analyticsMainContent');
   const createTaskBtn = document.getElementById('createTaskBtn');
   const orgAddWrapper = document.getElementById('orgAddWrapper');
   const orgAddBtn = document.getElementById('orgAddBtn');
@@ -3292,11 +3368,6 @@
       });
     });
 
-    document.querySelectorAll('.member-item').forEach(item => {
-      item.addEventListener('click', () => {
-        openUserGraphDialog(item.dataset.userId, item.dataset.username);
-      });
-    });
   }
 
   // Delegated handler for "Show N more / Show less" toggles used by any
@@ -3321,7 +3392,6 @@
 
   function closeDialog() {
     dialogOverlay.classList.remove('active');
-    dialogBox.classList.remove('perf-dialog');
   }
 
   dialogOverlay.addEventListener('click', (e) => {
@@ -4491,186 +4561,501 @@ Marketing,alex99,</div>
     };
   }
 
-  /* ---------- User Tasks Logic & Graphs ---------- */
-
-  // Periods offered in the per-user performance table. `days` is how many
-  // calendar days back from today each tab renders. The backend
-  // (get_user_task_graph) only returns ~60 days of history, so any day
-  // outside that coverage — or any day with no task due — naturally has
-  // no entries and is rendered as "Not Available" rather than pass/fail.
-  const PERF_PERIODS = [
-    { key: '1D', label: '1D', days: 1 },
-    { key: '5D', label: '5D', days: 5 },
-    { key: '1W', label: '1W', days: 7 },
-    { key: '1M', label: '1M', days: 30 },
-    { key: '6M', label: '6M', days: 182 },
-    { key: '1Y', label: '1Y', days: 365 },
-    { key: '10Y', label: '10Y', days: 3650 },
-    { key: 'ALL', label: 'ALL', days: 7300 },
+  /* ---------- Analytics tab ---------- */
+  // One org-wide call (get_task_report) gives every assignment with its
+  // status; everything else (user / group / sub-group / task views,
+  // roll-ups, search) is computed here from that single dataset.
+  const AN_PERIODS = [
+    { key: '1D', days: 1 }, { key: '5D', days: 5 }, { key: '1W', days: 7 },
+    { key: '1M', days: 30 }, { key: '6M', days: 182 }, { key: '1Y', days: 365 },
+    { key: 'ALL', days: null },
   ];
-  const PERF_DEFAULT_PERIOD = '1M';
+  const AN_OUTCOMES = {
+    done:   { label: 'On time',   color: 'var(--success)' },
+    late:   { label: 'Late',      color: 'var(--warn)' },
+    review: { label: 'In review', color: 'var(--accent)' },
+    open:   { label: 'Open',      color: 'var(--text-muted)' },
+    missed: { label: 'Missed',    color: 'var(--danger)' },
+  };
+  const AN_ORDER = ['done', 'late', 'review', 'open', 'missed'];
+  const AN_CHEV = '<svg class="an-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>';
 
-  async function openUserGraphDialog(targetUserId, username) {
-    dialogBox.classList.add('perf-dialog');
-    dialogBox.innerHTML = `
-      <div class="dialog-title">Performance</div>
-      <div class="dialog-text">Task completion history for <strong>${escapeHtml(username)}</strong></div>
-      <div class="perf-tabs" id="perfTabs"></div>
-      <div class="perf-table-wrap" id="perfTableWrap">
-        <div class="skeleton-note" style="margin: 16px;"><div class="skeleton-line" style="width: 100%"></div><div class="skeleton-line short"></div></div>
-      </div>
-      <div class="dialog-actions">
-        <button class="btn-primary" id="downloadPerfXlsxBtn">Download Excel</button>
-        <button class="btn-primary main" id="closeGraphBtn">Close</button>
-      </div>
-    `;
-    dialogOverlay.classList.add('active');
+  const an = {
+    loaded: false, loading: false, error: null, fetchedAt: 0, mode: 'leader',
+    rows: [], tasks: [], groups: [], groupById: new Map(), users: new Map(),
+    stack: [], q: '', type: 'all', period: '1M', rollup: true, expanded: {}, shell: false,
+  };
 
-    document.getElementById('closeGraphBtn').onclick = closeDialog;
-
+  function anReset() {
     try {
-      const res = await orgApiCall({ action: 'get_user_task_graph', targetUserId });
-      const graphData = (res.success && Array.isArray(res.graphData)) ? res.graphData : [];
-      renderPerformanceTable(graphData, username);
-    } catch (error) {
-      document.getElementById('perfTableWrap').innerHTML = `<div style="text-align: center; color: var(--danger); padding: 20px;">${escapeHtml(error.message)}</div>`;
+      Object.assign(an, { loaded: false, loading: false, error: null, fetchedAt: 0, rows: [], tasks: [], groups: [],
+        groupById: new Map(), users: new Map(), stack: [], q: '', type: 'all', expanded: {}, shell: false });
+      if (analyticsMainContent) analyticsMainContent.innerHTML = '';
+    } catch {}
+  }
+
+  const anTime = (r) => (r.due != null ? r.due : r.when != null ? r.when : null);
+  const anPct = (v) => (v == null ? '–' : Math.round(v * 100) + '%');
+  const anDate = (t) => (t == null ? '–' : new Date(t).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }));
+  const anDay = (t) => (t == null ? '–' : new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }));
+  const anPlural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+  function anUserLabel(name) {
+    const i = name.indexOf('@');
+    if (i <= 0) return escapeHtml(name);
+    return `${escapeHtml(name.slice(0, i))}<span class="an-org">${escapeHtml(name.slice(i))}</span>`;
+  }
+
+  async function loadAnalytics(force) {
+    if (an.loading) return;
+    if (!force && an.loaded && Date.now() - an.fetchedAt < 30000) { anRender(); return; }
+    an.loading = true; an.error = null;
+    if (!an.loaded) anRender();
+    try {
+      const session = getStoredSession();
+      let rep = null;
+      try {
+        rep = await orgApiCall({ action: 'get_task_report' });
+      } catch (err) {
+        if (!/permission denied/i.test(err.message || '')) throw err;
+      }
+      if (rep) {
+        const [g, a] = await Promise.all([
+          orgApiCall({ action: 'list_groups' }).catch(() => null),
+          orgApiCall({ action: 'list_accounts' }).catch(() => null),
+        ]);
+        if (g && g.success && Array.isArray(g.groups)) orgGroups = g.groups;
+        if (a && a.success && Array.isArray(a.accounts)) orgAccounts = a.accounts;
+        const reports = Array.isArray(rep.reports) ? rep.reports : (rep.reports ? [rep.reports] : []);
+        an.mode = 'leader';
+        anBuild(reports);
+      } else {
+        // Members can only see their own history.
+        const res = await orgApiCall({ action: 'get_user_task_graph', targetUserId: session.userId });
+        const gd = (res.success && Array.isArray(res.graphData)) ? res.graphData : [];
+        an.mode = 'self';
+        an.rows = gd.map((it, i) => ({
+          taskId: 'self-' + i, title: it.title || 'Untitled task', groupId: null, groupName: '',
+          due: null, when: it.date ? new Date(it.date).getTime() : null,
+          userId: session.userId, username: session.username, status: it.status,
+          outcome: it.status === 'completed' ? 'done' : it.status === 'failed' ? 'missed' : 'open',
+          submittedAt: null,
+        }));
+        an.users = new Map([[session.userId, { id: session.userId, username: session.username, groupIds: new Set() }]]);
+        an.groups = []; an.groupById = new Map(); an.tasks = [];
+        an.stack = [{ type: 'user', id: session.userId }];
+      }
+      an.loaded = true; an.fetchedAt = Date.now();
+    } catch (err) {
+      an.error = err.message || 'Could not load analytics.';
+    } finally {
+      an.loading = false;
+      if (currentTab === 'Analytics') anRender();
     }
   }
 
-  function renderPerformanceTable(graphData, username) {
-    const tabsEl = document.getElementById('perfTabs');
-    const wrapEl = document.getElementById('perfTableWrap');
-    const downloadBtn = document.getElementById('downloadPerfXlsxBtn');
-    if (!tabsEl || !wrapEl) return;
-
-    // Bucket the raw graph entries by their (YYYY-MM-DD) due date so each
-    // calendar day can be looked up in O(1) while rendering a period.
-    const dayMap = {};
-    graphData.forEach(item => {
-      if (!item || !item.date) return;
-      const dateStr = String(item.date).split('T')[0];
-      if (!dayMap[dateStr]) dayMap[dateStr] = [];
-      dayMap[dateStr].push(item);
+  function anBuild(reports) {
+    const now = Date.now();
+    an.rows = [];
+    reports.forEach(r => {
+      const due = r.dueDate ? new Date(r.dueDate).getTime() : null;
+      ['completed', 'failed', 'pending'].forEach(bucket => {
+        (r[bucket] || []).forEach(e => {
+          let outcome;
+          if (e.status === 'completed') outcome = e.onTime === false ? 'late' : 'done';
+          else if (e.status === 'pending') outcome = 'review';          // handed in, waiting for a leader
+          else if (due != null && due < now) outcome = 'missed';
+          else outcome = 'open';
+          an.rows.push({
+            taskId: r.taskId, title: r.title || 'Untitled task', groupId: r.groupId, groupName: r.groupName || '',
+            due, when: null, userId: e.userId, username: e.username || 'Unknown user', status: e.status,
+            outcome, submittedAt: e.submittedAt, verifiedAt: e.verifiedAt,
+          });
+        });
+      });
     });
+    an.tasks = reports.map(r => ({ id: r.taskId, title: r.title || 'Untitled task', groupId: r.groupId, groupName: r.groupName || '', due: r.dueDate ? new Date(r.dueDate).getTime() : null }));
 
-    tabsEl.innerHTML = PERF_PERIODS.map(p => `
-      <button class="perf-tab${p.key === PERF_DEFAULT_PERIOD ? ' active' : ''}" data-period="${p.key}">${p.label}</button>
-    `).join('');
-
-    let currentRows = [];
-
-    function perfMarkHtml(state) {
-      if (state === 'pass') {
-        return `<span class="perf-mark pass" title="Completed on time">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="9.5" fill="currentColor" opacity="0.16"/>
-            <path d="M7.5 12.5l3 3 6-6.5"/>
-          </svg>
-        </span>`;
-      }
-      if (state === 'fail') {
-        return `<span class="perf-mark fail" title="Not completed">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="9.5" fill="currentColor" opacity="0.16"/>
-            <path d="M8.5 8.5l7 7M15.5 8.5l-7 7"/>
-          </svg>
-        </span>`;
-      }
-      return `<span class="perf-mark na" title="Not available">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
-          <circle cx="12" cy="12" r="9.5" fill="currentColor" opacity="0.08"/>
-          <line x1="8" y1="12" x2="16" y2="12"/>
-        </svg>
-      </span>`;
-    }
-
-    function formatDate(dateStr) {
-      const d = new Date(dateStr + 'T00:00:00');
-      return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-    }
-
-    function localDateStr(d) {
-      const y = d.getFullYear();
-      const m = String(d.getMonth() + 1).padStart(2, '0');
-      const day = String(d.getDate()).padStart(2, '0');
-      return `${y}-${m}-${day}`;
-    }
-
-    function renderPeriod(periodKey) {
-      const period = PERF_PERIODS.find(p => p.key === periodKey) || PERF_PERIODS[3];
-      tabsEl.querySelectorAll('.perf-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.period === period.key));
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const rows = [];
-      for (let i = 0; i < period.days; i++) {
-        const d = new Date(today);
-        d.setDate(today.getDate() - i);
-        const dateStr = localDateStr(d);
-        const entries = dayMap[dateStr];
-
-        let state, label, titles = '';
-        if (!entries || entries.length === 0) {
-          state = 'na';
-          label = 'Not Available';
-        } else {
-          const allCompleted = entries.every(e => e.status === 'completed');
-          state = allCompleted ? 'pass' : 'fail';
-          label = allCompleted ? 'Completed' : 'Failed';
-          titles = entries.map(e => e.title).filter(Boolean).join(', ');
-        }
-        rows.push({ dateStr, state, label, titles });
-      }
-      currentRows = rows;
-
-      if (rows.every(r => r.state === 'na')) {
-        wrapEl.innerHTML = `<div class="perf-empty">No task activity recorded for this range — showing "Not Available" for every day.</div>`;
-        return;
-      }
-
-      wrapEl.innerHTML = `
-        <table class="perf-table">
-          <thead>
-            <tr><th>Date</th><th>Result</th><th>Task(s)</th></tr>
-          </thead>
-          <tbody>
-            ${rows.map(r => `
-              <tr class="perf-row perf-row-${r.state}">
-                <td class="perf-date">${formatDate(r.dateStr)}</td>
-                <td class="perf-result">${perfMarkHtml(r.state)}<span class="perf-status-text">${r.label}</span></td>
-                <td class="perf-tasks">${r.titles ? escapeHtml(r.titles) : `<span class="perf-muted">${r.state === 'na' ? '–' : '—'}</span>`}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      `;
-    }
-
-    tabsEl.querySelectorAll('.perf-tab').forEach(btn => {
-      btn.addEventListener('click', () => renderPeriod(btn.dataset.period));
-    });
-
-    if (downloadBtn) {
-      downloadBtn.onclick = () => {
-        if (typeof XLSX === 'undefined') {
-          toast('Excel support failed to load; please try again.', 'error');
-          return;
-        }
-        const aoa = [
-          ['Date', 'Result', 'Task(s)'],
-          ...currentRows.map(r => [r.dateStr, r.label, r.titles || 'Not Available'])
-        ];
-        const ws = XLSX.utils.aoa_to_sheet(aoa);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, 'Performance');
-        const safeName = (username || 'user').replace(/[^a-z0-9]+/gi, '_');
-        XLSX.writeFile(wb, `time12-performance-${safeName}.xlsx`);
+    an.groups = []; an.groupById = new Map();
+    const walk = (nodes, depth, parentId) => (nodes || []).forEach(n => {
+      const g = {
+        id: n.id, name: n.name, parentId, depth,
+        members: (n.group_members || []).filter(m => m.users).map(m => ({ id: m.user_id, username: m.users.username })),
+        children: (n.sub_groups || []).map(c => c.id),
       };
-    }
+      an.groups.push(g); an.groupById.set(g.id, g);
+      walk(n.sub_groups, depth + 1, n.id);
+    });
+    walk(orgGroups, 0, null);
 
-    renderPeriod(PERF_DEFAULT_PERIOD);
+    an.users = new Map();
+    const addU = (id, username) => {
+      if (!id) return null;
+      const u = an.users.get(id) || { id, username: null, groupIds: new Set() };
+      if (username && !u.username) u.username = username;
+      an.users.set(id, u);
+      return u;
+    };
+    an.groups.forEach(g => g.members.forEach(m => addU(m.id, m.username).groupIds.add(g.id)));
+    (orgAccounts || []).forEach(a => addU(a.id, a.username));
+    an.rows.forEach(r => addU(r.userId, r.username));
+    an.users.forEach(u => { if (!u.username) u.username = 'Unknown user'; });
+    an.stack = [];
   }
+
+  /* --- scoping & stats --- */
+  function anGroupSet(id) {
+    const s = new Set([id]);
+    if (!an.rollup) return s;
+    const walk = gid => ((an.groupById.get(gid) || {}).children || []).forEach(c => { s.add(c); walk(c); });
+    walk(id);
+    return s;
+  }
+  function anInPeriod(r) {
+    const p = AN_PERIODS.find(x => x.key === an.period);
+    if (!p || p.days == null) return true;
+    const t = anTime(r);
+    if (t == null) return true;
+    const start = new Date(); start.setHours(0, 0, 0, 0); start.setDate(start.getDate() - (p.days - 1));
+    return t >= start.getTime();
+  }
+  function anScope(view) {
+    let rows = an.rows;
+    if (view.type === 'user') rows = rows.filter(r => r.userId === view.id);
+    else if (view.type === 'task') rows = rows.filter(r => r.taskId === view.id);
+    else if (view.type === 'group') { const ids = anGroupSet(view.id); rows = rows.filter(r => ids.has(r.groupId)); }
+    return rows;
+  }
+  const anScopeFiltered = (view) => (view.type === 'task' ? anScope(view) : anScope(view).filter(anInPeriod));
+  function anStats(rows) {
+    const c = { done: 0, late: 0, review: 0, open: 0, missed: 0 };
+    rows.forEach(r => { c[r.outcome]++; });
+    const total = rows.length, completed = c.done + c.late;
+    return { ...c, total, completed, rate: total ? completed / total : null, onTime: completed ? c.done / completed : null };
+  }
+  function anGroupBy(rows, key) {
+    const m = new Map();
+    rows.forEach(r => { const k = r[key]; if (!m.has(k)) m.set(k, []); m.get(k).push(r); });
+    return m;
+  }
+  function anViewName(v) {
+    if (v.type === 'user') { const u = an.users.get(v.id); return u ? u.username : 'User'; }
+    if (v.type === 'group') { const g = an.groupById.get(v.id); return g ? g.name : 'Group'; }
+    if (v.type === 'task') { const t = an.tasks.find(x => x.id === v.id); return t ? t.title : 'Task'; }
+    return 'Analytics';
+  }
+
+  /* --- small html builders --- */
+  function anSeg(s, cls) {
+    const inner = s.total ? AN_ORDER.filter(k => s[k]).map(k => `<i style="flex:${s[k]};background:${AN_OUTCOMES[k].color}" title="${AN_OUTCOMES[k].label}: ${s[k]}"></i>`).join('') : '';
+    return `<span class="an-seg ${cls || ''}">${inner}</span>`;
+  }
+  function anStatsHtml(s) {
+    const cell = (n, label, color, extra, cls) => `<div class="an-stat"><b${cls ? ` class="${cls}"` : ''}>${n}${extra || ''}</b><span>${color ? `<i class="an-dot" style="background:${color}"></i>` : ''}${label}</span></div>`;
+    return `<div class="an-stats">` +
+      cell(s.completed, 'Completed', null, `<small>of ${s.total} · ${anPct(s.rate)}</small>`) +
+      AN_ORDER.map(k => cell(s[k], AN_OUTCOMES[k].label, AN_OUTCOMES[k].color, '', k === 'missed' && s.missed ? 'bad' : '')).join('') +
+      `</div>` + anSeg(s, 'big');
+  }
+  function anRow(o) {
+    const missed = o.s.missed ? `<span class="bad">${o.s.missed} missed</span>` : '';
+    const sub = [o.sub, missed].filter(Boolean).join(' · ');
+    return `<button type="button" class="an-row" data-an-type="${o.type}" data-an-id="${escapeHtml(o.id)}"${o.indent ? ` style="padding-left:${16 + o.indent * 20}px"` : ''}>
+      <span class="an-row-main"><span class="an-row-name"><span class="t">${o.name}</span>${o.chip ? `<span class="an-chip">${o.chip}</span>` : ''}</span>${sub ? `<span class="an-row-sub">${sub}</span>` : ''}</span>
+      ${anSeg(o.s)}<span class="an-rate">${anPct(o.s.rate)}</span>${AN_CHEV}</button>`;
+  }
+  function anSection(key, title, items, render, cap) {
+    if (!items.length) return '';
+    cap = cap || 8;
+    const open = an.expanded[key];
+    const list = open ? items : items.slice(0, cap);
+    return `<section class="an-sec"><div class="an-sec-title">${title}<small>${items.length}</small></div>
+      <div class="an-list">${list.map(render).join('')}</div>
+      ${items.length > cap ? `<button type="button" class="list-overflow-toggle" data-an-act="toggle" data-key="${key}">${open ? 'Show less' : `Show all ${items.length}`}</button>` : ''}</section>`;
+  }
+  function anTrendHtml(rows) {
+    const WEEKS = 12, WK = 7 * 864e5;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const monday = new Date(today); monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+    const start = new Date(monday); start.setDate(monday.getDate() - 7 * (WEEKS - 1));
+    const buckets = Array.from({ length: WEEKS }, () => []);
+    rows.forEach(r => {
+      const t = anTime(r); if (t == null) return;
+      const i = Math.floor((t - start.getTime()) / WK);
+      if (i >= 0 && i < WEEKS) buckets[i].push(r);
+    });
+    if (buckets.every(b => !b.length)) return '';
+    const lab = i => { const d = new Date(start); d.setDate(start.getDate() + 7 * i); return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); };
+    const cols = buckets.map((b, i) => {
+      const s = anStats(b);
+      const title = b.length ? `Week of ${lab(i)}: ${s.completed} of ${s.total} completed${s.missed ? `, ${s.missed} missed` : ''}` : `Week of ${lab(i)}: no tasks due`;
+      const segs = ['missed', 'open', 'review', 'late', 'done'].filter(k => s[k]).map(k => `<i style="flex:${s[k]};background:${AN_OUTCOMES[k].color}"></i>`).join('');
+      return `<div class="an-wk" title="${escapeHtml(title)}"><div class="an-wk-bar${b.length ? '' : ' empty'}">${segs}</div></div>`;
+    }).join('');
+    const labels = buckets.map((_, i) => `<span>${i % 3 === 0 ? lab(i) : ''}</span>`).join('');
+    return `<div class="an-sec" style="margin-top:0;margin-bottom:8px"><div class="an-sec-title" style="font-size:18px">Last 12 weeks</div><div class="an-trend">${cols}</div><div class="an-trend-labels">${labels}</div></div>`;
+  }
+  function anRingHtml(rows) {
+    const n = rows.length; if (!n) return '';
+    const rank = { done: 0, late: 1, review: 2, open: 3, missed: 4 };
+    const sorted = [...rows].sort((a, b) => rank[a.outcome] - rank[b.outcome]);
+    const w = Math.max(1.6, Math.min(5, 260 / n));
+    const lines = sorted.map((r, i) => {
+      const a = (i / n) * 2 * Math.PI - Math.PI / 2, c = Math.cos(a), s = Math.sin(a);
+      return `<line x1="${(75 + c * 54).toFixed(1)}" y1="${(75 + s * 54).toFixed(1)}" x2="${(75 + c * 70).toFixed(1)}" y2="${(75 + s * 70).toFixed(1)}" style="stroke:${AN_OUTCOMES[r.outcome].color}" stroke-width="${w}" stroke-linecap="round"><title>${escapeHtml(r.username)}: ${AN_OUTCOMES[r.outcome].label}</title></line>`;
+    }).join('');
+    const done = rows.filter(r => r.outcome === 'done' || r.outcome === 'late').length;
+    return `<div class="an-ring"><svg viewBox="0 0 150 150">${lines}</svg><b>${done}<small>of ${n} done</small></b></div>`;
+  }
+  const anDownloadBtn = `<button type="button" class="btn-row" data-an-act="xlsx">Download Excel</button>`;
+
+  /* --- entity row factories --- */
+  function anUserRow(u, byUser) {
+    const rows = byUser.get(u.id) || [];
+    const names = [...u.groupIds].map(id => (an.groupById.get(id) || {}).name).filter(Boolean);
+    return anRow({ type: 'user', id: u.id, name: anUserLabel(u.username), s: anStats(rows),
+      sub: rows.length ? escapeHtml(names.slice(0, 2).join(', ')) : 'No tasks in this period' });
+  }
+  function anGroupRow(g, byGroup, indent, chip) {
+    const ids = anGroupSet(g.id);
+    let rows = []; const mem = new Set();
+    ids.forEach(id => { rows = rows.concat(byGroup.get(id) || []); ((an.groupById.get(id) || {}).members || []).forEach(m => mem.add(m.id)); });
+    return anRow({ type: 'group', id: g.id, name: escapeHtml(g.name), chip: chip === false ? '' : (g.depth > 0 ? 'Sub-group' : 'Group'),
+      s: anStats(rows), sub: anPlural(mem.size, 'member'), indent });
+  }
+  function anTaskRow(t, byTask, withChip) {
+    return anRow({ type: 'task', id: t.id, name: escapeHtml(t.title), chip: withChip ? 'Task' : '',
+      s: anStats(byTask.get(t.id) || []), sub: `${escapeHtml(t.groupName)}${t.groupName ? ' · ' : ''}Due ${anDay(t.due)}` });
+  }
+
+  /* --- views --- */
+  function anOverviewHtml() {
+    const rows = an.rows.filter(anInPeriod);
+    const s = anStats(rows);
+    const byUser = anGroupBy(rows, 'userId'), byGroup = anGroupBy(rows, 'groupId'), byTask = anGroupBy(rows, 'taskId');
+    const want = k => an.type === 'all' || an.type === k;
+    const users = [...an.users.values()].sort((a, b) => a.username.localeCompare(b.username));
+    const attention = users.map(u => ({ u, st: anStats(byUser.get(u.id) || []) })).filter(x => x.st.missed > 0)
+      .sort((a, b) => b.st.missed - a.st.missed || (a.st.rate || 0) - (b.st.rate || 0)).map(x => x.u);
+    const tasks = an.tasks.filter(t => byTask.has(t.id)).sort((a, b) => (b.due || 0) - (a.due || 0));
+
+    if (!an.rows.length && !an.groups.length && !an.users.size) {
+      return `<div class="empty-state"><div class="empty-state-title">Nothing to measure yet</div><div class="empty-state-text">Create a group, add its members and post a task. Results show up here as work comes in.</div></div>`;
+    }
+    return `
+      <div class="an-head"><div><div class="an-name">Whole organization</div><div class="an-sub"><span>${anPlural(s.total, 'assignment')} in this period</span></div></div>${anDownloadBtn}</div>
+      ${anStatsHtml(s)}${anTrendHtml(an.rows)}
+      ${an.type === 'all' ? anSection('attention', 'Needs attention', attention, u => anUserRow(u, byUser), 5) : ''}
+      ${want('groups') ? anSection('groups', 'Groups', an.groups, g => anGroupRow(g, byGroup, g.depth, true), 10) : ''}
+      ${want('users') ? anSection('users', 'People', users, u => anUserRow(u, byUser), 10) : ''}
+      ${want('tasks') ? anSection('tasks', 'Tasks', tasks, t => anTaskRow(t, byTask, false), 8) : ''}
+      ${an.type === 'all' && !attention.length && rows.length ? `<div class="an-note">Nobody has missed a deadline in this period.</div>` : ''}`;
+  }
+
+  function anGroupHtml(view) {
+    const g = an.groupById.get(view.id);
+    if (!g) return `<div class="an-note">This group no longer exists.</div>`;
+    const ids = anGroupSet(g.id);
+    const rows = anScopeFiltered(view);
+    const s = anStats(rows);
+    const byUser = anGroupBy(rows, 'userId'), byGroup = anGroupBy(rows, 'groupId'), byTask = anGroupBy(rows, 'taskId');
+    const memberIds = new Set(); ids.forEach(id => ((an.groupById.get(id) || {}).members || []).forEach(m => memberIds.add(m.id)));
+    const members = [...memberIds].map(id => an.users.get(id)).filter(Boolean).sort((a, b) => a.username.localeCompare(b.username));
+    const subs = g.children.map(id => an.groupById.get(id)).filter(Boolean);
+    const tasks = an.tasks.filter(t => ids.has(t.groupId) && byTask.has(t.id)).sort((a, b) => (b.due || 0) - (a.due || 0));
+    const path = []; for (let p = g; p; p = p.parentId ? an.groupById.get(p.parentId) : null) path.unshift(p.name);
+    return `
+      <div class="an-head"><div><div class="an-name">${escapeHtml(g.name)}</div>
+        <div class="an-sub">${path.length > 1 ? `<span>${path.map(escapeHtml).join(' › ')}</span>` : ''}<span>${anPlural(memberIds.size, 'person')}${an.rollup && subs.length ? ' incl. sub-groups' : ''}</span></div></div>
+        <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+          ${g.children.length ? `<label class="an-toggle"><input type="checkbox" data-an-act="rollup" ${an.rollup ? 'checked' : ''}> Include sub-groups</label>` : ''}${anDownloadBtn}</div></div>
+      ${anStatsHtml(s)}${anTrendHtml(anScope(view))}
+      ${anSection('g-subs', 'Sub-groups', subs, sg => anGroupRow(sg, byGroup, 0, false), 8)}
+      ${anSection('g-members', 'People', members, u => anUserRow(u, byUser), 10)}
+      ${anSection('g-tasks', 'Tasks', tasks, t => anTaskRow(t, byTask, false), 8)}
+      ${!rows.length ? `<div class="an-note">No tasks were due in this period. Try a longer range.</div>` : ''}`;
+  }
+
+  function anUserHtml(view) {
+    const u = an.users.get(view.id);
+    if (!u) return `<div class="an-note">This account no longer exists.</div>`;
+    const all = anScope(view);
+    const rows = all.filter(anInPeriod).sort((a, b) => (anTime(b) || 0) - (anTime(a) || 0));
+    const s = anStats(rows);
+    const groups = [...u.groupIds].map(id => an.groupById.get(id)).filter(Boolean);
+    const self = an.mode === 'self';
+    const CAP = 150;
+    const table = rows.length ? `
+      <div class="perf-table-wrap" style="max-height:520px"><table class="perf-table"><thead><tr>
+        <th>Task</th>${self ? '' : '<th>Group</th>'}<th>${self ? 'Date' : 'Due'}</th><th>Result</th>${self ? '' : '<th>Handed in</th>'}</tr></thead><tbody>
+        ${rows.slice(0, CAP).map(r => `<tr>
+          <td>${self ? escapeHtml(r.title) : `<button type="button" class="an-link" data-an-type="task" data-an-id="${escapeHtml(r.taskId)}">${escapeHtml(r.title)}</button>`}</td>
+          ${self ? '' : `<td>${r.groupId ? `<button type="button" class="an-link" data-an-type="group" data-an-id="${escapeHtml(r.groupId)}">${escapeHtml(r.groupName)}</button>` : '–'}</td>`}
+          <td class="perf-date">${anDate(anTime(r))}</td>
+          <td><span class="an-badge ${r.outcome}">${r.status === 'rejected' && r.outcome === 'open' ? 'Redo' : AN_OUTCOMES[r.outcome].label}</span></td>
+          ${self ? '' : `<td class="perf-tasks">${r.submittedAt ? anDate(new Date(r.submittedAt).getTime()) : '–'}</td>`}</tr>`).join('')}
+      </tbody></table></div>${rows.length > CAP ? `<div class="an-note">Showing the latest ${CAP} of ${rows.length}. Download Excel for everything.</div>` : ''}`
+      : `<div class="an-note">No tasks were due in this period. Try a longer range.</div>`;
+    return `
+      <div class="an-head"><div><div class="an-name">${anUserLabel(u.username)}</div>
+        <div class="an-sub">${groups.length ? `<span>${groups.map(g => `<button type="button" class="an-link" data-an-type="group" data-an-id="${escapeHtml(g.id)}">${escapeHtml(g.name)}</button>`).join(', ')}</span>` : (self ? '<span>Your task history</span>' : '<span>Not in any group</span>')}</div></div>${anDownloadBtn}</div>
+      ${anStatsHtml(s)}${anTrendHtml(all)}${table}`;
+  }
+
+  function anTaskHtml(view) {
+    const t = an.tasks.find(x => x.id === view.id);
+    if (!t) return `<div class="an-note">This task no longer exists.</div>`;
+    const rows = anScope(view);
+    const s = anStats(rows);
+    const rank = { missed: 0, open: 1, review: 2, late: 3, done: 4 };
+    const people = [...rows].sort((a, b) => rank[a.outcome] - rank[b.outcome] || a.username.localeCompare(b.username));
+    const pastDue = t.due != null && t.due < Date.now();
+    return `
+      <div class="an-task-top">${anRingHtml(rows)}
+        <div style="flex:1;min-width:220px"><div class="an-name">${escapeHtml(t.title)}</div>
+          <div class="an-sub">${t.groupId ? `<button type="button" class="an-link" data-an-type="group" data-an-id="${escapeHtml(t.groupId)}">${escapeHtml(t.groupName)}</button>` : ''}<span>Due ${anDate(t.due)}${pastDue ? ' · deadline passed' : ''}</span></div>
+          <div style="margin-top:14px">${anDownloadBtn}</div></div></div>
+      ${anStatsHtml(s)}
+      <section class="an-sec" style="margin-top:28px"><div class="an-sec-title">People<small>${people.length}</small></div>
+        <div class="an-list">${people.map(r => `
+          <button type="button" class="an-row person" data-an-type="user" data-an-id="${escapeHtml(r.userId)}">
+            <span class="an-row-main"><span class="an-row-name"><span class="t">${anUserLabel(r.username)}</span></span>
+              <span class="an-row-sub">${r.submittedAt ? 'Handed in ' + anDate(new Date(r.submittedAt).getTime()) : (r.status === 'rejected' ? 'Rejected, needs resubmission' : 'Nothing handed in')}</span></span>
+            <span class="an-badge ${r.outcome}">${AN_OUTCOMES[r.outcome].label}</span>${AN_CHEV}</button>`).join('') || '<div class="an-note">Nobody is assigned to this task.</div>'}</div></section>`;
+  }
+
+  function anSearchHtml() {
+    const q = an.q.trim().toLowerCase();
+    const rows = an.rows.filter(anInPeriod);
+    const byUser = anGroupBy(rows, 'userId'), byGroup = anGroupBy(rows, 'groupId'), byTask = anGroupBy(rows, 'taskId');
+    const rank = (name) => (name.toLowerCase().startsWith(q) ? 0 : 1);
+    const hit = (arr, get) => arr.filter(x => get(x).toLowerCase().includes(q)).sort((a, b) => rank(get(a)) - rank(get(b)) || get(a).localeCompare(get(b)));
+    const want = k => an.type === 'all' || an.type === k;
+    const users = want('users') ? hit([...an.users.values()], u => u.username) : [];
+    const groups = want('groups') ? hit(an.groups, g => g.name) : [];
+    const tasks = want('tasks') ? hit(an.tasks, t => t.title + ' ' + t.groupName) : [];
+    if (!users.length && !groups.length && !tasks.length) {
+      return `<div class="an-note">Nothing matches “${escapeHtml(an.q.trim())}”.</div>`;
+    }
+    return anSection('q-users', 'People', users, u => anUserRow(u, byUser), 8) +
+      anSection('q-groups', 'Groups', groups, g => anGroupRow(g, byGroup, 0, true), 8) +
+      anSection('q-tasks', 'Tasks', tasks, t => anTaskRow(t, byTask, false), 8);
+  }
+
+  /* --- render --- */
+  function anBuildShell() {
+    analyticsMainContent.innerHTML = `
+      <div class="org-header"><div><div class="org-title">Analytics</div></div>
+        <button type="button" class="btn-row" data-an-act="refresh">Refresh</button></div>
+      <div class="org-meta" id="anMeta"><span>Who is done, who is late, who is pending</span></div>
+      <div id="anFinder">
+        <div class="an-toolbar">
+          <div class="an-search"><input type="text" class="search-input" id="anSearch" placeholder="Search a person, group or task" autocomplete="off" spellcheck="false"></div>
+          <div class="perf-tabs" id="anTypes" style="margin-bottom:0">
+            ${[['all', 'All'], ['users', 'People'], ['groups', 'Groups'], ['tasks', 'Tasks']].map(([k, l]) => `<button type="button" class="perf-tab${k === an.type ? ' active' : ''}" data-an-type-filter="${k}">${l}</button>`).join('')}
+          </div>
+        </div>
+      </div>
+      <div class="an-controls"><div class="perf-tabs" id="anPeriods">
+        ${AN_PERIODS.map(p => `<button type="button" class="perf-tab${p.key === an.period ? ' active' : ''}" data-an-period="${p.key}">${p.key}</button>`).join('')}
+      </div></div>
+      <div id="anBody"></div>`;
+    an.shell = true;
+  }
+
+  function anRender() {
+    if (!analyticsMainContent) return;
+    if (!an.shell || !document.getElementById('anBody')) anBuildShell();
+    const body = document.getElementById('anBody');
+    const meta = document.getElementById('anMeta');
+    const finder = document.getElementById('anFinder');
+    if (an.loading && !an.loaded) {
+      body.innerHTML = `<div class="skeleton-note"><div class="skeleton-line" style="width:100%"></div><div class="skeleton-line short"></div></div><div class="skeleton-note"><div class="skeleton-line" style="width:100%"></div><div class="skeleton-line short"></div></div>`;
+      return;
+    }
+    if (an.error && !an.loaded) {
+      body.innerHTML = `<div class="empty-state"><div class="empty-state-title">Couldn't load analytics</div><div class="empty-state-text">${escapeHtml(an.error)}</div><button type="button" class="btn-action primary" data-an-act="refresh" style="margin:0 auto;display:inline-flex">Try again</button></div>`;
+      return;
+    }
+    const self = an.mode === 'self';
+    if (finder) finder.style.display = self ? 'none' : '';
+    if (meta && !self) meta.innerHTML = `<span>${anPlural(an.users.size, 'person')}</span><span class="dot"></span><span>${anPlural(an.groups.length, 'group')}</span><span class="dot"></span><span>${anPlural(an.tasks.length, 'task')}</span>`;
+    if (meta && self) meta.innerHTML = `<span>Your task history</span>`;
+
+    const searching = !self && an.q.trim().length > 0;
+    const view = an.stack[an.stack.length - 1];
+    let html = '';
+    if (!searching && !self) {
+      const crumbs = [{ label: 'Analytics', idx: -1 }, ...an.stack.map((v, i) => ({ label: anViewName(v), idx: i }))];
+      if (crumbs.length > 1) {
+        html += `<div class="an-crumbs">${crumbs.map((c, i) => i === crumbs.length - 1
+          ? `<span class="an-crumb current">${escapeHtml(c.label)}</span>`
+          : `<button type="button" class="an-crumb" data-an-crumb="${c.idx}">${escapeHtml(c.label)}</button><span class="sep">/</span>`).join('')}</div>`;
+      }
+    }
+    const typesEl = document.getElementById('anTypes');
+    if (typesEl) typesEl.style.display = (!self && (searching || !view)) ? '' : 'none';
+
+    if (searching) html += anSearchHtml();
+    else if (!view) html += anOverviewHtml();
+    else if (view.type === 'group') html += anGroupHtml(view);
+    else if (view.type === 'user') html += anUserHtml(view);
+    else html += anTaskHtml(view);
+    const periods = document.getElementById('anPeriods');
+    if (periods) periods.parentElement.style.display = (view && view.type === 'task' && !searching) ? 'none' : '';
+    body.innerHTML = html;
+  }
+
+  function anGo(type, id) {
+    const searchEl = document.getElementById('anSearch');
+    if (an.q) { an.q = ''; an.stack = []; if (searchEl) searchEl.value = ''; }
+    const top = an.stack[an.stack.length - 1];
+    if (!top || top.type !== type || top.id !== id) an.stack.push({ type, id });
+    anRender();
+    analyticsTabContent.scrollTop = 0;
+  }
+
+  function anDownload() {
+    if (typeof XLSX === 'undefined') { toast('Excel support failed to load; please try again.', 'error'); return; }
+    const view = an.stack[an.stack.length - 1] || { type: 'org' };
+    const rows = anScopeFiltered(view).sort((a, b) => (anTime(b) || 0) - (anTime(a) || 0));
+    const fmt = t => (t == null ? '' : new Date(t).toLocaleString());
+    const aoa = [['Person', 'Task', 'Group', 'Due', 'Result', 'Handed in'],
+      ...rows.map(r => [r.username, r.title, r.groupName || '', fmt(anTime(r)), AN_OUTCOMES[r.outcome].label, r.submittedAt ? fmt(new Date(r.submittedAt).getTime()) : ''])];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'Analytics');
+    const slug = (view.type === 'org' ? 'organization' : anViewName(view)).replace(/[^a-z0-9]+/gi, '_');
+    XLSX.writeFile(wb, `time12-${slug}-${view.type === 'task' ? 'all' : an.period}.xlsx`);
+  }
+
+  analyticsMainContent.addEventListener('click', (e) => {
+    const crumb = e.target.closest('[data-an-crumb]');
+    if (crumb) { an.stack = an.stack.slice(0, Number(crumb.dataset.anCrumb) + 1); anRender(); analyticsTabContent.scrollTop = 0; return; }
+    const nav = e.target.closest('[data-an-type]');
+    if (nav) { anGo(nav.dataset.anType, nav.dataset.anId); return; }
+    const period = e.target.closest('[data-an-period]');
+    if (period) {
+      an.period = period.dataset.anPeriod;
+      document.querySelectorAll('#anPeriods .perf-tab').forEach(b => b.classList.toggle('active', b === period));
+      anRender(); return;
+    }
+    const tf = e.target.closest('[data-an-type-filter]');
+    if (tf) {
+      an.type = tf.dataset.anTypeFilter;
+      document.querySelectorAll('#anTypes .perf-tab').forEach(b => b.classList.toggle('active', b === tf));
+      anRender(); return;
+    }
+    const act = e.target.closest('[data-an-act]');
+    if (!act) return;
+    if (act.dataset.anAct === 'toggle') { an.expanded[act.dataset.key] = !an.expanded[act.dataset.key]; anRender(); }
+    else if (act.dataset.anAct === 'xlsx') anDownload();
+    else if (act.dataset.anAct === 'refresh') loadAnalytics(true);
+  });
+  analyticsMainContent.addEventListener('change', (e) => {
+    if (e.target.matches('[data-an-act="rollup"]')) { an.rollup = e.target.checked; anRender(); }
+  });
+  analyticsMainContent.addEventListener('input', (e) => {
+    if (e.target.id === 'anSearch') { an.q = e.target.value; anRender(); }
+  });
 
   function renderUserTasksState() {
     if (!userAssignedTasks || userAssignedTasks.length === 0) {
@@ -4982,6 +5367,7 @@ Marketing,alex99,</div>
     notesTabContent.style.display = 'none';
     orgTabContent.classList.remove('active');
     myTasksTabContent.classList.remove('active');
+    analyticsTabContent.classList.remove('active');
     // Hide all action button groups
     editorActions.style.display = 'none';
     taskActions.style.display = 'none';
@@ -5015,6 +5401,9 @@ Marketing,alex99,</div>
           orgActions.style.display = 'flex';
         }
         renderOrgState();
+      } else if (target === 'Analytics') {
+        analyticsTabContent.classList.add('active');
+        loadAnalytics(false);
       }
     }
   }
@@ -5720,8 +6109,7 @@ Marketing,alex99,</div>
       e.preventDefault(); applyFormat('link');
     } else if (e.key === 'Escape') {
       dialogOverlay.classList.remove('active');
-      dialogBox.classList.remove('perf-dialog');
-      shortcutsOverlay.classList.remove('active');
+        shortcutsOverlay.classList.remove('active');
       closePalette();
       deleteConfirmId = null;
       tabsDropdown.classList.remove('open');
