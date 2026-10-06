@@ -4773,26 +4773,67 @@ Marketing,alex99,</div>
       ${items.length > cap ? `<button type="button" class="list-overflow-toggle" data-an-act="toggle" data-key="${key}">${open ? 'Show less' : `Show all ${items.length}`}</button>` : ''}</section>`;
   }
   function anTrendHtml(rows) {
-    const WEEKS = 12, WK = 7 * 864e5;
+    // Bars follow the selected period: hourly (1D), daily (5D/1W/1M), weekly (6M), monthly (1Y/ALL)
+    const key = an.period;
+    const H = 36e5, D = 864e5;
     const today = new Date(); today.setHours(0, 0, 0, 0);
-    const monday = new Date(today); monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
-    const start = new Date(monday); start.setDate(monday.getDate() - 7 * (WEEKS - 1));
-    const buckets = Array.from({ length: WEEKS }, () => []);
+    const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1);
+    const edges = []; let unit = 'day', heading = '';
+    const addDays = (d, n) => { const x = new Date(d); x.setDate(x.getDate() + n); return x; };
+    const addMonths = (d, n) => { const x = new Date(d); x.setMonth(x.getMonth() + n); return x; };
+    if (key === '1D') {
+      unit = 'hour'; heading = 'Today';
+      for (let h = 0; h <= 24; h++) edges.push(today.getTime() + h * H);
+    } else if (key === '5D' || key === '1W' || key === '1M') {
+      const n = key === '5D' ? 5 : key === '1W' ? 7 : 30;
+      heading = key === '5D' ? 'Last 5 days' : key === '1W' ? 'Last 7 days' : 'Last 30 days';
+      const start = addDays(today, -(n - 1));
+      for (let i = 0; i <= n; i++) edges.push(addDays(start, i).getTime());
+    } else if (key === '6M') {
+      unit = 'week'; heading = 'Last 6 months';
+      const monday = addDays(today, -((today.getDay() + 6) % 7));
+      const start = addDays(monday, -7 * 25);
+      for (let i = 0; i <= 26; i++) edges.push(addDays(start, 7 * i).getTime());
+    } else {
+      unit = 'month';
+      const first = new Date(today.getFullYear(), today.getMonth(), 1);
+      let start, step = 1, end = tomorrow.getTime();
+      if (key === '1Y') { heading = 'Last 12 months'; start = addMonths(first, -11); }
+      else {
+        heading = 'All time';
+        const times = rows.map(anTime).filter(t => t != null);
+        if (!times.length) return '';
+        const mn = new Date(Math.min(...times)); start = new Date(mn.getFullYear(), mn.getMonth(), 1);
+        end = Math.max(end, Math.max(...times) + 1);
+        const months = (new Date(end).getFullYear() - start.getFullYear()) * 12 + new Date(end).getMonth() - start.getMonth() + 1;
+        step = Math.max(1, Math.ceil(months / 24));
+      }
+      for (let d = new Date(start); ; d = addMonths(d, step)) { edges.push(d.getTime()); if (d.getTime() > end) break; }
+    }
+    const N = edges.length - 1;
+    const buckets = Array.from({ length: N }, () => []);
     rows.forEach(r => {
-      const t = anTime(r); if (t == null) return;
-      const i = Math.floor((t - start.getTime()) / WK);
-      if (i >= 0 && i < WEEKS) buckets[i].push(r);
+      const t = anTime(r); if (t == null || t < edges[0] || t >= edges[N]) return;
+      let i = 0; while (i < N - 1 && t >= edges[i + 1]) i++;
+      buckets[i].push(r);
     });
     if (buckets.every(b => !b.length)) return '';
-    const lab = i => { const d = new Date(start); d.setDate(start.getDate() + 7 * i); return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }); };
+    const lab = i => {
+      const d = new Date(edges[i]);
+      if (unit === 'hour') return d.toLocaleTimeString(undefined, { hour: 'numeric' });
+      if (unit === 'month') return d.toLocaleDateString(undefined, { month: 'short', year: '2-digit' });
+      return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    };
+    const prefix = unit === 'week' ? 'Week of ' : '';
     const cols = buckets.map((b, i) => {
       const s = anStats(b);
-      const title = b.length ? `Week of ${lab(i)}: ${s.completed} of ${s.total} completed${s.missed ? `, ${s.missed} missed` : ''}` : `Week of ${lab(i)}: no tasks due`;
+      const title = b.length ? `${prefix}${lab(i)}: ${s.completed} of ${s.total} completed${s.missed ? `, ${s.missed} missed` : ''}` : `${prefix}${lab(i)}: no tasks due`;
       const segs = ['missed', 'open', 'review', 'late', 'done'].filter(k => s[k]).map(k => `<i style="flex:${s[k]};background:${AN_OUTCOMES[k].color}"></i>`).join('');
       return `<div class="an-wk" title="${escapeHtml(title)}"><div class="an-wk-bar${b.length ? '' : ' empty'}">${segs}</div></div>`;
     }).join('');
-    const labels = buckets.map((_, i) => `<span>${i % 3 === 0 ? lab(i) : ''}</span>`).join('');
-    return `<div class="an-sec" style="margin-top:0;margin-bottom:8px"><div class="an-sec-title" style="font-size:18px">Last 12 weeks</div><div class="an-trend">${cols}</div><div class="an-trend-labels">${labels}</div></div>`;
+    const every = Math.max(1, Math.ceil(N / 6));
+    const labels = buckets.map((_, i) => `<span>${i % every === 0 ? lab(i) : ''}</span>`).join('');
+    return `<div class="an-sec" style="margin-top:0;margin-bottom:8px"><div class="an-sec-title" style="font-size:18px">${heading}</div><div class="an-trend">${cols}</div><div class="an-trend-labels">${labels}</div></div>`;
   }
   function anRingHtml(rows) {
     const n = rows.length; if (!n) return '';
