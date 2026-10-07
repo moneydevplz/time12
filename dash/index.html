@@ -1549,6 +1549,35 @@
     visibility: hidden;
   }
 
+
+  /* ============ Time12 Keys: hint mode + shortcut sheet ============ */
+  #t12Hints { position: fixed; inset: 0; z-index: 2147483000; pointer-events: none; }
+  .t12-hint {
+    position: fixed; display: inline-flex; align-items: center; justify-content: center;
+    min-width: 17px; height: 17px; padding: 0 5px; border-radius: 5px;
+    font: 700 11px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    letter-spacing: .04em; text-transform: uppercase; color: #fff;
+    background: var(--accent, #FD7E14); border: 1px solid rgba(0,0,0,.45);
+    box-shadow: 0 2px 6px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.35);
+    text-shadow: 0 1px 0 rgba(0,0,0,.35); white-space: nowrap;
+  }
+  .t12-hint b { opacity: .45; font-weight: 700; }
+  .t12-hint.t12-dim { display: none; }
+  #t12HintBar {
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%);
+    z-index: 2147483001; pointer-events: none; padding: 7px 14px; border-radius: 999px;
+    font: 600 12px/1 var(--sans, system-ui, sans-serif); color: #fff;
+    background: rgba(24,18,14,.92); border: 1px solid rgba(255,255,255,.15);
+    box-shadow: 0 6px 20px rgba(0,0,0,.35);
+  }
+  .shortcuts-box { max-width: 760px !important; }
+  .shortcuts-intro { font-size: 12px; color: var(--text-soft); line-height: 1.5; margin: -4px 0 16px; }
+  .shortcuts-group-title {
+    grid-column: 1 / -1; margin-top: 10px; font-size: 11px; font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase; color: var(--accent);
+  }
+  .shortcut-keys { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
+  .shortcut-keys .shortcut-or { color: var(--text-muted); font-size: 11px; margin: 0 2px; }
 </style>
 </head>
 <body>
@@ -5915,14 +5944,25 @@ Marketing,alex99,</div>
   });
 
   /* ---------- Command palette ---------- */
+  const K = (s) => (window.T12Keys ? window.T12Keys.fmt(s) : s);
+  const T = (id) => () => setTimeout(() => window.T12Keys && window.T12Keys.run(id), 60);
   const COMMANDS = [
-    { id: 'new', label: 'New note', icon: 'plus', kbd: 'Ctrl+N', run: () => createNew() },
-    { id: 'save', label: 'Save note', icon: 'save', kbd: 'Ctrl+S', run: () => saveNote() },
-    { id: 'delete', label: 'Delete current note', icon: 'trash', kbd: 'Ctrl+Shift+D', run: () => currentNoteId && showDeleteConfirmation(currentNoteId) },
-    { id: 'theme', label: 'Toggle theme', icon: 'sun', kbd: 'Ctrl+J', run: () => themeToggle.click() },
-    { id: 'device', label: 'Switch device mode (Higher / Lower End)', icon: 'device', run: () => toggleDeviceMode() },
-    { id: 'shortcuts', label: 'Show shortcuts', icon: 'kb', run: () => shortcutsOverlay.classList.add('active') },
-    { id: 'logout', label: 'Sign out', icon: 'logout', run: () => doLogout() },
+    { id: 'hints', label: 'Click anything (hint keys)', icon: 'kb', kbd: K('Mod+E'), run: T('hints') },
+    { id: 'new', label: 'New note / task / group', icon: 'plus', kbd: K('Mod+D'), run: T('new') },
+    { id: 'save', label: 'Save note', icon: 'save', kbd: K('Mod+S'), run: () => saveNote() },
+    { id: 'delete', label: 'Delete current note', icon: 'trash', kbd: K('Mod+Shift+D'), run: () => currentNoteId && showDeleteConfirmation(currentNoteId) },
+    { id: 'tab1', label: 'Go to Notes', icon: 'note', kbd: K('Mod+1'), run: T('tab1') },
+    { id: 'tab2', label: 'Go to My Tasks', icon: 'note', kbd: K('Mod+2'), run: T('tab2') },
+    { id: 'tab3', label: 'Go to Org', icon: 'note', kbd: K('Mod+3'), run: T('tab3') },
+    { id: 'tab4', label: 'Go to Analytics', icon: 'note', kbd: K('Mod+4'), run: T('tab4') },
+    { id: 'group', label: 'Org: add group', icon: 'plus', kbd: K('Mod+G'), run: T('group') },
+    { id: 'account', label: 'Org: add account', icon: 'plus', kbd: K('Mod+Shift+G'), run: T('account') },
+    { id: 'search', label: 'Search notes', icon: 'note', kbd: K('Mod+Shift+F'), run: T('search') },
+    { id: 'sidebar', label: 'Toggle sidebar', icon: 'note', kbd: K('Mod+\\'), run: T('sidebar') },
+    { id: 'theme', label: 'Toggle theme', icon: 'sun', kbd: K('Mod+J'), run: () => themeToggle.click() },
+    { id: 'device', label: 'Switch device mode (Higher / Lower End)', icon: 'device', kbd: K('Mod+Shift+L'), run: () => toggleDeviceMode() },
+    { id: 'shortcuts', label: 'Show shortcuts', icon: 'kb', kbd: K('Mod+/'), run: () => shortcutsOverlay.classList.add('active') },
+    { id: 'logout', label: 'Sign out', icon: 'logout', kbd: K('Mod+Shift+X'), run: () => doLogout() },
   ];
 
   const ICONS = {
@@ -6236,5 +6276,367 @@ Marketing,alex99,</div>
     }
   })();
 </script>
+<script>
+/* ======================= Time12 Keys =======================
+   Every shortcut is Cmd (Mac) / Ctrl (Windows) + key, so plain typing is never hijacked.
+   Mod+E : hint mode. Labels every clickable thing with left-hand letters; type the label to click it. */
+(function () {
+  'use strict';
+  var IS_MAC = /Mac|iPhone|iPad|iPod/i.test(navigator.platform || navigator.userAgent || '');
+  var $ = function (id) { return document.getElementById(id); };
+  var HK = 'asdfgqwertzxcvb';
+
+  /* ---------- state helpers ---------- */
+  function shown(el) {
+    if (!el || !el.getClientRects().length) return false;
+    var cs = getComputedStyle(el);
+    return cs.display !== 'none' && cs.visibility !== 'hidden';
+  }
+  function click(el) { if (el) { el.click(); return true; } return false; }
+  function appVisible() { var a = $('Time12App'); return !!a && a.style.display !== 'none' && shown(a); }
+  function scope() {
+    if (document.documentElement.hasAttribute('data-need-device')) return 'picker';
+    return appVisible() ? 'app' : 'login';
+  }
+  function tab() { var t = document.querySelector('.tab-item.active'); return t ? t.dataset.tab : 'Notes'; }
+  function overlay() {
+    if ($('dialogOverlay') && $('dialogOverlay').classList.contains('active')) return 'dialog';
+    if ($('paletteOverlay') && $('paletteOverlay').classList.contains('active')) return 'palette';
+    if ($('shortcutsOverlay') && $('shortcutsOverlay').classList.contains('active')) return 'shortcuts';
+    return null;
+  }
+  var NON_TEXT = { checkbox: 1, radio: 1, button: 1, submit: 1, reset: 1, file: 1, range: 1, color: 1, image: 1 };
+  function isTyping(t) {
+    if (!t || !t.tagName) return false;
+    if (t.isContentEditable) return true;
+    if (t.tagName === 'TEXTAREA' || t.tagName === 'SELECT') return true;
+    return t.tagName === 'INPUT' && !NON_TEXT[(t.type || '').toLowerCase()];
+  }
+  function codeName(c) {
+    if (/^Key[A-Z]$/.test(c)) return c.slice(3);
+    if (/^Digit\d$/.test(c)) return c.slice(5);
+    return ({ Slash: '/', Enter: 'Enter', ArrowUp: '↑', ArrowDown: '↓', BracketLeft: '[', Backslash: '\\', Backspace: '⌫' })[c] || c;
+  }
+
+  /* ---------- action runners ---------- */
+  function go(t) { return function () { click(document.querySelector('.dropdown-item[data-tab="' + t + '"]')); }; }
+  function stepNote(d) {
+    return function () {
+      if (tab() !== 'Notes') return;
+      var items = [].slice.call(document.querySelectorAll('#notesList .note-item'));
+      if (!items.length) return;
+      var i = items.findIndex(function (n) { return n.classList.contains('active'); });
+      var n = items[Math.max(0, Math.min(items.length - 1, i < 0 ? 0 : i + d))];
+      if (n && n !== items[i]) { n.click(); n.scrollIntoView({ block: 'nearest' }); }
+    };
+  }
+  function newThing() {
+    var t = tab();
+    if (t === 'Notes') click($('newNoteBtn'));
+    else if (t === 'MyTasks') click($('createTaskBtn'));
+    else if (t === 'Org' && shown($('orgActions'))) click($('dropdownAddGroup'));
+  }
+  function focusSearch() {
+    if (tab() !== 'Notes') return;
+    var s = $('searchInput'), m = $('menuToggle');
+    if (!shown(s) && shown(m)) m.click();
+    setTimeout(function () { s.focus(); s.select(); }, 40);
+  }
+  function toggleSidebar() {
+    var m = $('menuToggle');
+    if (!shown(m)) return;
+    if ($('sidebar').classList.contains('open')) click($('backdrop')); else m.click();
+  }
+  function confirmAction() {
+    if (overlay() === 'dialog') {
+      var b = document.querySelector('#dialogBox .dialog-actions .main, #dialogBox .dialog-actions .destructive');
+      if (!b) { var all = document.querySelectorAll('#dialogBox .dialog-actions button'); b = all[all.length - 1]; }
+      return click(b);
+    }
+    if (overlay()) return;
+    if (scope() === 'login') return click($('loginBtn'));
+    if (scope() === 'app' && tab() === 'Notes') return click($('saveBtn'));
+  }
+  function fmtBtn(f) { return function () { if (tab() === 'Notes' && shown($('editorToolbar'))) click(document.querySelector('.btn-toolbar[data-fmt="' + f + '"]')); }; }
+  function themeBtn() { return appVisible() ? $('themeToggle') : $('loginThemeToggle'); }
+  function deviceBtn() { return appVisible() ? $('deviceToggle') : $('loginDeviceToggle'); }
+
+  /* ---------- action table: every entry is Cmd/Ctrl + key (+Shift/Alt). ov = overlays where it is allowed. ---------- */
+  var A = [
+    { id: 'hints', g: 'Click anything', label: 'Hint mode: label every clickable thing', codes: ['KeyE'], scopes: ['app', 'login', 'picker'], ov: ['dialog'], run: function () { hintOpen(); } },
+    { id: 'palette', g: 'General', label: 'Command palette', codes: ['KeyK'], scopes: ['app'], ov: ['palette'], run: function () { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, metaKey: IS_MAC, bubbles: true })); } },
+    { id: 'help', g: 'General', label: 'Show / hide this sheet', codes: ['Slash'], scopes: ['app', 'login', 'picker'], ov: ['shortcuts'], run: function () { $('shortcutsOverlay').classList.toggle('active'); } },
+    { id: 'theme', g: 'General', label: 'Toggle theme', codes: ['KeyJ'], scopes: ['app', 'login'], run: function () { click(themeBtn()); } },
+    { id: 'device', g: 'General', label: 'Switch Higher / Lower End mode', codes: ['KeyL'], shift: true, scopes: ['app', 'login'], run: function () { click(deviceBtn()); } },
+    { id: 'confirm', g: 'General', label: 'Confirm / primary action (dialog, Login, Save)', codes: ['Enter'], scopes: ['app', 'login'], ov: ['dialog'], run: confirmAction },
+    { id: 'signout', g: 'General', label: 'Sign out', codes: ['KeyX'], shift: true, scopes: ['app'], run: function () { click($('logoutLink')); } },
+
+    { id: 'tab1', g: 'Go to', label: 'Notes tab', codes: ['Digit1'], scopes: ['app'], run: go('Notes') },
+    { id: 'tab2', g: 'Go to', label: 'My Tasks tab', codes: ['Digit2'], scopes: ['app'], run: go('MyTasks') },
+    { id: 'tab3', g: 'Go to', label: 'Org tab', codes: ['Digit3'], scopes: ['app'], run: go('Org') },
+    { id: 'tab4', g: 'Go to', label: 'Analytics tab', codes: ['Digit4'], scopes: ['app'], run: go('Analytics') },
+    { id: 'search', g: 'Go to', label: 'Search notes', codes: ['KeyF'], shift: true, scopes: ['app'], run: focusSearch },
+    { id: 'sidebar', g: 'Go to', label: 'Open / close sidebar (small screens)', codes: ['Backslash'], scopes: ['app'], run: toggleSidebar },
+    { id: 'prev', g: 'Go to', label: 'Previous note', codes: ['ArrowUp'], alt: true, scopes: ['app'], repeat: true, run: stepNote(-1) },
+    { id: 'next', g: 'Go to', label: 'Next note', codes: ['ArrowDown'], alt: true, scopes: ['app'], repeat: true, run: stepNote(1) },
+    { id: 'back', g: 'Go to', label: 'Analytics: back one level', codes: ['BracketLeft'], scopes: ['app'], run: function () { if (tab() !== 'Analytics') return; var c = document.querySelectorAll('#analyticsMainContent .an-crumb:not(.current)'); click(c[c.length - 1]); } },
+
+    { id: 'new', g: 'Create & edit', label: 'New (note / task / group, by tab)', codes: ['KeyD'], scopes: ['app'], run: newThing },
+    { id: 'new2', hidden: true, codes: ['KeyN'], scopes: ['app'], run: newThing },
+    { id: 'save', g: 'Create & edit', label: 'Save note', codes: ['KeyS'], scopes: ['app'], run: function () { if (tab() === 'Notes') click($('saveBtn')); } },
+    { id: 'delete', g: 'Create & edit', label: 'Delete note', codes: ['KeyD'], shift: true, scopes: ['app'], run: function () { if (tab() === 'Notes') click($('deleteBtn')); } },
+    { id: 'group', g: 'Create & edit', label: 'Org: add group', codes: ['KeyG'], scopes: ['app'], run: function () { if (tab() === 'Org' && shown($('orgActions'))) click($('dropdownAddGroup')); } },
+    { id: 'account', g: 'Create & edit', label: 'Org: add account', codes: ['KeyG'], shift: true, scopes: ['app'], run: function () { if (tab() === 'Org' && shown($('orgActions'))) click($('dropdownAddAccount')); } },
+    { id: 'bulk', g: 'Create & edit', label: 'Org: delete selected accounts', codes: ['Backspace'], shift: true, scopes: ['app'], run: function () { if (tab() === 'Org') click($('bulkDeleteBtn')); } },
+
+    { id: 'underline', g: 'Formatting', label: 'Underline', codes: ['KeyU'], scopes: ['app'], run: fmtBtn('underline') },
+    { id: 'code', g: 'Formatting', label: 'Code', codes: ['KeyK'], shift: true, scopes: ['app'], run: fmtBtn('code') },
+    { id: 'h1', g: 'Formatting', label: 'Heading 1', codes: ['Digit1'], shift: true, scopes: ['app'], run: fmtBtn('h1') },
+    { id: 'h2', g: 'Formatting', label: 'Heading 2', codes: ['Digit2'], shift: true, scopes: ['app'], run: fmtBtn('h2') },
+    { id: 'bullet', g: 'Formatting', label: 'Bullet list', codes: ['KeyU'], shift: true, scopes: ['app'], run: fmtBtn('bullet') },
+    { id: 'quote', g: 'Formatting', label: 'Quote', codes: ['KeyE'], shift: true, scopes: ['app'], run: fmtBtn('quote') },
+
+    { id: 'register', g: 'Login screen', label: 'Register (Login is Mod+Enter)', codes: ['Enter'], shift: true, scopes: ['login'], run: function () { click($('registerBtn')); } },
+    { id: 'pickHigh', g: 'Device picker', label: 'Higher End Device', codes: ['Digit1'], scopes: ['picker'], run: function () { click(document.querySelector('.device-option[data-device="high"]')); } },
+    { id: 'pickLow', g: 'Device picker', label: 'Lower End Device', codes: ['Digit2'], scopes: ['picker'], run: function () { click(document.querySelector('.device-option[data-device="low"]')); } }
+  ];
+  var INFO = [
+    { g: 'Formatting', label: 'Bold', keys: ['Mod+B'] },
+    { g: 'Formatting', label: 'Italic', keys: ['Mod+I'] },
+    { g: 'Formatting', label: 'Link', keys: ['Mod+L'] },
+    { g: 'General', label: 'Close dialog / palette / menu', keys: ['Esc'] }
+  ];
+
+  /* ---------- key formatting ---------- */
+  var SYM = IS_MAC ? { Mod: '⌘', Alt: '⌥', Shift: '⇧' } : { Mod: 'Ctrl', Alt: 'Alt', Shift: 'Shift' };
+  function parts(s) { return s.split('+').map(function (p) { return SYM[p] || p; }); }
+  function fmt(s) { var p = parts(s); return IS_MAC ? p.join('') : p.join('+'); }
+  function combos(a) { return ['Mod+' + (a.alt ? 'Alt+' : '') + (a.shift ? 'Shift+' : '') + codeName(a.codes[0])]; }
+  function chips(c) { return parts(c).map(function (p) { return '<span class="key">' + p + '</span>'; }).join(''); }
+  function titleKeys(a) { return fmt(combos(a)[0]); }
+
+  /* ---------- main key handler ---------- */
+  function match(a, e) {
+    if (a.codes.indexOf(e.code) < 0) return false;
+    if (!!a.shift !== !!e.shiftKey) return false;
+    return (e.metaKey || e.ctrlKey) && !!a.alt === !!e.altKey;
+  }
+  function onKey(e) {
+    if (e.isComposing || !e.isTrusted) return;
+    if (hint.on) return hintKey(e);
+    var sc = scope(), ov = overlay(), typing = isTyping(e.target);
+
+    if (e.key === 'Escape') {
+      var w = $('orgAddWrapper'); if (w) w.classList.remove('open');
+      if (!ov) {
+        var bd = $('backdrop'); if (bd && bd.classList.contains('active')) bd.click();
+        if (typing && e.target.blur && sc === 'app') e.target.blur();
+      }
+      return; /* existing handler closes dialogs / palette / sheet */
+    }
+    for (var i = 0; i < A.length; i++) {
+      var a = A[i];
+      if (a.scopes.indexOf(sc) < 0) continue;
+      if (ov && !(a.ov && a.ov.indexOf(ov) >= 0)) continue;
+      if (e.repeat && !a.repeat) continue;
+      if (!match(a, e)) continue;
+      e.preventDefault(); e.stopPropagation();
+      a.run();
+      return;
+    }
+  }
+  window.addEventListener('keydown', onKey, true);
+
+  /* ---------- hint mode ---------- */
+  var hint = { on: false, items: [], typed: '', root: null, bar: null, timer: null };
+  var SEL = 'a[href],button,input:not([type=hidden]),select,textarea,summary,[role=button],[role=tab],[role=menuitem],[role=checkbox],[role=switch],[role=option],[role=link],[onclick],[contenteditable=""],[contenteditable=true],label[for],[tabindex]:not([tabindex="-1"]),.tab-item,.dropdown-item,.custom-dropdown-item,.note-item,.palette-item,.an-row,.an-link,.an-crumb:not(.current),.device-option,[data-fp-zone],[data-tab],[data-action],[data-an-crumb]';
+  var STRONG = 'a[href],button,input,select,textarea,summary,[role]';
+
+  function makeLabels(n) {
+    var K = HK.split(''), B = K.length, out = [], i, j, k;
+    if (n <= B) return K.slice(0, n);
+    if (n <= B * B) {
+      var s = Math.max(0, Math.floor((B * B - n) / (B - 1)));
+      out = K.slice(0, s);
+      var pre = K.slice(s);
+      for (i = 0; i < pre.length && out.length < n; i++) for (j = 0; j < B && out.length < n; j++) out.push(pre[i] + K[j]);
+      return out;
+    }
+    for (i = 0; i < B && out.length < n; i++) for (j = 0; j < B && out.length < n; j++) for (k = 0; k < B && out.length < n; k++) out.push(K[i] + K[j] + K[k]);
+    return out;
+  }
+
+  function collect() {
+    var vw = innerWidth, vh = innerHeight, list = [], opacityCache = new Map();
+    function deadAncestor(el) {
+      var a = el.parentElement && el.parentElement.parentElement;
+      while (a && a !== document.body) {
+        var o = opacityCache.get(a);
+        if (o === undefined) { o = parseFloat(getComputedStyle(a).opacity); opacityCache.set(a, o); }
+        if (o === 0) return true;
+        a = a.parentElement;
+      }
+      return false;
+    }
+    var all = document.body.querySelectorAll('*');
+    for (var i = 0; i < all.length; i++) {
+      var el = all[i];
+      if (el.tagName === 'SCRIPT' || el.tagName === 'STYLE' || el.id === 't12Hints' || el.id === 't12HintBar') continue;
+      var r = el.getBoundingClientRect();
+      if (r.width < 6 || r.height < 6 || r.bottom < 0 || r.right < 0 || r.top > vh || r.left > vw) continue;
+      var cs = getComputedStyle(el);
+      if (cs.display === 'none' || cs.visibility === 'hidden' || cs.pointerEvents === 'none') continue;
+      if (!el.matches(SEL)) {
+        if (cs.cursor !== 'pointer') continue;
+        var p = el.parentElement;
+        if (p && getComputedStyle(p).cursor === 'pointer') continue;
+      }
+      if (el.disabled || el.getAttribute('aria-disabled') === 'true') continue;
+      if (deadAncestor(el)) continue;
+      var pts = [[r.left + r.width / 2, r.top + r.height / 2], [r.left + Math.min(10, r.width / 2), r.top + r.height / 2]], ok = false;
+      for (var q = 0; q < pts.length && !ok; q++) {
+        var x = Math.min(vw - 1, Math.max(0, pts[q][0])), y = Math.min(vh - 1, Math.max(0, pts[q][1]));
+        var hit = document.elementFromPoint(x, y);
+        ok = !!hit && (hit === el || el.contains(hit) || hit.contains(el));
+      }
+      if (!ok) continue;
+      list.push({ el: el, rect: r, strong: el.matches(STRONG) });
+    }
+    var set = new Set(list.map(function (c) { return c.el; }));
+    return list.filter(function (c) {
+      if (c.strong) return true;
+      for (var a = c.el.parentElement; a; a = a.parentElement) if (set.has(a)) return false;
+      return true;
+    });
+  }
+
+  function hintOpen() {
+    hintClose();
+    var list = collect();
+    if (!list.length) return;
+    var order = list.map(function (c, i) { return { c: c, i: i }; }).sort(function (a, b) { return (a.c.strong ? 0 : 1) - (b.c.strong ? 0 : 1) || a.i - b.i; });
+    var labels = makeLabels(order.length);
+    order.forEach(function (o, idx) { o.c.label = labels[idx]; });
+    hint.root = document.createElement('div'); hint.root.id = 't12Hints'; hint.root.setAttribute('aria-hidden', 'true');
+    var placed = [];
+    list.forEach(function (c) {
+      var s = document.createElement('span');
+      s.className = 't12-hint';
+      var w = c.label.length * 8 + 12, h = 17;
+      var x = Math.max(2, Math.min(innerWidth - w - 2, c.rect.left + 2)), y = Math.max(2, Math.min(innerHeight - h - 2, c.rect.top + 2)), n = 0;
+      function clash() { return placed.some(function (p) { return x < p.x + p.w + 1 && x + w + 1 > p.x && y < p.y + p.h + 1 && y + h + 1 > p.y; }); }
+      while (n < 6 && clash()) { if (n % 2 === 0) y += h + 1; else { y -= h + 1; x += w + 2; } n++; }
+      placed.push({ x: x, y: y, w: w, h: h });
+      s.style.left = x + 'px'; s.style.top = y + 'px';
+      s.innerHTML = '<b></b><span>' + c.label + '</span>';
+      c.node = s; hint.root.appendChild(s);
+    });
+    hint.items = list; hint.typed = ''; hint.on = true;
+    hint.bar = document.createElement('div'); hint.bar.id = 't12HintBar';
+    hint.bar.textContent = 'Type a hint to click  ·  ⌫ undo  ·  Esc cancel';
+    document.body.appendChild(hint.root); document.body.appendChild(hint.bar);
+  }
+  function hintClose() {
+    hint.on = false; hint.items = []; hint.typed = '';
+    if (hint.root) hint.root.remove(); if (hint.bar) hint.bar.remove();
+    hint.root = hint.bar = null;
+  }
+  function hintRender() {
+    hint.items.forEach(function (c) {
+      var m = c.label.indexOf(hint.typed) === 0;
+      c.node.classList.toggle('t12-dim', !m);
+      if (m) { c.node.firstChild.textContent = hint.typed; c.node.lastChild.textContent = c.label.slice(hint.typed.length); }
+    });
+  }
+  function hintKey(e) {
+    var k = e.key;
+    if (k === 'Shift' || k === 'Alt' || k === 'Control' || k === 'Meta') return;
+    e.preventDefault(); e.stopPropagation();
+    if (k === 'Escape' || e.code === 'KeyF' && !e.shiftKey && hint.typed === '' && HK.indexOf('f') >= 0 && false) { return hintClose(); }
+    if (k === 'Escape' || k === 'Tab' || e.ctrlKey || e.metaKey) return hintClose();
+    if (k === 'Backspace') { hint.typed = hint.typed.slice(0, -1); return hintRender(); }
+    var ch = (!e.altKey && k.length === 1) ? k.toLowerCase() : (/^Key[A-Z]$/.test(e.code) ? e.code.slice(3).toLowerCase() : '');
+    if (!ch || HK.indexOf(ch) < 0) return;
+    var next = hint.typed + ch;
+    var m = hint.items.filter(function (c) { return c.label.indexOf(next) === 0; });
+    if (!m.length) return;
+    hint.typed = next;
+    var exact = m.filter(function (c) { return c.label === next; })[0];
+    if (exact) { var el = exact.el; hintClose(); activate(el); } else hintRender();
+  }
+  function activate(el) {
+    var tag = el.tagName, type = (el.type || '').toLowerCase();
+    if (tag === 'SELECT') { el.focus(); try { el.showPicker && el.showPicker(); } catch (x) {} return; }
+    if (tag === 'TEXTAREA' || el.isContentEditable || (tag === 'INPUT' && !NON_TEXT[type])) {
+      el.focus(); try { if (tag !== 'INPUT' || /text|search|url|tel|password|email/.test(type || 'text')) { var l = (el.value || '').length; el.setSelectionRange(l, l); } } catch (x) {}
+      return;
+    }
+    el.click();
+  }
+  function relayout() { if (!hint.on) return; clearTimeout(hint.timer); hint.timer = setTimeout(function () { if (hint.on) hintOpen(); }, 120); }
+  window.addEventListener('scroll', relayout, true);
+  window.addEventListener('resize', relayout);
+  window.addEventListener('blur', function () { if (hint.on) hintClose(); });
+
+  /* ---------- UI: titles, shortcut sheet, first-run tip ---------- */
+  function setTitle(el, base, keys) {
+    if (!el) return;
+    var b = base || (el.getAttribute('title') || '').replace(/\s*\([^)]*\)\s*$/, '');
+    el.setAttribute('title', b + (keys ? ' (' + keys + ')' : ''));
+  }
+  function decorate() {
+    var byId = {}; A.forEach(function (a) { byId[a.id] = a; });
+    var map = { saveBtn: 'save', deleteBtn: 'delete', newNoteBtn: 'new', createTaskBtn: 'new', bulkDeleteBtn: 'bulk', themeToggle: 'theme', loginThemeToggle: 'theme', deviceToggle: 'device', loginDeviceToggle: 'device', shortcutsLink: 'help', logoutLink: 'signout', menuToggle: 'sidebar', dropdownAddGroup: 'group', dropdownAddAccount: 'account', loginBtn: 'confirm', registerBtn: 'register' };
+    Object.keys(map).forEach(function (id) { var a = byId[map[id]]; setTitle($(id), a.label.split(' (')[0], titleKeys(a)); });
+    setTitle($('searchInput'), 'Search notes', titleKeys(byId.search));
+    setTitle($('orgAddBtn'), 'Add group / account', titleKeys(byId.group) + ' · ' + titleKeys(byId.account));
+    ['tab1', 'tab2', 'tab3', 'tab4'].forEach(function (id, i) {
+      var t = ['Notes', 'MyTasks', 'Org', 'Analytics'][i];
+      document.querySelectorAll('[data-tab="' + t + '"]').forEach(function (el) { setTitle(el, el.textContent.trim(), titleKeys(byId[id])); });
+    });
+    var fm = { bold: 'Mod+B', italic: 'Mod+I', underline: 'Mod+U', h1: 'Mod+Shift+1', h2: 'Mod+Shift+2', bullet: 'Mod+Shift+U', quote: 'Mod+Shift+E', link: 'Mod+L', code: 'Mod+Shift+K' };
+    document.querySelectorAll('.btn-toolbar[data-fmt]').forEach(function (b) { var k = fm[b.dataset.fmt]; if (k) setTitle(b, b.dataset.fmt.charAt(0).toUpperCase() + b.dataset.fmt.slice(1), fmt(k)); });
+    var hd = { high: 'pickHigh', low: 'pickLow' };
+    document.querySelectorAll('.device-option[data-device]').forEach(function (b) { setTitle(b, b.querySelector('.device-option-label').textContent, titleKeys(byId[hd[b.dataset.device]])); });
+  }
+  function sheet() {
+    var list = document.querySelector('#shortcutsOverlay .shortcuts-list'), box = document.querySelector('#shortcutsOverlay .shortcuts-box');
+    if (!list || !box) return;
+    var order = ['Click anything', 'General', 'Go to', 'Create & edit', 'Formatting', 'Login screen', 'Device picker'], rows = {};
+    A.forEach(function (a) { if (a.hidden) return; (rows[a.g] = rows[a.g] || []).push({ label: a.label, combos: combos(a) }); });
+    INFO.forEach(function (a) { (rows[a.g] = rows[a.g] || []).push({ label: a.label, combos: a.keys }); });
+    var html = '';
+    order.forEach(function (g) {
+      if (!rows[g]) return;
+      html += '<div class="shortcuts-group-title">' + g + '</div>';
+      rows[g].forEach(function (r) {
+        html += '<div class="shortcut"><span class="shortcut-label">' + r.label + '</span><div class="shortcut-keys">' +
+          r.combos.map(chips).join('<span class="shortcut-or">/</span>') + '</div></div>';
+      });
+    });
+    list.innerHTML = html;
+    var intro = document.createElement('div'); intro.className = 'shortcuts-intro';
+    intro.innerHTML = 'Every shortcut is <span class="key">' + SYM.Mod + '</span> + key, so typing is never hijacked. Press ' + chips('Mod+E') + ' anywhere: every clickable thing gets a left-hand letter, type it to click.';
+    box.insertBefore(intro, list);
+  }
+  function tip() {
+    try { if (localStorage.getItem('t12_keys_tip')) return; } catch (x) {}
+    var iv = setInterval(function () {
+      if (!appVisible()) return;
+      clearInterval(iv);
+      try { localStorage.setItem('t12_keys_tip', '1'); } catch (x) {}
+      var c = $('toastContainer'); if (!c) return;
+      var t = document.createElement('div'); t.className = 'toast success';
+      t.textContent = 'Press ' + fmt('Mod+E') + ' to click anything from the keyboard. ' + fmt('Mod+/') + ' shows every shortcut.';
+      c.appendChild(t); setTimeout(function () { t.remove(); }, 7000);
+    }, 800);
+  }
+
+  window.T12Keys = { fmt: fmt, run: function (id) { for (var i = 0; i < A.length; i++) if (A[i].id === id) return A[i].run(); } };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
+  function init() { try { decorate(); sheet(); tip(); } catch (e) { console.error('T12Keys init', e); } }
+})();
+</script>
+
 </body>
 </html>
