@@ -1001,6 +1001,78 @@
     background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--radius);
     padding: 16px; margin-bottom: 16px; font-size: 14px; color: var(--text);
   }
+  /* ---------- Rejection feedback + submission history ---------- */
+  .feedback-callout {
+    background: rgba(162, 59, 42, 0.08); border: 1px solid rgba(162, 59, 42, 0.35);
+    border-left: 4px solid var(--danger); border-radius: var(--radius);
+    padding: 12px 14px; margin-bottom: 16px;
+  }
+  .feedback-label {
+    display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em; color: var(--danger); margin-bottom: 6px;
+  }
+  .feedback-label svg { width: 13px; height: 13px; flex-shrink: 0; }
+  .feedback-meta { margin-left: auto; font-weight: 500; letter-spacing: 0.04em; color: var(--text-muted); text-transform: none; }
+  .feedback-text { font-size: 14px; color: var(--text); line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+  .dialog-box .feedback-callout, #dialogBox .feedback-callout { margin-top: 4px; }
+
+  .reason-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .reason-chip {
+    padding: 6px 12px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text-soft); font-family: var(--sans);
+    font-size: 12px; font-weight: 500; cursor: pointer; transition: var(--t);
+  }
+  .reason-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .reason-chip.used { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); }
+  .reason-count { margin-top: 6px; text-align: right; font-size: 11px; color: var(--text-muted); }
+
+  .hist-toggle {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 10px;
+    padding: 4px 10px; font-size: 12px; font-weight: 600; font-family: var(--sans);
+    color: var(--accent); background: transparent; border: 1px solid var(--border);
+    border-radius: var(--radius); cursor: pointer; transition: var(--t);
+  }
+  .hist-toggle:hover { background: var(--accent-soft); border-color: var(--accent); }
+  .hist-toggle svg { width: 11px; height: 11px; transition: transform 0.2s ease; }
+  .hist-toggle.open svg { transform: rotate(90deg); }
+  .hist-panel { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+  .hist-panel[hidden] { display: none !important; }
+  .hist-item {
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-left-width: 3px; border-radius: var(--radius); padding: 10px 12px; font-size: 13px;
+  }
+  .hist-item.pending { border-left-color: var(--warn); }
+  .hist-item.completed { border-left-color: var(--success); }
+  .hist-item.rejected { border-left-color: var(--danger); }
+  .hist-head { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 6px; }
+  .hist-v { font-weight: 700; color: var(--text); }
+  .hist-when { margin-left: auto; font-size: 11px; color: var(--text-muted); }
+  .hist-badge {
+    padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em; background: var(--surface-2); color: var(--text-muted);
+  }
+  .hist-badge.pending { background: rgba(176, 136, 50, 0.15); color: var(--warn); }
+  .hist-badge.completed { background: rgba(95, 122, 58, 0.15); color: var(--success); }
+  .hist-badge.rejected { background: rgba(162, 59, 42, 0.15); color: var(--danger); }
+  .hist-text { color: var(--text-soft); line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+  .hist-text.muted { color: var(--text-muted); font-style: italic; }
+  .hist-links { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+  .hist-links a { font-size: 12px; color: var(--accent); word-break: break-all; }
+  .hist-note {
+    margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border);
+    color: var(--text); line-height: 1.5; white-space: pre-wrap; word-break: break-word;
+  }
+  .hist-note strong {
+    display: block; margin-bottom: 2px; font-size: 10px; text-transform: uppercase;
+    letter-spacing: 0.1em; color: var(--danger);
+  }
+  .resub-tag {
+    margin-left: 8px; padding: 2px 8px; border-radius: 999px; font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em; background: var(--accent-soft); color: var(--accent);
+  }
+  .row-reason { margin-top: 4px; font-size: 12px; color: var(--text-soft); line-height: 1.5; word-break: break-word; }
+  .row-reason strong { color: var(--danger); }
+
   .task-links { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
   .task-link-item {
     display: flex; gap: 8px; align-items: center;
@@ -3147,20 +3219,31 @@
               subDetails += '</div>';
             }
 
+            // Version history for this member (each attempt keeps its own note)
+            const memberVersions = (t.versions || []).filter(v => v.userId === member.user_id).sort((a, b) => a.versionNo - b.versionNo);
+            const lastRej = latestRejection(memberVersions);
+            const resubTag = (subStatus === 'pending' && memberVersions.length > 1)
+              ? `<span class="resub-tag">Resubmitted · v${memberVersions[memberVersions.length - 1].versionNo}</span>` : '';
+            const reasonLine = (lastRej && lastRej.note && (subStatus === 'rejected' || subStatus === 'pending'))
+              ? `<div class="row-reason"><strong>${subStatus === 'rejected' ? 'Fix requested' : 'Earlier fix request'} (v${lastRej.versionNo}):</strong> ${escapeHtml(lastRej.note)}</div>` : '';
+            const memberHistoryHtml = historyHtml(memberVersions);
+
             // Show Verify/Reject buttons only for pending submissions
             let memberActions = '';
             if (sub?.status === 'pending') {
               memberActions = `
                 <button class="btn-row" data-task-action="verify" data-task-id="${t.id}" data-user-id="${member.user_id}" style="margin-left: 8px;">Verify</button>
-                <button class="btn-row danger" data-task-action="reject" data-task-id="${t.id}" data-user-id="${member.user_id}">Reject</button>
+                <button class="btn-row danger" data-task-action="reject" data-task-id="${t.id}" data-user-id="${member.user_id}" data-username="${escapeHtml(memberUser)}">Reject</button>
               `;
             }
 
             memberStatusHtml += `
               <div class="${memberIdx >= MEMBER_PROGRESS_VISIBLE ? 'list-overflow-hidden' : ''}" style="font-size: 13px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 4px 0;">
                 <div style="flex: 1;">
-                  <div><strong>${escapeHtml(memberUser)}</strong> <span style="color: ${statusColor}; font-weight: 600; text-transform: capitalize; margin-left: 8px; font-size: 11px;">(${statusText})</span></div>
+                  <div><strong>${escapeHtml(memberUser)}</strong> <span style="color: ${statusColor}; font-weight: 600; text-transform: capitalize; margin-left: 8px; font-size: 11px;">(${statusText})</span>${resubTag}</div>
                   ${subDetails}
+                  ${reasonLine}
+                  ${memberHistoryHtml}
                 </div>
                 <div class="row-actions" style="flex-shrink: 0;">${memberActions}</div>
               </div>
@@ -3293,7 +3376,7 @@
         btn.addEventListener('click', () => guardButton(btn, 'verify:'+btn.dataset.taskId+':'+btn.dataset.userId, () => handleTaskAction('verify_task', btn.dataset.taskId, btn.dataset.userId)));
       });
       document.querySelectorAll('[data-task-action="reject"]').forEach(btn => {
-        btn.addEventListener('click', () => guardButton(btn, 'reject:'+btn.dataset.taskId+':'+btn.dataset.userId, () => handleTaskAction('reject_task', btn.dataset.taskId, btn.dataset.userId)));
+        btn.addEventListener('click', () => openRejectDialog(btn.dataset.taskId, btn.dataset.userId, btn.dataset.username));
       });
       document.querySelectorAll('[data-task-action="delete"]').forEach(btn => {
         btn.addEventListener('click', () => guardButton(btn, 'delete_task:'+btn.dataset.taskId, () => handleTaskAction('delete_task', btn.dataset.taskId)));
@@ -3459,16 +3542,149 @@
     });
   });
 
-  async function handleTaskAction(action, taskId, userId = null) {
+  /* ============================================================
+   * Rejection feedback + submission history
+   * Every submission attempt is its own version with its own note.
+   * ============================================================ */
+  const HIST_LABELS = { pending: 'Awaiting review', completed: 'Accepted', rejected: 'Rejected' };
+  const REJECT_PRESETS = ['Incomplete', 'Wrong format', 'Missing sources', 'Off topic', 'Hard to read'];
+  const REJECT_MAX = 500;
+
+  function fmtWhen(iso) {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return isNaN(d) ? '' : d.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+  }
+  function histSafeUrl(u) {
+    try {
+      const x = new URL(String(u), location.href);
+      return /^https?:$/.test(x.protocol) ? x.href : '#';
+    } catch (e) { return '#'; }
+  }
+  function latestRejection(versions) {
+    for (let i = (versions || []).length - 1; i >= 0; i--) {
+      if (versions[i].status === 'rejected') return versions[i];
+    }
+    return null;
+  }
+  function feedbackCalloutHtml(v) {
+    return `
+      <div class="feedback-callout">
+        <div class="feedback-label">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+          Needs fixing
+          <span class="feedback-meta">v${v.versionNo}${v.reviewedAt ? ' · ' + escapeHtml(fmtWhen(v.reviewedAt)) : ''}</span>
+        </div>
+        <div class="feedback-text">${escapeHtml(v.note)}</div>
+      </div>`;
+  }
+  function historyHtml(versions) {
+    if (!versions || !versions.length) return '';
+    const items = versions.slice().sort((a, b) => b.versionNo - a.versionNo).map(v => {
+      const links = (v.links || []).map(l =>
+        `<a href="${escapeHtml(histSafeUrl(l.url))}" target="_blank" rel="noopener">🔗 ${escapeHtml(l.label || l.url)}</a>`).join('');
+      const empty = !v.text && !links;
+      return `
+        <div class="hist-item ${escapeHtml(v.status)}">
+          <div class="hist-head">
+            <span class="hist-v">v${v.versionNo}</span>
+            <span class="hist-badge ${escapeHtml(v.status)}">${HIST_LABELS[v.status] || escapeHtml(v.status)}</span>
+            <span class="hist-when">${escapeHtml(fmtWhen(v.submittedAt))}</span>
+          </div>
+          ${v.text ? `<div class="hist-text">${escapeHtml(v.text)}</div>` : ''}
+          ${links ? `<div class="hist-links">${links}</div>` : ''}
+          ${empty ? '<div class="hist-text muted">No text or links on this version.</div>' : ''}
+          ${v.note ? `<div class="hist-note"><strong>${v.status === 'rejected' ? 'Needs fixing' : 'Note'}</strong>${escapeHtml(v.note)}</div>` : ''}
+        </div>`;
+    }).join('');
+    return `
+      <button type="button" class="hist-toggle" data-hist-toggle data-count="${versions.length}" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        <span>History (${versions.length})</span>
+      </button>
+      <div class="hist-panel" hidden>${items}</div>`;
+  }
+  // Delegated, so it survives every re-render.
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-hist-toggle]');
+    if (!b) return;
+    const panel = b.nextElementSibling;
+    if (!panel) return;
+    const opening = panel.hasAttribute('hidden');
+    if (opening) panel.removeAttribute('hidden'); else panel.setAttribute('hidden', '');
+    b.classList.toggle('open', opening);
+    b.setAttribute('aria-expanded', opening ? 'true' : 'false');
+    const label = b.querySelector('span');
+    if (label) label.textContent = opening ? 'Hide history' : `History (${b.dataset.count})`;
+  });
+
+  function openRejectDialog(taskId, userId, username) {
+    dialogBox.innerHTML = `
+      <div class="dialog-title">Send back for fixes</div>
+      <div class="dialog-text">Tell ${escapeHtml(username || 'the student')} exactly what to change. They will see this note while revising and can resubmit; this attempt stays in the history.</div>
+      <div class="dialog-input-group">
+        <label>Quick reasons</label>
+        <div class="reason-chips">
+          ${REJECT_PRESETS.map(p => `<button type="button" class="reason-chip" data-chip="${escapeHtml(p)}">${escapeHtml(p)}</button>`).join('')}
+        </div>
+      </div>
+      <div class="dialog-input-group">
+        <label>What needs fixing?</label>
+        <textarea id="rejectReasonInput" class="dialog-input" rows="4" maxlength="${REJECT_MAX}" style="resize: vertical;" placeholder="e.g. Add two sources and rewrite the conclusion."></textarea>
+        <div class="reason-count" id="rejectReasonCount">0 / ${REJECT_MAX}</div>
+      </div>
+      <div class="dialog-actions">
+        <button class="btn-primary" id="cancelDialog">Cancel</button>
+        <button class="btn-primary destructive" id="confirmReject">Reject &amp; send note</button>
+      </div>
+    `;
+    dialogOverlay.classList.add('active');
+
+    const ta = document.getElementById('rejectReasonInput');
+    const count = document.getElementById('rejectReasonCount');
+    const updateCount = () => { count.textContent = `${ta.value.length} / ${REJECT_MAX}`; };
+    ta.addEventListener('input', updateCount);
+    dialogBox.querySelectorAll('[data-chip]').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const text = chip.dataset.chip;
+        if (!ta.value.toLowerCase().includes(text.toLowerCase())) {
+          const base = ta.value.trim();
+          ta.value = ((base ? base + ' ' : '') + text + '. ').slice(0, REJECT_MAX);
+        }
+        chip.classList.add('used');
+        ta.focus();
+        updateCount();
+      });
+    });
+    setTimeout(() => ta.focus(), 50);
+
+    document.getElementById('cancelDialog').onclick = closeDialog;
+    document.getElementById('confirmReject').onclick = async () => {
+      const reason = ta.value.trim();
+      if (reason.length < 3) {
+        toast('Tell the student what needs fixing first.', 'error');
+        ta.focus();
+        return;
+      }
+      const ok = await handleTaskAction('reject_task', taskId, userId, { reason });
+      if (ok) closeDialog();
+    };
+    guardDialogButton('confirmReject', 'reject_task:' + taskId + ':' + userId);
+  }
+
+  async function handleTaskAction(action, taskId, userId = null, extra = null) {
     try {
       setStatus('saving');
       const payload = { action, taskId };
       if (userId) payload.userId = userId;
+      if (extra) Object.assign(payload, extra);
       await orgApiCall(payload);
       toast(`Task successfully ${action.includes('verify') ? 'verified' : action.includes('reject') ? 'rejected' : 'deleted'}.`);
       fetchOrgTasks();
+      return true;
     } catch (error) {
       toast(error.message, 'error');
+      return false;
     } finally {
       setStatus('ready');
     }
@@ -5309,11 +5525,15 @@ Marketing,alex99,</div>
         `;
       }
 
+      const myVersions = (t.versions || []).slice().sort((a, b) => a.versionNo - b.versionNo);
+      const myRejection = latestRejection(myVersions);
+      const feedbackHtml = (t.status === 'rejected' && myRejection && myRejection.note) ? feedbackCalloutHtml(myRejection) : '';
+      const myHistoryHtml = historyHtml(myVersions);
       const canStillAct = t.status === 'not_started' || t.status === 'rejected';
       const canSubmit = canStillAct && !isOverdue;
       let actionButton = '';
       if (canSubmit) {
-        actionButton = `<button class="btn-action primary" data-task-action="submit" data-task-id="${t.taskId}">Submit Task</button>`;
+        actionButton = `<button class="btn-action primary" data-task-action="submit" data-task-id="${t.taskId}">${t.status === 'rejected' ? 'Resubmit' : 'Submit Task'}</button>`;
       } else if (canStillAct && isOverdue) {
         actionButton = `<span style="font-size: 12px; font-weight: 600; color: var(--danger, #e5484d); text-transform: uppercase; letter-spacing: 0.05em;">Deadline Passed — Submissions Closed</span>`;
       }
@@ -5326,14 +5546,16 @@ Marketing,alex99,</div>
               <div class="task-card-meta">
                 <span>${escapeHtml(t.groupName || 'Unassigned')}</span>
                 <span class="dot"></span>
-                <span class="${isOverdue ? 'due-overdue' : ''}">Due: ${dueDate}</span>
+                <span class="${isOverdue ? 'due-overdue' : ''}">Due: ${dueDate}</span>${myVersions.length > 1 ? `<span class="dot"></span><span>Attempt ${myVersions.length}</span>` : ''}
               </div>
             </div>
             <span class="task-status-badge ${isOverdue && canStillAct ? 'overdue' : statusClass}">${isOverdue && canStillAct ? 'Overdue' : statusText}</span>
           </div>
           ${t.description ? `<div class="task-description">${escapeHtml(t.description)}</div>` : ''}
+          ${feedbackHtml}
           ${submissionHtml}
           ${linksHtml}
+          ${myHistoryHtml}
           ${actionButton ? `<div style="margin-top: 16px; text-align: right;">${actionButton}</div>` : ''}
         </div>
       `;
@@ -5347,9 +5569,13 @@ Marketing,alex99,</div>
   }
 
   function openSubmitTaskDialog(taskId) {
+    const __task = (userAssignedTasks || []).find(x => String(x.taskId) === String(taskId)) || {};
+    const __rej = __task.status === 'rejected'
+      ? latestRejection((__task.versions || []).slice().sort((a, b) => a.versionNo - b.versionNo)) : null;
     dialogBox.innerHTML = `
-      <div class="dialog-title">Submit Task</div>
-      <div class="dialog-text">Provide your text response and attach any relevant links for review.</div>
+      <div class="dialog-title">${__rej ? 'Resubmit Task' : 'Submit Task'}</div>
+      ${__rej && __rej.note ? feedbackCalloutHtml(__rej) : ''}
+      <div class="dialog-text">${__rej ? 'Fix what was asked above, then send it back for review. Your earlier attempt stays in History.' : 'Provide your text response and attach any relevant links for review.'}</div>
       
       <div class="dialog-input-group">
         <label>Submission Text</label>
@@ -5371,10 +5597,11 @@ Marketing,alex99,</div>
 
       <div class="dialog-actions">
         <button class="btn-primary" id="cancelDialog">Cancel</button>
-        <button class="btn-primary main" id="confirmSubmit">Submit</button>
+        <button class="btn-primary main" id="confirmSubmit">${__rej ? 'Resubmit' : 'Submit'}</button>
       </div>
     `;
     dialogOverlay.classList.add('active');
+    if (__rej && __rej.text) document.getElementById('submitTextInput').value = __rej.text;
 
     document.getElementById('addLinkBtn').addEventListener('click', () => {
       const container = document.getElementById('submitLinksContainer');
