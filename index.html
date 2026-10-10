@@ -4,14 +4,15 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="tractionbooster-site-verification" content="tb_verify_977ef7266ae7489dc438fe3fec2b3a86">
-<title>Time12 — Make Time True</title>
-<meta name="description" content="Assign tasks, collect submissions and see who is actually done. Time12 for teachers, managers, students and employees.">
+<title>Time12 — Task and submission tracking for classes and teams</title>
+<meta name="description" content="Time12 is a task and submission tracker for teachers, managers, students and employees. Assign work to a group, collect text, links and files, verify or reject each submission, and see who is done, late or missing.">
 <meta property="og:title" content="Time12 — Make Time True">
+<meta property="og:description" content="Assign tasks to a class or team, collect submissions, verify them and see who is actually done.">
 <meta property="og:type" content="website">
 <meta property="og:image" content="https://time12.xin/taiwan.png">
 <meta property="og:url" content="https://time12.xin/">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Time12","applicationCategory":"ProductivityApplication","operatingSystem":"Web","description":"Assign tasks, collect submissions and see who is actually done. Time12 helps teachers, managers, students and employees track work in one place.","url":"https://time12.xin/","image":"https://time12.xin/taiwan.png"}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Time12","applicationCategory":"ProductivityApplication","operatingSystem":"Web","description":"Task and submission tracking for classes and teams. Assign tasks to groups, collect text, links and files, verify or reject submissions, and read completion analytics.","url":"https://time12.xin/","image":"https://time12.xin/taiwan.png","audience":{"@type":"Audience","audienceType":"Teachers, managers, students and employees"},"featureList":["Groups and sub-groups","Tasks with exact due date and time","Submissions with text, links and files up to 25 MB","Verify or reject submissions","Analytics with 1D to ALL periods and Excel export","CSV and Excel bulk account import","Offline-first notes with sync","Command palette and keyboard shortcuts","Light and dark themes"]}
 </script>
 <script>
 (function(){var t=null;try{t=localStorage.getItem('Time12-theme')}catch(e){}
@@ -24,20 +25,26 @@ document.documentElement.setAttribute('data-theme',t);})();
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{color-scheme:light;--bg:#FFFFFF;--card:#FFFFFF;--soft-bg:#F7F3EE;--ink:#18120E;--soft:#4A4036;--mute:#7A6F63;--line:#E5DDD3;--acc:#FD7E14;--acc-soft:#FFF1E0;--chip-p:#B45309;--ok:#4F6B2E;--bad:#A23B2A;--shadow:rgba(24,18,14,.28);--serif:'DM Serif Display',Georgia,serif;--sans:'DM Sans',system-ui,sans-serif}
-:root[data-theme="dark"]{color-scheme:dark;--bg:#000000;--card:#0F0F0F;--soft-bg:#0A0A0A;--ink:#F5F5F5;--soft:#B5B5B5;--mute:#8A8A8A;--line:#242424;--acc-soft:#2A1808;--chip-p:#FFA45C;--ok:#7AB560;--bad:#D97060;--shadow:rgba(0,0,0,.8)}
-body,nav,.mock,.f,.bar,.said span,.band{transition:background-color .3s,border-color .3s,color .3s}
+:root{color-scheme:light;
+--bg:#FFFFFF;--card:#FFFFFF;--soft-bg:#F7F3EE;--surface-2:#EFE9E1;--ink:#18120E;--soft:#4A4036;--mute:#7A6F63;--line:#E5DDD3;
+--acc:#FD7E14;--acc-soft:#FFF4E5;--molding:#1A1A1A;--ok:#5F7A3A;--warn:#B08832;--bad:#A23B2A;
+--shadow:rgba(24,18,14,.28);--serif:'DM Serif Display',Georgia,serif;--sans:'DM Sans',system-ui,sans-serif}
+:root[data-theme="dark"]{color-scheme:dark;
+--bg:#000000;--card:#0F0F0F;--soft-bg:#0A0A0A;--surface-2:#1A1A1A;--ink:#F5F5F5;--soft:#B5B5B5;--mute:#8A8A8A;--line:#242424;
+--acc-soft:#3A1F0A;--molding:#FF8A33;--ok:#7AB560;--warn:#FFA45C;--bad:#D97060;--shadow:rgba(0,0,0,.8)}
+body,nav,.win,.dlg,.band,.card{transition:background-color .3s,border-color .3s,color .3s}
 html{scroll-behavior:smooth}
 body{font-family:var(--sans);background:var(--bg);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}
 svg.i{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
 :focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:6px}
 .wrap{max-width:1120px;margin:0 auto;padding:0 24px}
-.btn{display:inline-flex;align-items:center;gap:8px;font:600 15px var(--sans);padding:12px 22px;border-radius:999px;background:var(--acc);color:#18120E;border:1px solid var(--acc);transition:transform .15s,box-shadow .15s}
+.btn{display:inline-flex;align-items:center;gap:8px;font:600 15px var(--sans);padding:12px 22px;border-radius:999px;background:var(--acc);color:#18120E;border:1px solid var(--acc);transition:transform .15s,box-shadow .15s;cursor:pointer}
 .btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(253,126,20,.35)}
 .btn.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
 .btn.ghost:hover{box-shadow:none;border-color:var(--ink)}
-nav{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+/* nav */
+nav{position:sticky;top:0;z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
 nav .wrap{display:flex;align-items:center;justify-content:space-between;height:64px}
 .logo{display:flex;align-items:center;gap:10px;font:400 24px var(--serif)}
 .logo img{width:30px;height:30px;object-fit:contain;display:block}
@@ -50,104 +57,338 @@ nav .wrap{display:flex;align-items:center;justify-content:space-between;height:6
 .tog .moon{display:none}
 :root[data-theme="dark"] .tog .sun{display:none}
 :root[data-theme="dark"] .tog .moon{display:block}
-.links{display:flex;gap:28px;font-size:14px;color:var(--soft)}
+.links{display:flex;gap:26px;font-size:14px;color:var(--soft)}
 .links a:hover{color:var(--ink)}
 nav .btn{padding:8px 18px;font-size:14px}
-.hero{padding:72px 0 56px}
-.hero .wrap{display:grid;grid-template-columns:1fr 1.08fr;gap:56px;align-items:center}
-h1{font:400 clamp(40px,5.6vw,68px)/1.04 var(--serif);letter-spacing:-.02em}
-.lead{margin:22px 0 30px;font-size:18px;color:var(--soft);max-width:460px}
+/* hero */
+.hero{padding:64px 0 40px}
+.hero .wrap{display:grid;grid-template-columns:1fr 1.18fr;gap:48px;align-items:start}
+h1{font:400 clamp(40px,5.4vw,66px)/1.04 var(--serif);letter-spacing:-.02em}
+.lead{margin:20px 0 26px;font-size:18px;color:var(--soft);max-width:480px}
+.lead b{color:var(--ink);font-weight:600}
 .cta{display:flex;gap:12px;flex-wrap:wrap}
-.who{margin-top:26px;font-size:13.5px;color:var(--mute);display:flex;flex-wrap:wrap;gap:6px 18px}
-.who span{display:flex;align-items:center;gap:6px}
-.who svg{width:15px;height:15px;color:var(--acc)}
-/* dashboard mock */
-.mock{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:0 30px 60px -30px var(--shadow);overflow:hidden}
-.bar{display:flex;align-items:center;gap:6px;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--soft-bg)}
-.bar i{width:9px;height:9px;border-radius:50%;background:var(--line)}
-.tabs{display:flex;gap:4px;margin-left:12px;font-size:12.5px;font-weight:500}
-.tabs span{padding:4px 12px;border-radius:999px;color:var(--mute)}
-.tabs .on{background:var(--acc-soft);color:var(--ink)}
-.mbody{display:grid;grid-template-columns:150px 1fr;gap:20px;padding:24px 22px 22px;align-items:center}
-.ring{position:relative;width:150px;height:150px}
-.ring svg{width:100%;height:100%}
-.ring line{stroke:var(--line);stroke-width:5;stroke-linecap:round;transition:stroke .4s}
-.ring line.p{stroke:var(--acc)}
-.ring line.d{stroke:var(--ink)}
-.ring b{position:absolute;inset:0;display:grid;place-content:center;text-align:center;font:400 34px/1 var(--serif)}
-.ring b small{display:block;font:500 11px var(--sans);color:var(--mute);margin-top:4px}
-.task h4{font-size:15px;font-weight:600}
-.task p{font-size:12.5px;color:var(--mute);margin:2px 0 12px;display:flex;align-items:center;gap:6px}
-.task p svg{width:14px;height:14px}
-.row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px}
-.chip{font-size:11.5px;font-weight:600;padding:3px 10px;border-radius:999px;background:var(--soft-bg);color:var(--mute);transition:all .3s}
-.chip.p{background:var(--acc-soft);color:var(--chip-p)}
-.chip.d{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
-.mfoot{padding:14px 22px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;font-size:12.5px;color:var(--mute)}
-.mfoot em{font-style:normal;color:var(--ink);font-weight:600}
+.aud{margin-top:30px;display:grid;gap:0;border-top:1px solid var(--line);max-width:480px}
+.aud div{display:grid;grid-template-columns:104px 1fr;gap:14px;padding:12px 0;border-bottom:1px solid var(--line);font-size:14px;color:var(--soft)}
+.aud b{color:var(--ink);font-weight:600}
+.cap{margin-top:12px;font-size:13px;color:var(--mute)}
+/* ---------- faithful app window ---------- */
+.win{background:var(--card);border:1px solid var(--line);border-radius:14px;box-shadow:0 30px 60px -30px var(--shadow);overflow:hidden;text-align:left}
+.wbar{display:flex;align-items:center;gap:6px;padding:11px 16px;border-bottom:1px solid var(--line);background:var(--soft-bg)}
+.wbar i{width:9px;height:9px;border-radius:50%;background:var(--line)}
+.wbar span{margin-left:12px;font-size:11.5px;color:var(--mute);background:var(--card);border:1px solid var(--line);border-radius:999px;padding:2px 14px}
+.wbody{overflow-x:auto}
+.app{min-width:560px;padding:14px 20px 22px}
+.top{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin-bottom:22px}
+.top .l{display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--mute)}
+.top .l i{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.top .r{display:flex;justify-content:flex-end;gap:8px}
+.pill{display:flex;gap:4px;padding:5px;border:1px solid var(--line);border-radius:999px;background:var(--soft-bg)}
+.pill span{padding:5px 14px;border-radius:999px;font-size:12.5px;font-weight:500;color:var(--mute);white-space:nowrap}
+.pill .on{background:var(--card);color:var(--ink);font-weight:600;box-shadow:0 1px 6px rgba(0,0,0,.12)}
+.ab{font:600 12px var(--sans);padding:6px 14px;border:1px solid var(--line);border-radius:4px;background:transparent;color:var(--ink);white-space:nowrap}
+.ab.p{background:var(--acc);border-color:var(--acc);color:#18120E}
+.ab.d:hover{color:var(--bad)}
+.mt{font:400 30px/1.2 var(--serif);letter-spacing:-.02em}
+.mm{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;font-size:10px;color:var(--mute);text-transform:uppercase;letter-spacing:.1em;margin:4px 0 20px;padding-bottom:12px;border-bottom:2px solid var(--molding)}
+.mm u{width:3px;height:3px;border-radius:50%;background:var(--mute);display:inline-block}
+.lab{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--mute)}
+.tbl{border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:12.5px}
+.th,.tr{display:grid;grid-template-columns:minmax(0,1fr) 92px 112px;gap:14px;padding:12px 14px;align-items:start}
+.th{background:var(--soft-bg);border-bottom:1px solid var(--line)}
+.tr+.tr{border-top:1px solid var(--line)}
+.tr strong{font-size:14px}
+.tr .desc{color:var(--mute);margin-top:3px}
+.ref{margin-top:8px;font-size:12px;color:var(--soft)}
+.ref a{color:var(--acc);display:flex;align-items:center;gap:5px;margin-top:2px}
+.ref svg{width:12px;height:12px}
+.prog{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px}
+.mp{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:4px 0;font-size:12.5px;min-height:30px}
+.mp b{font-weight:600}
+.st{font-size:10.5px;font-weight:600;text-transform:capitalize;margin-left:6px;transition:color .3s}
+.st.not_started{color:var(--mute)}.st.pending{color:var(--warn)}.st.completed{color:var(--ok)}.st.rejected{color:var(--bad)}
+.acts{display:flex;gap:6px;flex:none;min-height:24px}
+.rb{font:600 11px var(--sans);padding:3px 10px;border:1px solid var(--line);border-radius:4px;color:var(--ink);white-space:nowrap}
+.rb.d{color:var(--bad)}
+.more{margin-top:4px;font:600 11.5px var(--sans);color:var(--acc);background:none;border:0;padding:0}
+.od{color:var(--bad)}
+.sub{padding:8px 10px;margin:3px 0 4px;background:var(--surface-2);border:1px solid var(--line);border-radius:4px;font-size:11.5px;color:var(--soft)}
+.sub a{display:flex;align-items:center;gap:5px;color:var(--acc);margin-top:3px}
+.sub svg{width:11px;height:11px}
+/* groups */
+.gc{border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin-bottom:10px;background:var(--card)}
+.gh{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.gn{font-weight:600;font-size:14.5px;display:flex;align-items:center;gap:8px}
+.gid{font:500 10px ui-monospace,Menlo,monospace;color:var(--mute);background:var(--surface-2);padding:1px 6px;border-radius:3px}
+.ga{display:flex;gap:6px}
+.mem{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.mem span{font-size:12px;padding:3px 8px;background:var(--surface-2);border-radius:4px;display:inline-flex;align-items:center;gap:6px}
+.mem em{font-style:normal;color:var(--mute)}
+.nest{margin-left:22px;border-left:2px solid var(--line);padding-left:12px}
+.chk{width:13px;height:13px;border:1.5px solid var(--mute);border-radius:3px;display:inline-block;vertical-align:-2px}
+.chk.on{background:var(--acc);border-color:var(--acc)}
+.selbar{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--soft);padding:8px 14px;background:var(--acc-soft);border-top:1px solid var(--line)}
+.tr.acc{grid-template-columns:24px 1fr auto;align-items:center;padding:8px 14px}
+/* task cards */
+.gcard{border:1px solid var(--line);border-radius:8px;padding:14px 16px;margin-bottom:16px}
+.gcard .gt{display:flex;justify-content:space-between;font-size:14px;font-weight:600}
+.gcard .gt small{font-weight:400;font-size:11px;color:var(--mute)}
+.gcard svg{width:100%;height:70px;display:block;margin-top:8px}
+.ga-area{fill:var(--acc);opacity:.14}.ga-line{fill:none;stroke:var(--acc);stroke-width:1.6;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+.ga-grid line{stroke:var(--line);stroke-width:.5;vector-effect:non-scaling-stroke}
+.tc{border:1px solid var(--line);border-top:3px solid var(--line);border-radius:8px;padding:16px 18px;margin-bottom:14px}
+.tc.pending{border-top-color:var(--warn)}.tc.completed{border-top-color:var(--ok)}.tc.rejected{border-top-color:var(--bad)}.tc.overdue{border-top-color:var(--bad)}
+.tch{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.tct{font-weight:600;font-size:15px}
+.tcm{font-size:11.5px;color:var(--mute);margin-top:2px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap;background:var(--surface-2);color:var(--mute)}
+.badge:before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor}
+.badge.pending{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+.badge.completed,.badge.done{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.badge.rejected,.badge.overdue,.badge.missed{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+.badge.late{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
+.badge.review{background:var(--acc-soft);color:var(--acc)}
+.badge.n{text-transform:none;letter-spacing:0;font-size:11px}
+.tcd{margin-top:8px;font-size:12.5px;color:var(--soft)}
+.rev{margin-top:10px;padding:9px 11px;background:var(--surface-2);border-radius:4px;font-size:12px;color:var(--soft)}
+.rev b{display:block;margin-bottom:3px;font-size:10px;letter-spacing:.08em;color:var(--acc)}
+.tcl{margin-top:10px;font-size:12px}
+.tcl a{display:flex;align-items:center;gap:5px;color:var(--acc);margin-top:2px}
+.tcl svg{width:12px;height:12px}
+.tcf{margin-top:12px;text-align:right}
+.closed{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.05em;color:var(--bad)}
+/* dialogs */
+.dlg{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:22px;box-shadow:0 30px 60px -30px var(--shadow);font-size:13px;max-width:460px;width:100%}
+.dlg.fade{-webkit-mask-image:linear-gradient(#000 78%,transparent);mask-image:linear-gradient(#000 78%,transparent)}
+.dt{font:400 24px/1.2 var(--serif)}
+.dx{color:var(--mute);margin:4px 0 14px;font-size:12.5px}
+.f2{margin-bottom:12px}
+.f2 label{display:block;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--mute);margin-bottom:5px}
+.f2 label i{font-style:normal;text-transform:none;letter-spacing:0;opacity:.8}
+.in{border:1px solid var(--line);border-radius:4px;padding:7px 10px;font-size:12.5px;color:var(--mute);background:var(--bg);display:flex;justify-content:space-between;align-items:center;min-height:32px}
+.in.v{color:var(--ink)}
+.two{display:grid;grid-template-columns:2fr 1fr;gap:8px;margin-bottom:6px}
+.drop{border:1.5px dashed var(--line);border-radius:6px;text-align:center;padding:14px 10px;color:var(--soft);font-size:12px}
+.drop small{display:block;color:var(--mute);margin-top:3px;font-size:11px}
+.drop svg{width:20px;height:20px;margin-bottom:4px;color:var(--mute)}
+.da{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+.tg{display:flex;gap:4px;padding:3px;background:var(--surface-2);border-radius:6px;margin-bottom:12px}
+.tg span{flex:1;text-align:center;padding:6px;font-size:12px;font-weight:600;border-radius:4px;color:var(--mute)}
+.tg .on{background:var(--card);color:var(--ink);box-shadow:0 1px 4px rgba(0,0,0,.1)}
+.fmt{font-size:11.5px;color:var(--mute);line-height:1.65;background:var(--surface-2);border-radius:4px;padding:9px 11px}
+.fmt b{color:var(--soft)}
+.mono{font:500 11.5px/1.6 ui-monospace,Menlo,monospace}
+code{font:500 12px ui-monospace,Menlo,monospace;background:var(--surface-2);padding:1px 6px;border-radius:4px}
+.csvx{margin-top:8px;background:var(--surface-2);border-radius:4px;padding:8px 10px;color:var(--soft)}
+.ai{margin-top:12px;background:var(--surface-2);border-radius:4px;padding:9px 11px;font-size:12px;font-weight:600;color:var(--soft)}
+/* notes mock */
+.notes{display:grid;grid-template-columns:190px 1fr;min-height:340px}
+.side{border-right:1px solid var(--line);padding:16px 14px;display:flex;flex-direction:column;gap:12px;background:var(--soft-bg)}
+.brand{display:flex;align-items:center;gap:8px;font:400 18px var(--serif)}
+.brand svg{width:20px;height:20px}
+.srch{border:1px solid var(--line);border-radius:4px;padding:6px 9px;font-size:12px;color:var(--mute);background:var(--bg)}
+.nl{display:flex;flex-direction:column;gap:2px;flex:1}
+.nl div{padding:7px 9px;border-radius:4px;font-size:12.5px}
+.nl div small{display:block;color:var(--mute);font-size:10.5px}
+.nl .on{background:var(--acc-soft)}
+.sf{font-size:11px;color:var(--mute);display:flex;flex-direction:column;gap:5px;border-top:1px solid var(--line);padding-top:10px}
+.sf div{display:flex;justify-content:space-between}
+.sf i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);margin-right:6px}
+.ed{padding:20px 24px;display:flex;flex-direction:column}
+.edt{font:400 28px/1.2 var(--serif)}
+.edm{font-size:11px;color:var(--mute);margin:4px 0 14px}
+.edb{font-size:13.5px;color:var(--soft);line-height:1.75;flex:1}
+.edb p+p{margin-top:6px}
+.tb{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px;margin-top:12px}
+.tbg{display:flex;gap:2px}
+.tbg span{min-width:26px;height:26px;border-radius:4px;display:grid;place-items:center;font-size:12px;font-weight:600;border:1px solid transparent}
+.tbg span+span{margin-left:0}
+.tbs{width:1px;height:16px;background:var(--line);margin:0 6px}
+.cnt{font-size:11px;color:var(--mute)}
+.cnt b{color:var(--ink)}
+/* palette */
+.pal{max-width:480px;border:1px solid var(--line);border-radius:10px;background:var(--card);box-shadow:0 30px 60px -30px var(--shadow);overflow:hidden;width:100%}
+.pi{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line);font-size:13px;color:var(--mute)}
+.pi svg{width:16px;height:16px}
+.ps{padding:8px 14px 4px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--mute)}
+.pit{display:flex;align-items:center;gap:10px;padding:8px 14px;font-size:13px}
+.pit svg{width:15px;height:15px;color:var(--mute)}
+.pit span{margin-left:auto;font:500 11px ui-monospace,Menlo,monospace;color:var(--mute)}
+.pit.sel{background:var(--acc-soft)}
+.pit.sel svg{color:var(--acc)}
+.ks{margin-top:14px;border:1px solid var(--line);border-radius:10px;padding:14px 16px;max-width:480px;background:var(--card)}
+.ks div{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px;border-bottom:1px solid var(--line)}
+.ks div:last-child{border:0}
+.key{display:inline-block;min-width:24px;text-align:center;padding:1px 7px;border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;font:500 11px ui-monospace,Menlo,monospace;margin-left:4px;background:var(--soft-bg)}
+/* analytics */
+.an-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.an-name{font:400 24px/1.2 var(--serif)}
+.an-s{font-size:12px;color:var(--mute);margin-top:2px}
+.an-tools{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.an-tools .in{flex:1;min-width:200px}
+.seg{display:flex;gap:4px}
+.seg span{font-size:11.5px;font-weight:600;padding:5px 11px;border:1px solid var(--line);border-radius:999px;color:var(--mute)}
+.seg .on{background:var(--acc-soft);color:var(--ink);border-color:var(--acc)}
+.stats{display:grid;grid-template-columns:1.5fr repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin:14px 0 12px}
+.stat{background:var(--bg);padding:12px 14px}
+.stat b{display:block;font:400 26px/1 var(--serif)}
+.stat b small{font:400 11px var(--sans);color:var(--mute);margin-left:4px}
+.stat b.bad{color:var(--bad)}
+.stat span{display:flex;align-items:center;gap:6px;margin-top:7px;font-size:11.5px;color:var(--mute)}
+.stat span i{width:7px;height:7px;border-radius:50%}
+.sg{display:flex;height:9px;border-radius:999px;overflow:hidden;background:var(--surface-2);margin-bottom:22px}
+.sg.s{height:6px;min-width:70px;flex:0 0 90px;margin:0}
+.sg i{display:block;height:100%}
+.trh{font:400 17px var(--serif);margin-bottom:8px}
+.trend{display:flex;align-items:stretch;gap:4px;height:84px}
+.trend .w{flex:1;display:flex;flex-direction:column;border-radius:3px;overflow:hidden}
+.trend .w i{display:block;min-height:2px}
+.trend .w.e{height:8%;align-self:flex-end;background:var(--surface-2)}
+.trl{display:flex;gap:4px;margin-top:6px;font-size:10px;color:var(--mute)}
+.trl span{flex:1;white-space:nowrap}
+.sec2{margin-top:24px}
+.sect{font:400 17px var(--serif);display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.sect small{font:600 11px var(--sans);color:var(--mute);background:var(--surface-2);padding:1px 8px;border-radius:999px}
+.rw{display:flex;align-items:center;gap:14px;padding:10px 12px;border:1px solid var(--line);border-radius:6px;margin-bottom:6px;font-size:13px}
+.rw .m{flex:1;min-width:0}
+.rw .m b{font-weight:600}
+.rw .m small{display:block;font-size:11.5px;color:var(--mute)}
+.rw .m small .bad{color:var(--bad)}
+.rw .pc{font-weight:600;font-size:12.5px;min-width:36px;text-align:right}
+.rw .ch{width:14px;height:14px;color:var(--mute)}
+.org{color:var(--mute);font-weight:400}
+.two-up{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.an-top{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.ringw{position:relative;width:118px;height:118px;flex:none}
+.ringw svg{width:100%;height:100%}
+.ringw b{position:absolute;inset:0;display:grid;place-content:center;text-align:center;font:400 28px/1 var(--serif)}
+.ringw b small{display:block;font:500 10px var(--sans);color:var(--mute);margin-top:3px}
+.pt{width:100%;border-collapse:collapse;font-size:12px}
+.pt th{text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--mute);padding:7px 8px;background:var(--soft-bg);border-bottom:1px solid var(--line)}
+.pt td{padding:8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.pt td:first-child{color:var(--acc);font-weight:500}
 /* sections */
-section{padding:88px 0}
-h2{font:400 clamp(30px,4vw,46px)/1.1 var(--serif);letter-spacing:-.015em;max-width:640px}
-.sub{color:var(--soft);font-size:17px;margin-top:14px;max-width:560px}
-.ask{background:var(--soft-bg);border-block:1px solid var(--line)}
-.ask .wrap{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
+.sec{padding:84px 0}
+.sec.tint{background:var(--soft-bg);border-block:1px solid var(--line)}
+h2{font:400 clamp(30px,4vw,46px)/1.1 var(--serif);letter-spacing:-.015em;max-width:700px}
+.subh{color:var(--soft);font-size:17px;margin-top:14px;max-width:620px}
 .said{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
 .said span{padding:10px 18px;border-radius:18px 18px 18px 4px;background:var(--card);border:1px solid var(--line);font-size:16px;color:var(--mute)}
 .said span:nth-child(2){margin-left:28px;opacity:.75}
 .said span:nth-child(3){margin-left:56px;opacity:.5}
-.bento{display:grid;grid-template-columns:repeat(6,1fr);gap:16px;margin-top:44px}
-.f{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:26px}
-.f.a{grid-column:span 4}.f.b{grid-column:span 2}.f.c{grid-column:span 3}.f.d{grid-column:span 2}.f.e{grid-column:span 4}
-.f .ic{width:38px;height:38px;border-radius:10px;background:var(--acc-soft);color:var(--acc);display:grid;place-items:center;margin-bottom:16px}
-.f h3{font-size:18px;font-weight:600;margin-bottom:6px}
-.f p{color:var(--soft);font-size:15px}
-.f p+p{margin-top:8px}
-.states{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
-.grid{display:grid;grid-template-columns:repeat(30,1fr);gap:3px;margin-top:20px}
-.grid i{aspect-ratio:1;border-radius:2px;background:var(--line)}
-.grid i.y{background:var(--ok)}.grid i.n{background:var(--bad)}
-.legend{display:flex;gap:14px;font-size:12px;color:var(--mute);margin-top:10px}
-.legend s{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;text-decoration:none}
-code{font:500 12.5px ui-monospace,Menlo,monospace;background:var(--soft-bg);padding:2px 7px;border-radius:5px}
-.csv{margin-top:14px;background:var(--soft-bg);border-radius:10px;padding:12px 14px;font:500 12.5px/1.7 ui-monospace,Menlo,monospace;color:var(--soft)}
-.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:44px;border-top:1px solid var(--line)}
-.step{padding:28px 28px 0 0}
-.step+.step{padding-left:28px;border-left:1px solid var(--line)}
-.step b{font:400 40px/1 var(--serif);color:var(--acc)}
-.step h3{margin:14px 0 6px;font-size:18px}
-.step p{color:var(--soft);font-size:15px}
+.ask{display:grid;grid-template-columns:.8fr 1.2fr;gap:56px;align-items:center}
+.who3{display:grid;grid-template-columns:repeat(3,1fr);gap:0;margin-top:44px;border-top:1px solid var(--line)}
+.who3>div{padding:28px 28px 0 0}
+.who3>div+div{padding-left:28px;border-left:1px solid var(--line)}
+.who3 h3{font:400 28px/1.15 var(--serif);margin-bottom:4px}
+.who3 .role{font-size:13.5px;color:var(--mute);margin-bottom:14px}
+.who3 p{font-size:15px;color:var(--soft)}
+.who3 ul{list-style:none;margin-top:14px;display:grid;gap:9px}
+.who3 li{font-size:14.5px;color:var(--soft);display:flex;gap:10px}
+.who3 li:before{content:'';flex:none;width:6px;height:6px;border-radius:50%;background:var(--acc);margin-top:9px}
+.flow{display:grid;grid-template-columns:repeat(5,1fr);margin-top:44px;border-top:1px solid var(--line)}
+.step{padding:26px 22px 0 0}
+.step+.step{padding-left:22px;border-left:1px solid var(--line)}
+.step b{font:400 38px/1 var(--serif);color:var(--acc)}
+.step h3{margin:12px 0 6px;font-size:17px}
+.step p{color:var(--soft);font-size:14.5px}
+.life{margin-top:40px;border:1px solid var(--line);border-radius:14px;padding:22px 26px;background:var(--card);display:flex;flex-wrap:wrap;gap:14px 18px;align-items:center}
+.life .ar{width:18px;height:18px;color:var(--mute)}
+.life p{flex-basis:100%;font-size:14px;color:var(--soft)}
+.life .row{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.life .tag{font-size:12px;color:var(--mute)}
+.tour{display:grid;grid-template-columns:.78fr 1.22fr;gap:52px;align-items:center;margin-top:84px}
+.tour.flip{grid-template-columns:1.22fr .78fr}
+.tour.flip .tx{order:2}
+.tx h3{font:400 clamp(26px,3vw,34px)/1.12 var(--serif);letter-spacing:-.01em}
+.tx>p{margin-top:12px;color:var(--soft);font-size:16px}
+.tx ul{list-style:none;margin-top:16px;border-top:1px solid var(--line)}
+.tx li{padding:10px 0;border-bottom:1px solid var(--line);font-size:14.5px;color:var(--soft)}
+.tx li b{color:var(--ink);font-weight:600}
+.tour.full{grid-template-columns:1fr;gap:28px}
+.tour.full .tx{max-width:700px}
+.stage{display:flex;justify-content:center}
+.stage .win,.stage .dlg{width:100%}
+.stack{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:44px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px}
+.card h3{font-size:17px;font-weight:600;margin-bottom:6px;display:flex;align-items:center;gap:10px}
+.card p{color:var(--soft);font-size:14.5px}
+.card .ic{width:34px;height:34px;border-radius:9px;background:var(--acc-soft);color:var(--acc);display:grid;place-items:center;flex:none}
+.card .ic svg{width:18px;height:18px}
+.card.wide{grid-column:span 2}
+.dev{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.dev div{border:1px solid var(--line);border-radius:8px;padding:14px;text-align:center;font-size:12.5px;color:var(--mute)}
+.dev div:first-child{border-color:var(--acc);background:var(--acc-soft)}
+.dev b{display:block;color:var(--ink);font-size:13.5px;margin:6px 0 2px}
+.dev svg{width:24px;height:24px;color:var(--acc)}
+.dev div:last-child svg{color:var(--mute)}
+.pitch{margin-top:20px;font:600 14px var(--sans);color:var(--soft)}
+details{border-bottom:1px solid var(--line);padding:18px 0}
+details:first-of-type{border-top:1px solid var(--line)}
+summary{cursor:pointer;font-weight:600;font-size:16.5px;list-style:none;display:flex;justify-content:space-between;gap:16px}
+summary::-webkit-details-marker{display:none}
+summary:after{content:'+';font:400 24px/1 var(--serif);color:var(--acc)}
+details[open] summary:after{content:'–'}
+details p{margin-top:10px;color:var(--soft);font-size:15.5px;max-width:700px}
+.faq{max-width:760px;margin-top:36px}
 .final{padding:0 0 88px}
 .band{background:var(--soft-bg);border:1px solid var(--line);border-radius:22px;padding:64px 48px;text-align:center}
 .band h2{margin:0 auto}
-.band p{margin:14px auto 28px;color:var(--soft);max-width:460px}
+.band p{margin:14px auto 28px;color:var(--soft);max-width:520px}
 footer{border-top:1px solid var(--line);padding:32px 0;font-size:13.5px;color:var(--mute)}
 footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
-@media(max-width:860px){
+@media(max-width:940px){
 .links{display:none}
-.hero .wrap,.ask .wrap{grid-template-columns:1fr;gap:40px}
-.f.a,.f.b,.f.c,.f.d,.f.e{grid-column:span 6}
-.steps{grid-template-columns:1fr}.step,.step+.step{padding:24px 0;border-left:0;border-bottom:1px solid var(--line)}
-.grid{grid-template-columns:repeat(20,1fr)}
-.band{padding:48px 24px}}
-@media(max-width:480px){.mbody{grid-template-columns:1fr;justify-items:center}.task{width:100%}}
+.hero .wrap>div:first-child{order:0}.hero .wrap>.hp{order:1;border-top:0;padding-top:0}.hero .wrap>div:nth-child(2){order:2}
+.hero .wrap,.ask,.tour,.tour.flip{grid-template-columns:minmax(0,1fr);gap:36px}
+.tour.flip .tx{order:0}
+.who3,.flow{grid-template-columns:1fr}
+.who3>div,.who3>div+div,.step,.step+.step{padding:24px 0;border-left:0;border-bottom:1px solid var(--line)}
+.stack{grid-template-columns:1fr}.card.wide{grid-column:auto}
+.two-up{grid-template-columns:1fr}
+.stats{grid-template-columns:repeat(3,1fr)}
+.band{padding:48px 24px}
+.notes{grid-template-columns:1fr}.side{display:none}
+.sec{padding:64px 0}.tour{margin-top:64px}}
+.hero .wrap>*,.tour>*,.ask>*,.two-up>*,.stage>*{min-width:0}
+.who3>div,.step{min-width:0}
+@media(max-width:480px){h1{font-size:38px}.top{grid-template-columns:1fr}.top .l,.top .r{display:none}.aud div{grid-template-columns:1fr;gap:2px}}
+.partners{overflow:hidden}
+.mq{margin-top:40px;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
+.mq-track{display:flex;width:max-content;animation:mq 32s linear infinite}
+.mq:hover .mq-track{animation-play-state:paused}
+.mq-set{display:flex;gap:20px;padding-right:20px}
+.pl{width:220px;height:96px;flex:none;border:1px solid var(--line);border-radius:14px;background:#fff;display:grid;place-items:center;padding:18px 24px}
+.pl img{max-width:100%;max-height:100%;object-fit:contain;display:block}
+.pl span{font:600 16px var(--sans);color:#18120E}
+@keyframes mq{to{transform:translateX(-50%)}}
+.hp{grid-column:1/-1;margin-top:8px;padding-top:28px;border-top:1px solid var(--line)}
+.mq.mini{margin-top:10px}
+.mini .pl{width:200px;height:80px}
+@media(prefers-reduced-motion:reduce){.mq-track{animation-duration:70s}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-<symbol id="check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M8 12.5l3 3 5-6"/></symbol>
-<symbol id="clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M12 6.5V12l3.5 2"/></symbol>
-<symbol id="users" viewBox="0 0 24 24"><path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20"/><circle cx="10" cy="8" r="3.5"/><path d="M20 20v-1.5a3.5 3.5 0 0 0-2.5-3.35M15.5 4.65a3.5 3.5 0 0 1 0 6.7"/></symbol>
-<symbol id="link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></symbol>
-<symbol id="chart" viewBox="0 0 24 24"><path d="M4 20V4M4 20h16"/><path d="M8 16l4-5 3 3 5-7"/></symbol>
-<symbol id="note" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></symbol>
-<symbol id="tree" viewBox="0 0 24 24"><rect x="9" y="3" width="6" height="5" rx="1"/><rect x="3" y="16" width="6" height="5" rx="1"/><rect x="15" y="16" width="6" height="5" rx="1"/><path d="M12 8v4M6 16v-4h12v4"/></symbol>
-<symbol id="upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></symbol>
-<symbol id="lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
-<symbol id="cmd" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10l3 2-3 2M13 15h4"/></symbol>
-<symbol id="sync" viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.2L3 16M3 12A9 9 0 0 1 18.5 5.8L21 8"/><path d="M21 3v5h-5M3 21v-5h5"/></symbol>
-<symbol id="down" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></symbol>
 <symbol id="arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+<symbol id="link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></symbol>
+<symbol id="upload" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></symbol>
+<symbol id="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+<symbol id="search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></symbol>
+<symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+<symbol id="save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
+<symbol id="sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+<symbol id="kb" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M7 16h10"/></symbol>
+<symbol id="note" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></symbol>
+<symbol id="device" viewBox="0 0 24 24"><path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"/></symbol>
+<symbol id="phone" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2"/><path d="M12 18h.01"/></symbol>
+<symbol id="code" viewBox="0 0 24 24"><path d="M16 18l6-6-6-6M8 6l-6 6 6 6"/></symbol>
+<symbol id="db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></symbol>
+<symbol id="disk" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 4v5"/></symbol>
+<symbol id="glow" viewBox="0 0 24 24"><path d="M3 15c3-6 6 0 9-6s6 0 9-3M3 20c3-6 6 0 9-6s6 0 9-3"/></symbol>
+<symbol id="sheet" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18"/></symbol>
+<symbol id="type" viewBox="0 0 24 24"><path d="M4 7V4h16v3M9 20h6M12 4v16"/></symbol>
+<symbol id="lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
 </svg>
 
 <nav><div class="wrap">
@@ -156,135 +397,471 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 <svg class="fb" width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="14" cy="14" r="11" stroke-dasharray="2.2 3.3" stroke="#FD7E14"/><path d="M14 14V7.5M14 14l4 2.5"/></svg>
 Time12
 </a>
-<div class="links"><a href="#features">Features</a><a href="#how">How it works</a></div>
+<div class="links"><a href="#who">Who it's for</a><a href="#how">How it works</a><a href="#tour">Inside the app</a><a href="#stack">How it's built</a><a href="#faq">FAQ</a></div>
 <div class="right">
 <button class="tog" id="themeBtn" type="button" aria-label="Toggle light and dark mode" title="Toggle theme">
-<svg class="i sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+<svg class="i sun" viewBox="0 0 24 24" aria-hidden="true"><use href="#sun"/></svg>
 <svg class="i moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
 </button>
-<a class="btn" href="https://time12.xin/dash">Try Time12</a>
+<a class="btn" href="https://time12.xin/dash">Open Time12</a>
 </div>
 </div></nav>
 
+<!-- ============ HERO ============ -->
 <header class="hero" id="top"><div class="wrap">
 <div>
 <h1>Stop asking “Are you done?”</h1>
-<p class="lead">Time12 is where tasks get assigned, handed in and checked. Teachers and managers see the truth in one place, without chasing anyone for it.</p>
+<p class="lead"><b>Time12 is a task and submission tracker for classes and teams.</b> Assign work to a group, collect what people hand in, verify it, and see who is done, late or missing, all in one place.</p>
 <div class="cta">
-<a class="btn" href="https://time12.xin/dash">Try Time12 <svg class="i" width="18" height="18"><use href="#arrow"/></svg></a>
-<a class="btn ghost" href="#features">See what it does</a>
+<a class="btn" href="https://time12.xin/dash">Open Time12 <svg class="i" width="18" height="18"><use href="#arrow"/></svg></a>
+<a class="btn ghost" href="#how">See how it works</a>
 </div>
-<div class="who">
-<span><svg class="i"><use href="#check"/></svg>Teachers</span>
-<span><svg class="i"><use href="#check"/></svg>Managers</span>
-<span><svg class="i"><use href="#check"/></svg>Students</span>
-<span><svg class="i"><use href="#check"/></svg>Employees</span>
+<div class="aud">
+<div><b>Teachers</b><span>Give a class homework or a lab report with a due time. Review each student's hand-in.</span></div>
+<div><b>Managers</b><span>Assign work to a team. Verify what comes in and see who keeps missing deadlines.</span></div>
+<div><b>Students and employees</b><span>See what is due, hand in text, links or files, and track your own record.</span></div>
 </div>
 </div>
 
-<div class="mock" role="img" aria-label="Time12 dashboard preview showing a group task with each member's status">
-<div class="bar"><i></i><i></i><i></i>
-<div class="tabs"><span>Notes</span><span>My Tasks</span><span class="on">Org</span></div>
+<div>
+<div class="win" role="img" aria-label="Time12 Org tab showing a task with each member's status and Verify and Reject buttons">
+<div class="wbar"><i></i><i></i><i></i><span>time12.xin/dash</span></div>
+<div class="wbody"><div class="app">
+<div class="top"><div class="l"><i></i>Ready</div>
+<div class="pill"><span>Notes</span><span>My Tasks</span><span class="on">Org</span><span>Analytics</span></div>
+<div class="r"><span class="ab p">Add ▾</span></div></div>
+<div class="mt">ms.hart</div>
+<div class="mm"><span>Organization Overview</span><u></u><span>24 sub-accounts</span><u></u><span>2 root groups</span></div>
+<div class="tbl">
+<div class="th lab"><span>Task details &amp; member progress</span><span>Group</span><span>Due date</span></div>
+<div class="tr">
+<div>
+<strong>Lab report: Pendulum</strong>
+<div class="desc">Measure the period at five string lengths and plot T² against L.</div>
+<div class="ref"><span class="lab">Reference materials:</span><a href="#"><svg class="i"><use href="#link"/></svg>Lab handout</a></div>
+<div class="prog"><span class="lab">Member progress</span>
+<div id="hm"></div>
+<button class="more" type="button" tabindex="-1">Show 9 more</button>
 </div>
-<div class="mbody">
-<div class="ring"><svg viewBox="0 0 120 120" id="ring"></svg><b><span id="count">0</span><small>of 12 done</small></b></div>
-<div class="task">
-<h4>Lab report: Pendulum</h4>
-<p><svg class="i"><use href="#clock"/></svg>Due today, 11:59 PM · Physics 10B</p>
-<div id="rows"></div>
+</div>
+<div>Physics 10B</div>
+<div>Oct 14, 2026, 11:59 PM</div>
 </div>
 </div>
-<div class="mfoot"><svg class="i" width="16" height="16"><use href="#clock"/></svg><span>Each tick is one person. <em>The ring fills as work comes in.</em></span></div>
+</div></div>
 </div>
+<p class="cap">The Org tab. Members move from not started to pending, then you verify or reject each one.</p>
+</div>
+<div class="hp"><span class="lab">Trusted partners</span>
+<div class="mq mini" aria-label="Trusted partners: Tabula, SmoothRecorder and Prod99"><div class="mq-track"></div></div></div>
 </div></header>
 
-<section class="ask"><div class="wrap">
+<!-- ============ PROBLEM ============ -->
+<section class="sec tint" style="padding:64px 0"><div class="wrap ask">
 <div class="said" aria-hidden="true"><span>Are you done?</span><span>Are you done yet?</span><span>So… are you done?</span></div>
 <div>
-<h2>Every group has this question. Time12 answers it.</h2>
-<p class="sub">The task, the deadline, the submission and the status all live on one screen. Check it when you need it. No follow-up messages, no guessing.</p>
+<h2>Every class and team has this question. Time12 answers it.</h2>
+<p class="subh">The task, the deadline, each person's submission and its status live on one screen. Open it when you need it. No follow-up messages, no guessing.</p>
 </div>
 </div></section>
 
-<section id="features"><div class="wrap">
-<h2>Everything a group needs to get work done and prove it</h2>
-<p class="sub">Built for classrooms and teams. Simple enough to start today.</p>
-
-<div class="bento">
-<div class="f a">
-<div class="ic"><svg class="i"><use href="#check"/></svg></div>
-<h3>Assign tasks with a real deadline</h3>
-<p>Give a task a title, description, a due date and exact time, and reference links. Assign it to a group and everyone in it gets it.</p>
-<div class="states"><span class="chip">Not started</span><span class="chip p">Pending</span><span class="chip d">Completed</span><span class="chip" style="background:color-mix(in srgb,var(--bad) 15%,transparent);color:var(--bad)">Rejected</span></div>
+<!-- ============ WHO ============ -->
+<section class="sec" id="who"><div class="wrap">
+<h2>Built for the person who assigns and the person who hands in</h2>
+<p class="subh">One organization account creates the groups and member accounts. Everyone else signs in with a username and password.</p>
+<div class="who3">
+<div>
+<h3>Teachers</h3><div class="role">One group per class</div>
+<p>Set up your roster once, post work with a deadline, and stop collecting it over chat.</p>
+<ul>
+<li>Import a whole class from one CSV or Excel file</li>
+<li>Attach reference links and files to each task</li>
+<li>Verify or reject every hand-in</li>
+<li>Download results as Excel</li>
+</ul>
 </div>
-<div class="f b">
-<div class="ic"><svg class="i"><use href="#lock"/></svg></div>
-<h3>Deadlines that mean it</h3>
-<p>Once the due time passes, an unsubmitted task shows “Deadline Passed” and can no longer be handed in.</p>
+<div>
+<h3>Managers</h3><div class="role">Groups and sub-groups for teams</div>
+<p>Assign deliverables to a team or department and see where work is stuck.</p>
+<ul>
+<li>Nest sub-groups inside groups</li>
+<li>Roll sub-group results up into the parent</li>
+<li>“Needs attention” lists people with missed deadlines</li>
+<li>Drill from organization to group, person and task</li>
+</ul>
 </div>
-
-<div class="f c">
-<div class="ic"><svg class="i"><use href="#link"/></svg></div>
-<h3>Submit with text and links</h3>
-<p>Members write a response and attach links, such as a doc, a repo or a video. If a task is rejected, they can submit again before the deadline.</p>
-</div>
-<div class="f c">
-<div class="ic"><svg class="i"><use href="#tree"/></svg></div>
-<h3>Groups inside groups</h3>
-<p>Organize by school, class, department or team. Nest sub-groups, add existing accounts, or remove people whenever things change.</p>
-</div>
-
-<div class="f e">
-<div class="ic"><svg class="i"><use href="#chart"/></svg></div>
-<h3>Performance you can read at a glance</h3>
-<p>See each person’s history as on-time and missed tasks. Switch between 1D, 5D, 1W, 1M, 6M, 1Y and ALL, and download it as Excel. Members get their own 60-day activity graph.</p>
-<div class="grid" id="grid" aria-hidden="true"></div>
-<div class="legend"><span><s style="background:var(--ok)"></s>Completed on time</span><span><s style="background:var(--bad)"></s>Not completed</span><span><s style="background:var(--line)"></s>No task</span></div>
-</div>
-<div class="f d">
-<div class="ic"><svg class="i"><use href="#upload"/></svg></div>
-<h3>Set up a whole class in one file</h3>
-<p>Import a CSV or Excel sheet. Missing groups are created for you and blank passwords are generated.</p>
-<div class="csv">group,username,password<br>Physics,aisha,<br>Physics,omar,Secure123</div>
-</div>
-
-<div class="f c">
-<div class="ic"><svg class="i"><use href="#users"/></svg></div>
-<h3>Accounts you control</h3>
-<p>Create accounts under your organization, with a random or custom password. Re-roll a password or delete an account when needed. Members only see what is assigned to them.</p>
-</div>
-<div class="f c">
-<div class="ic"><svg class="i"><use href="#note"/></svg></div>
-<h3>Notes that keep up with you</h3>
-<p>Write with bold, italic, headings, lists, quotes, links and code. Notes autosave, show word count and read time, and sync across your devices.</p>
-</div>
-
-<div class="f b">
-<div class="ic"><svg class="i"><use href="#cmd"/></svg></div>
-<h3>Keyboard first</h3>
-<p>Press <code>Ctrl K</code> for the command palette, <code>Ctrl J</code> to switch light and dark.</p>
-</div>
-<div class="f a">
-<div class="ic"><svg class="i"><use href="#sync"/></svg></div>
-<h3>Light on any device</h3>
-<p>Notes are stored on your device first and queued for sync, so writing never waits on a connection. Time12 runs on phones, school laptops and older hardware.</p>
+<div>
+<h3>Students and employees</h3><div class="role">Your own account and task list</div>
+<p>Know what is due and when, and hand it in without sending a message.</p>
+<ul>
+<li>Submit text, links and files in one step</li>
+<li>Submit again if a task is rejected, until the deadline</li>
+<li>See your own last 60 days of tasks</li>
+<li>Keep private notes that sync across devices</li>
+</ul>
 </div>
 </div>
 </div></section>
 
-<section id="how" style="padding-top:0"><div class="wrap">
-<h2>From assignment to answer in three steps</h2>
-<div class="steps">
-<div class="step"><b>1</b><h3>Assign</h3><p>Create a group, add its members, and post a task with a due time.</p></div>
-<div class="step"><b>2</b><h3>Submit</h3><p>Members hand in text and links from their own My Tasks tab.</p></div>
-<div class="step"><b>3</b><h3>See the truth</h3><p>Every status and every person’s history is one tab away.</p></div>
+<!-- ============ HOW ============ -->
+<section class="sec tint" id="how"><div class="wrap">
+<h2>From assignment to answer in five steps</h2>
+<p class="subh">Each step maps to a real screen in the app.</p>
+<div class="flow">
+<div class="step"><b>1</b><h3>Set up</h3><p>Register, then create groups and member accounts in the Org tab. Import many at once from a file.</p></div>
+<div class="step"><b>2</b><h3>Assign</h3><p>Pick a group, set a due date and exact time, and attach links or files.</p></div>
+<div class="step"><b>3</b><h3>Hand in</h3><p>Members open My Tasks and submit text, links and files.</p></div>
+<div class="step"><b>4</b><h3>Verify or reject</h3><p>Pending submissions get Verify and Reject buttons. Rejected work can be sent in again.</p></div>
+<div class="step"><b>5</b><h3>Read results</h3><p>Analytics shows who was on time, late, in review, open or missed.</p></div>
+</div>
+<div class="life">
+<div class="row"><span class="badge">Not started</span><svg class="i ar"><use href="#arrow"/></svg><span class="badge pending">Pending</span><svg class="i ar"><use href="#arrow"/></svg><span class="badge completed">Completed</span></div>
+<div class="row"><span class="badge pending">Pending</span><svg class="i ar"><use href="#arrow"/></svg><span class="badge rejected">Rejected</span><svg class="i ar"><use href="#arrow"/></svg><span class="badge pending">Pending</span><span class="tag">resubmitted before the deadline</span></div>
+<p>Once the due time passes, a task nobody handed in shows <b>Deadline Passed — Submissions Closed</b> and can no longer be submitted.</p>
 </div>
 </div></section>
+
+<!-- ============ TOUR ============ -->
+<section class="sec" id="tour" style="padding-top:84px"><div class="wrap">
+<h2>Inside the app</h2>
+<p class="subh">These are the screens you will use, drawn from the app itself. The four tabs across the top are Notes, My Tasks, Org and Analytics.</p>
+
+<!-- T1 Org tree -->
+<div class="tour">
+<div class="tx">
+<h3>Organize people into groups and sub-groups</h3>
+<p>The Org tab is where the organization account builds its structure.</p>
+<ul>
+<li><b>Groups nest.</b> Add a sub-group to any group, add members, or remove them with one click.</li>
+<li><b>Add existing or create new.</b> Put current accounts in a group, or make new accounts and assign them immediately.</li>
+<li><b>Accounts are named under your organization,</b> like <code>aisha@ms.hart</code>.</li>
+<li><b>Manage passwords.</b> Re-roll a password, delete one account, or select several and delete them together.</li>
+</ul>
+</div>
+<div class="stage"><div class="win" role="img" aria-label="Time12 Org tab with groups, a nested sub-group and a sub-accounts table">
+<div class="wbar"><i></i><i></i><i></i><span>time12.xin/dash</span></div>
+<div class="wbody"><div class="app">
+<div class="top"><div class="l"><i></i>Ready</div><div class="pill"><span>Notes</span><span>My Tasks</span><span class="on">Org</span><span>Analytics</span></div><div class="r"><span class="ab p">Add ▾</span></div></div>
+<div class="gc">
+<div class="gh"><div class="gn">Physics 10B <span class="gid">ID: 3f9a12c0</span></div><div class="ga"><span class="ab">Add Member</span><span class="ab">+ Sub-Group</span><span class="ab d">Delete</span></div></div>
+<div class="mem"><span>aisha@ms.hart <em>×</em></span><span>omar@ms.hart <em>×</em></span><span>lina@ms.hart <em>×</em></span><span class="org">Show 9 more</span></div>
+</div>
+<div class="nest"><div class="gc">
+<div class="gh"><div class="gn">Lab team A <span class="gid">ID: 9b21e7d4</span></div><div class="ga"><span class="ab">Add Member</span><span class="ab">+ Sub-Group</span><span class="ab d">Delete</span></div></div>
+<div class="mem"><span>yusuf@ms.hart <em>×</em></span><span>mei@ms.hart <em>×</em></span></div>
+</div></div>
+<div class="tbl" style="margin-top:6px">
+<div class="th lab" style="grid-template-columns:24px 1fr auto"><span><i class="chk"></i></span><span>Sub-account username</span><span>Actions</span></div>
+<div class="tr acc"><span><i class="chk on"></i></span><span>aisha@ms.hart</span><span class="ga"><span class="rb">Reroll</span><span class="rb d">Delete</span></span></div>
+<div class="tr acc"><span><i class="chk on"></i></span><span>omar@ms.hart</span><span class="ga"><span class="rb">Reroll</span><span class="rb d">Delete</span></span></div>
+<div class="tr acc"><span><i class="chk"></i></span><span>lina@ms.hart</span><span class="ga"><span class="rb">Reroll</span><span class="rb d">Delete</span></span></div>
+<div class="selbar"><span>2 selected</span><span class="ab d">Delete Selected</span></div>
+</div>
+</div></div></div></div>
+</div>
+
+<!-- T2 Create task -->
+<div class="tour flip">
+<div class="tx">
+<h3>Assign a task with a real deadline</h3>
+<p>Every task goes to one group, and everyone in it receives it.</p>
+<ul>
+<li><b>Exact due time,</b> not just a day. It defaults to 11:59 PM today.</li>
+<li><b>Reference links and files</b> go with the task, up to 25 MB per file.</li>
+<li><b>Description is optional.</b> Title, group and due time are required.</li>
+<li><b>Deadlines are enforced.</b> After the due time, unsubmitted tasks close.</li>
+</ul>
+</div>
+<div class="stage"><div class="dlg" role="img" aria-label="Create New Task dialog">
+<div class="dt">Create New Task</div><div class="dx">Assign a new task to one of your groups.</div>
+<div class="f2"><label>Task title</label><div class="in v">Lab report: Pendulum</div></div>
+<div class="f2"><label>Description <i>(optional)</i></label><div class="in v" style="align-items:flex-start;min-height:52px">Measure the period at five string lengths and plot T² against L.</div></div>
+<div class="f2"><label>Assign to group</label><div class="in v">Physics 10B <span>⌄</span></div></div>
+<div class="f2"><label>Due date &amp; time</label><div class="in v">10/14/2026, 11:59 PM</div></div>
+<div class="f2"><label>Attach links <i>(optional)</i></label><div class="two"><div class="in v">https://…/pendulum-handout</div><div class="in v">Lab handout</div></div><span class="ab">+ Add Link</span></div>
+<div class="f2" style="margin-top:12px"><label>Attach files <i>(optional, max 25 MB each)</i></label><div class="drop"><svg class="i"><use href="#upload"/></svg>Click to browse or drag &amp; drop</div></div>
+<div class="da"><span class="ab">Cancel</span><span class="ab p">Create</span></div>
+</div></div>
+</div>
+
+<!-- T3 My tasks -->
+<div class="tour">
+<div class="tx">
+<h3>Members see exactly what is theirs</h3>
+<p>The My Tasks tab is a member's own dashboard.</p>
+<ul>
+<li><b>Status at a glance.</b> The colored top edge and badge show not started, pending, completed, rejected or overdue.</li>
+<li><b>Everything in one card:</b> description, reference materials, your submission and your submitted links.</li>
+<li><b>Last 60 days</b> graph of your task volume over time.</li>
+<li><b>Closed means closed.</b> Past the due time, the card says Deadline Passed — Submissions Closed.</li>
+</ul>
+</div>
+<div class="stage"><div class="win" role="img" aria-label="Time12 My Tasks tab with a 60 day graph and task cards">
+<div class="wbar"><i></i><i></i><i></i><span>time12.xin/dash</span></div>
+<div class="wbody"><div class="app">
+<div class="top"><div class="l"><i></i>Ready</div><div class="pill"><span>Notes</span><span class="on">My Tasks</span><span>Org</span><span>Analytics</span></div><div class="r"></div></div>
+<div class="mt">My Assigned Tasks</div>
+<div class="mm"><span>Member Dashboard</span></div>
+<div class="gcard"><div class="gt">Last 60 Days<small>Task volume over time</small></div>
+<svg viewBox="0 0 100 40" preserveAspectRatio="none" id="g60" aria-hidden="true"></svg></div>
+
+<div class="tc rejected"><div class="tch"><div><div class="tct">Lab report: Pendulum</div><div class="tcm">Physics 10B · Due: Oct 14, 2026, 11:59 PM</div></div><span class="badge rejected">Rejected</span></div>
+<div class="tcd">Measure the period at five string lengths and plot T² against L.</div>
+<div class="rev"><b>YOUR SUBMISSION</b>Table and graph attached.</div>
+<div class="tcl"><span class="lab">Reference materials</span><a href="#"><svg class="i"><use href="#link"/></svg>Lab handout</a></div>
+<div class="tcf"><span class="ab p">Submit Task</span></div></div>
+
+<div class="tc pending"><div class="tch"><div><div class="tct">Reading response: Chapter 4</div><div class="tcm">English 10 · Due: Oct 12, 2026, 8:00 AM</div></div><span class="badge pending">Pending</span></div>
+<div class="rev"><b>YOUR SUBMISSION</b>Two paragraphs on the narrator's shift in tone.</div></div>
+
+<div class="tc overdue" style="margin-bottom:0"><div class="tch"><div><div class="tct">Weekly safety quiz</div><div class="tcm">Physics 10B · <span class="od">Due: Oct 8, 2026, 11:59 PM</span></div></div><span class="badge overdue">Overdue</span></div>
+<div class="tcf"><span class="closed">Deadline Passed — Submissions Closed</span></div></div>
+</div></div></div></div>
+</div>
+
+<!-- T4 Submit + review -->
+<div class="tour flip">
+<div class="tx">
+<h3>Hand in text, links and files in one step</h3>
+<p>Members need at least one of the three. Leaders then review it from the Org tab.</p>
+<ul>
+<li><b>Text, links and files</b> can be combined, up to 25 MB per file.</li>
+<li><b>Verify or Reject</b> appears next to every pending submission.</li>
+<li><b>Whole group visible.</b> Members who have not handed in still show as not started, so nobody hides.</li>
+<li><b>Long lists stay tidy.</b> Show the first three members, expand for the rest.</li>
+</ul>
+</div>
+<div class="stage" style="flex-direction:column;gap:18px;align-items:center">
+<div class="dlg" role="img" aria-label="Submit Task dialog">
+<div class="dt">Submit Task</div><div class="dx">Provide your text response and attach any relevant links for review.</div>
+<div class="f2"><label>Submission text</label><div class="in" style="align-items:flex-start;min-height:56px">Write your response…</div></div>
+<div class="f2"><label>Attach links <i>(optional)</i></label><div class="two"><div class="in">URL</div><div class="in">Label</div></div><span class="ab">+ Add Link</span></div>
+<div class="f2" style="margin-top:12px"><label>Attach files <i>(optional, max 25 MB each)</i></label><div class="drop"><svg class="i"><use href="#upload"/></svg>Click to browse or drag &amp; drop</div></div>
+<div class="da" style="margin-top:6px"><span class="ab">Cancel</span><span class="ab p">Submit</span></div>
+</div>
+<div class="win" role="img" aria-label="Org tab task with submitted work and Verify and Reject buttons">
+<div class="wbody"><div class="app" style="padding-top:18px">
+<div class="prog" style="margin:0;border:0;padding:0"><span class="lab">Member progress</span>
+<div class="mp"><div style="flex:1"><div><b>omar@ms.hart</b><span class="st pending">(pending)</span></div>
+<div class="sub">Table and graph attached.<a href="#"><svg class="i"><use href="#link"/></svg>pendulum-data.xlsx</a></div></div>
+<div class="acts"><span class="rb">Verify</span><span class="rb d">Reject</span></div></div>
+<div class="mp"><div style="flex:1"><div><b>aisha@ms.hart</b><span class="st completed">(completed)</span></div>
+<div class="sub">Results in the linked sheet.<a href="#"><svg class="i"><use href="#link"/></svg>Pendulum results</a></div></div><div class="acts"></div></div>
+<div class="mp"><div><b>lina@ms.hart</b><span class="st not_started">(not started)</span></div><div class="acts"></div></div>
+<button class="more" type="button" tabindex="-1">Show 9 more</button>
+</div>
+</div></div></div>
+</div>
+</div>
+
+<!-- T5 Analytics -->
+<div class="tour full">
+<div class="tx">
+<h3>Analytics that answer “who is behind?”</h3>
+<p>One organization-wide report, explored by period, person, group or task. Members see only their own history.</p>
+<ul>
+<li><b>Five outcomes:</b> on time, late, in review, open and missed.</li>
+<li><b>Seven periods:</b> 1D, 5D, 1W, 1M, 6M, 1Y and ALL. The chart groups by hour, day, week or month to match.</li>
+<li><b>Drill down</b> from the whole organization to a group, a person or a single task, with breadcrumbs back.</li>
+<li><b>Needs attention</b> lists people with missed deadlines. Search finds any person, group or task.</li>
+<li><b>Include sub-groups</b> rolls child groups into a parent. <b>Download Excel</b> exports the current view.</li>
+</ul>
+</div>
+<div class="win" role="img" aria-label="Time12 Analytics tab showing completion stats, a 30 day chart and ranked lists">
+<div class="wbar"><i></i><i></i><i></i><span>time12.xin/dash</span></div>
+<div class="wbody"><div class="app" style="min-width:680px">
+<div class="top"><div class="l"><i></i>Ready</div><div class="pill"><span>Notes</span><span>My Tasks</span><span>Org</span><span class="on">Analytics</span></div><div class="r"><span class="ab">Refresh</span></div></div>
+<div class="mt">Analytics</div>
+<div class="mm"><span>24 people</span><u></u><span>3 groups</span><u></u><span>9 tasks</span></div>
+<div class="an-tools"><div class="in"><span>Search a person, group or task</span></div><div class="seg"><span class="on">All</span><span>People</span><span>Groups</span><span>Tasks</span></div></div>
+<div class="seg" style="margin-bottom:18px"><span>1D</span><span>5D</span><span>1W</span><span class="on">1M</span><span>6M</span><span>1Y</span><span>ALL</span></div>
+<div class="an-head"><div><div class="an-name">Whole organization</div><div class="an-s">86 assignments in this period</div></div><span class="ab">Download Excel</span></div>
+<div class="stats">
+<div class="stat"><b>71<small>of 86 · 83%</small></b><span>Completed</span></div>
+<div class="stat"><b>58</b><span><i style="background:var(--ok)"></i>On time</span></div>
+<div class="stat"><b>13</b><span><i style="background:var(--warn)"></i>Late</span></div>
+<div class="stat"><b>6</b><span><i style="background:var(--acc)"></i>In review</span></div>
+<div class="stat"><b>5</b><span><i style="background:var(--mute)"></i>Open</span></div>
+<div class="stat"><b class="bad">4</b><span><i style="background:var(--bad)"></i>Missed</span></div>
+</div>
+<div class="sg"><i style="flex:58;background:var(--ok)"></i><i style="flex:13;background:var(--warn)"></i><i style="flex:6;background:var(--acc)"></i><i style="flex:5;background:var(--mute)"></i><i style="flex:4;background:var(--bad)"></i></div>
+<div class="trh">Last 30 days</div>
+<div class="trend" id="trend"></div><div class="trl" id="trendl"></div>
+<div class="two-up sec2">
+<div><div class="sect">Needs attention<small>3</small></div>
+<div class="rw"><div class="m"><b>tariq<span class="org">@ms.hart</span></b><small>9 assignments · <span class="bad">2 missed</span></small></div><span class="sg s"><i style="flex:5;background:var(--ok)"></i><i style="flex:2;background:var(--warn)"></i><i style="flex:2;background:var(--bad)"></i></span><span class="pc">78%</span><svg class="i ch"><use href="#chev"/></svg></div>
+<div class="rw"><div class="m"><b>noor<span class="org">@ms.hart</span></b><small>8 assignments · <span class="bad">1 missed</span></small></div><span class="sg s"><i style="flex:6;background:var(--ok)"></i><i style="flex:1;background:var(--warn)"></i><i style="flex:1;background:var(--bad)"></i></span><span class="pc">88%</span><svg class="i ch"><use href="#chev"/></svg></div>
+<div class="rw"><div class="m"><b>sam<span class="org">@ms.hart</span></b><small>10 assignments · <span class="bad">1 missed</span></small></div><span class="sg s"><i style="flex:7;background:var(--ok)"></i><i style="flex:2;background:var(--acc)"></i><i style="flex:1;background:var(--bad)"></i></span><span class="pc">70%</span><svg class="i ch"><use href="#chev"/></svg></div></div>
+<div><div class="sect">Groups<small>3</small></div>
+<div class="rw"><div class="m"><b>Physics 10B</b><small>12 people</small></div><span class="sg s"><i style="flex:30;background:var(--ok)"></i><i style="flex:7;background:var(--warn)"></i><i style="flex:3;background:var(--acc)"></i><i style="flex:2;background:var(--bad)"></i></span><span class="pc">88%</span><svg class="i ch"><use href="#chev"/></svg></div>
+<div class="rw" style="margin-left:20px"><div class="m"><b>Lab team A</b><small>2 people</small></div><span class="sg s"><i style="flex:9;background:var(--ok)"></i><i style="flex:1;background:var(--warn)"></i></span><span class="pc">100%</span><svg class="i ch"><use href="#chev"/></svg></div>
+<div class="rw"><div class="m"><b>English 10</b><small>12 people · <span class="bad">2 missed</span></small></div><span class="sg s"><i style="flex:28;background:var(--ok)"></i><i style="flex:6;background:var(--warn)"></i><i style="flex:3;background:var(--acc)"></i><i style="flex:2;background:var(--bad)"></i></span><span class="pc">83%</span><svg class="i ch"><use href="#chev"/></svg></div></div>
+</div>
+</div></div></div>
+
+<div class="two-up" style="margin-top:20px">
+<div class="win" role="img" aria-label="Analytics task view with a ring and a people list">
+<div class="wbody"><div class="app" style="min-width:0;padding-top:20px">
+<div class="an-top"><div class="ringw"><svg viewBox="0 0 150 150" id="ringA"></svg><b>9<small>of 12 done</small></b></div>
+<div><div class="an-name">Lab report: Pendulum</div><div class="an-s">Physics 10B · Due Oct 14, 2026, 11:59 PM</div></div></div>
+<div class="sect sec2">People<small>12</small></div>
+<div class="rw"><div class="m"><b>tariq<span class="org">@ms.hart</span></b><small>Nothing handed in</small></div><span class="badge missed n">Missed</span></div>
+<div class="rw"><div class="m"><b>omar<span class="org">@ms.hart</span></b><small>Rejected, needs resubmission</small></div><span class="badge n">Open</span></div>
+<div class="rw"><div class="m"><b>lina<span class="org">@ms.hart</span></b><small>Handed in Oct 13, 10:42 PM</small></div><span class="badge review n">In review</span></div>
+<div class="rw" style="margin-bottom:0"><div class="m"><b>aisha<span class="org">@ms.hart</span></b><small>Handed in Oct 12, 4:15 PM</small></div><span class="badge done n">On time</span></div>
+</div></div></div>
+<div class="win" role="img" aria-label="Analytics person view with a results table">
+<div class="wbody"><div class="app" style="min-width:420px;padding-top:20px">
+<div class="an-name">omar<span class="org">@ms.hart</span></div><div class="an-s">Physics 10B</div>
+<div class="tbl" style="margin-top:14px"><table class="pt"><thead><tr><th>Task</th><th>Due</th><th>Result</th><th>Handed in</th></tr></thead><tbody>
+<tr><td>Lab report: Pendulum</td><td>Oct 14, 11:59 PM</td><td><span class="badge n">Redo</span></td><td>Oct 12, 9:03 PM</td></tr>
+<tr><td>Weekly safety quiz</td><td>Oct 8, 11:59 PM</td><td><span class="badge done n">On time</span></td><td>Oct 8, 6:20 PM</td></tr>
+<tr><td>Circuit worksheet</td><td>Oct 1, 11:59 PM</td><td><span class="badge late n">Late</span></td><td>Oct 2, 8:10 AM</td></tr>
+<tr><td>Motion graphs</td><td>Sep 24, 11:59 PM</td><td><span class="badge done n">On time</span></td><td>Sep 23, 7:48 PM</td></tr>
+</tbody></table></div>
+</div></div></div>
+</div>
+</div>
+
+<!-- T6 Bulk import -->
+<div class="tour">
+<div class="tx">
+<h3>Set up a whole class from one file</h3>
+<p>Add Account has a Single Account tab and an Import CSV/Excel tab.</p>
+<ul>
+<li><b>Three columns:</b> <code>group,username,password</code>. Header row optional.</li>
+<li><b>Missing groups are created</b> for you, and existing accounts are simply added to the group.</li>
+<li><b>Blank passwords are generated</b> for new accounts. Or set one custom password for the whole batch.</li>
+<li><b>.csv, .xlsx or .xls,</b> by drag and drop, file picker or pasted text.</li>
+<li><b>Need to tidy a list first?</b> Copy the built-in AI prompt, paste your list into any AI, and bring back clean rows.</li>
+<li><b>Credentials are shown once</b> after an account or an import is created, so copy them then.</li>
+</ul>
+</div>
+<div class="stage"><div class="dlg fade" role="img" aria-label="Add Account dialog on the Import CSV/Excel tab">
+<div class="dt">Add Account</div><div class="dx">Create a new account under your organization namespace (ms.hart@), or import many at once from a CSV/Excel file.</div>
+<div class="tg"><span>Single Account</span><span class="on">Import CSV/Excel</span></div>
+<div class="f2"><label>File format</label>
+<div class="fmt">Three columns, one row per user: <code>group,username,password</code><br>• <b>group</b>: required. Created automatically if it doesn't exist.<br>• <b>username</b>: required. Existing accounts are just added to the group.<br>• <b>password</b>: optional. Blank generates a random one for new accounts.</div>
+<div class="fmt mono csvx">group,username,password<br>Physics 10B,aisha,<br>Physics 10B,omar,Secure123<br>Chemistry 10A,lina,</div></div>
+<div class="f2"><label>Upload file</label><div class="drop"><svg class="i"><use href="#upload"/></svg>Click to browse or drag &amp; drop (.csv, .xlsx, .xls)</div></div>
+<div class="ai">Need to format your list? Get an AI prompt</div>
+<div class="f2" style="margin-top:12px"><label>Password method (rows without a password)</label><div class="tg"><span class="on">Generate Random</span><span>Custom Password</span></div></div>
+</div></div>
+</div>
+
+<!-- T7 Notes -->
+<div class="tour flip">
+<div class="tx">
+<h3>Notes that keep working without a connection</h3>
+<p>Every account also has a private notes tab.</p>
+<ul>
+<li><b>Written on your device first.</b> Notes are stored locally and queued for sync, with a Synced indicator in the sidebar.</li>
+<li><b>Autosaves</b> as you type. Word count and reading time update live.</li>
+<li><b>Formatting toolbar:</b> bold, italic, underline, two heading levels, bullets, quotes, links and code.</li>
+<li><b>Search</b> across your notes from the sidebar or the command palette.</li>
+</ul>
+</div>
+<div class="stage"><div class="win" role="img" aria-label="Time12 Notes tab with sidebar, editor and formatting toolbar">
+<div class="wbar"><i></i><i></i><i></i><span>time12.xin/dash</span></div>
+<div class="wbody"><div class="notes" style="min-width:560px">
+<div class="side">
+<div class="brand"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.5"/><path d="M8 12.5l3 3 5-6"/></svg>Time12</div>
+<div class="srch">Search the shelves...</div>
+<div class="lab">3 notes</div>
+<div class="nl"><div class="on">Pendulum method<small>Oct 10</small></div><div>Parent evening<small>Oct 7</small></div><div>Untitled<small>Oct 2</small></div></div>
+<div class="sf"><div><span><i></i>Synced</span><span>Shortcuts</span></div><div><span>aisha@ms.hart</span><span>Sign out</span></div></div>
+</div>
+<div class="ed">
+<div class="edt">Pendulum method</div>
+<div class="edm">Modified Oct 10 · 42 words</div>
+<div class="edb"><p><b>## Plan</b></p><p>- Five string lengths, ten swings each</p><p>- Time with a phone, average the runs</p><p>&gt; Plot T² against L. The slope gives g.</p></div>
+<div class="tb"><div style="display:flex;align-items:center;flex-wrap:wrap;gap:2px">
+<div class="tbg"><span>B</span><span style="font-style:italic">I</span><span style="text-decoration:underline">U</span></div><i class="tbs"></i>
+<div class="tbg"><span style="font-family:var(--serif)">H1</span><span style="font-family:var(--serif)">H2</span><span>•</span><span>”</span></div><i class="tbs"></i>
+<div class="tbg"><span><svg class="i" width="14" height="14" viewBox="0 0 24 24"><use href="#link"/></svg></span><span><svg class="i" width="14" height="14" viewBox="0 0 24 24"><use href="#code"/></svg></span></div></div>
+<div class="cnt"><b>42</b> words · <b>1</b> min read</div></div>
+</div>
+</div></div></div></div>
+</div>
+
+<!-- T8 Palette -->
+<div class="tour">
+<div class="tx">
+<h3>Keyboard shortcuts and a command palette</h3>
+<p>Press <code>Ctrl K</code> to run a command or jump to a note without leaving the keyboard.</p>
+<ul>
+<li><b>Commands:</b> new note, save, delete, toggle theme, switch device mode, show shortcuts, sign out.</li>
+<li><b>Notes are searchable</b> by title and content right in the palette.</li>
+<li><b>Formatting keys:</b> <code>Ctrl B</code>, <code>Ctrl I</code> and <code>Ctrl L</code> for bold, italic and links.</li>
+</ul>
+</div>
+<div class="stage" style="flex-direction:column;align-items:flex-start">
+<div class="pal" role="img" aria-label="Command palette">
+<div class="pi"><svg class="i"><use href="#search"/></svg>Type a command or search...</div>
+<div class="ps">Commands</div>
+<div class="pit sel"><svg class="i"><use href="#plus"/></svg>New note<span>Ctrl+N</span></div>
+<div class="pit"><svg class="i"><use href="#save"/></svg>Save note<span>Ctrl+S</span></div>
+<div class="pit"><svg class="i"><use href="#sun"/></svg>Toggle theme<span>Ctrl+J</span></div>
+<div class="pit"><svg class="i"><use href="#device"/></svg>Switch device mode (Higher / Lower End)</div>
+<div class="pit"><svg class="i"><use href="#kb"/></svg>Show shortcuts</div>
+<div class="ps">Notes</div>
+<div class="pit" style="padding-bottom:12px"><svg class="i"><use href="#note"/></svg>Pendulum method<span>Oct 10</span></div>
+</div>
+<div class="ks">
+<div><span>New note</span><span><i class="key">Ctrl</i><i class="key">N</i></span></div>
+<div><span>Save</span><span><i class="key">Ctrl</i><i class="key">S</i></span></div>
+<div><span>Command palette</span><span><i class="key">Ctrl</i><i class="key">K</i></span></div>
+<div><span>Toggle theme</span><span><i class="key">Ctrl</i><i class="key">J</i></span></div>
+</div>
+</div>
+</div>
+
+</div></section>
+
+<!-- ============ STACK ============ -->
+<section class="sec tint" id="stack"><div class="wrap">
+<h2>How it's built</h2>
+<p class="subh">Plain web technology, chosen to stay quick on school laptops and phones.</p>
+<div class="stack">
+<div class="card"><h3><span class="ic"><svg class="i"><use href="#code"/></svg></span>Vanilla JavaScript</h3><p>No front-end framework. The dashboard is a single page of ES modules, so there is nothing heavy to download or hydrate.</p></div>
+<div class="card"><h3><span class="ic"><svg class="i"><use href="#db"/></svg></span>Supabase</h3><p>Postgres and Edge Functions power sign-in, organizations, tasks, notes sync and file upload and download.</p></div>
+<div class="card"><h3><span class="ic"><svg class="i"><use href="#disk"/></svg></span>IndexedDB</h3><p>Notes live in your browser first, with a sync queue and an automatic sync every five seconds.</p></div>
+<div class="card"><h3><span class="ic"><svg class="i"><use href="#sheet"/></svg></span>SheetJS</h3><p>Reads <code>.xlsx</code>, <code>.xls</code> and <code>.csv</code> imports and writes your Excel exports, all inside the browser.</p></div>
+<div class="card"><h3><span class="ic"><svg class="i"><use href="#glow"/></svg></span>WebGL</h3><p>A shader draws the soft aurora behind sign-in and the app, with glass panels over it. Lower End mode switches it off.</p></div>
+<div class="card"><h3><span class="ic"><svg class="i"><use href="#type"/></svg></span>DM Serif Display and DM Sans</h3><p>One serif for titles and one sans for everything else, in light and dark themes you can toggle with <code>Ctrl J</code>.</p></div>
+<div class="card wide"><h3><span class="ic"><svg class="i"><use href="#device"/></svg></span>Tuned to your device</h3>
+<p>On your first visit, Time12 asks what you are using. It also reads reduced-motion and data-saver settings and drops to a lighter mode on its own if frames run slow. Switch any time from the button beside the theme toggle.</p>
+<div class="dev"><div><svg class="i"><use href="#device"/></svg><b>Higher End Device</b>Full visuals, glass effects and animations</div><div><svg class="i"><use href="#phone"/></svg><b>Lower End Device</b>No animations, lightweight and fast</div></div></div>
+<div class="card"><h3><span class="ic"><svg class="i"><use href="#lock"/></svg></span>UniClvrPass</h3><p>Accounts sign in with a username and password through UniClvrPass. No email address is required.</p></div>
+</div>
+</div></section>
+
+<!-- ============ FAQ ============ -->
+<section class="sec" id="faq"><div class="wrap">
+<h2>Common questions</h2>
+<div class="faq">
+<details><summary>Who creates tasks, groups and accounts?</summary><p>The organization account, meaning whoever registers. It adds groups, sub-groups and member accounts. Member accounts do not see the Add button in the Org tab.</p></details>
+<details><summary>What can a member hand in?</summary><p>Text, links and files, in any combination. Files can be up to 25 MB each. At least one of the three is required.</p></details>
+<details><summary>What happens when a submission is rejected?</summary><p>The task returns to the member as Rejected and they can submit again until the deadline. In Analytics it shows as Redo, and the task view says it needs resubmission.</p></details>
+<details><summary>What happens after the deadline?</summary><p>A task nobody handed in is marked overdue, and the member sees Deadline Passed — Submissions Closed. Analytics counts it as missed.</p></details>
+<details><summary>Can I export results?</summary><p>Yes. The Analytics tab has a Download Excel button for the current view: the whole organization, a group, a person or a single task.</p></details>
+<details><summary>Do I need an email address to sign up?</summary><p>No. You register with a username and a password. Accounts you create for members use the same, named under your organization.</p></details>
+<details><summary>Does it work offline?</summary><p>Notes do. They are saved on your device first and sync when you are back online. Tasks and submissions need a connection.</p></details>
+</div>
+</div></section>
+
+<!-- ============ PARTNERS ============ -->
+<section class="sec partners" id="partners"><div class="wrap">
+<h2>Trusted partners</h2>
+<p class="subh">Tools and teams we work with and recommend.</p>
+</div>
+<div class="mq" aria-label="Trusted partners: Tabula, SmoothRecorder and Prod99"><div class="mq-track"></div></div>
+</section>
 
 <div class="final"><div class="wrap"><div class="band">
 <h2>Make time true.</h2>
-<p>Open Time12 and see who is done, who is pending and who is late.</p>
-<a class="btn" href="https://time12.xin/dash">Try Time12 <svg class="i" width="18" height="18"><use href="#arrow"/></svg></a>
+<p>Register with a username and password, create your first group, and see who is done, who is pending and who is late.</p>
+<a class="btn" href="https://time12.xin/dash">Open Time12 <svg class="i" width="18" height="18"><use href="#arrow"/></svg></a>
 </div></div></div>
 
 <footer><div class="wrap">
@@ -300,11 +877,10 @@ function skin(t){
 var src=t==='dark'?'china.png':'taiwan.png';
 logoLink.classList.remove('nologo');
 logo.src=src;fav.href=src;
-var b=document.getElementById('themeBtn');b.setAttribute('aria-pressed',t==='dark');
+document.getElementById('themeBtn').setAttribute('aria-pressed',t==='dark');
 }
 logo.addEventListener('error',function(){logoLink.classList.add('nologo')});
 skin(root.getAttribute('data-theme'));
-
 document.getElementById('themeBtn').addEventListener('click',function(){
 var n=root.getAttribute('data-theme')==='dark'?'light':'dark';
 root.setAttribute('data-theme',n);
@@ -312,43 +888,92 @@ try{localStorage.setItem('Time12-theme',n)}catch(e){}
 skin(n);
 });
 window.addEventListener('storage',function(e){
-if(e.key==='Time12-theme'&&(e.newValue==='light'||e.newValue==='dark')){
-root.setAttribute('data-theme',e.newValue);
-skin(e.newValue);
+if(e.key==='Time12-theme'&&(e.newValue==='light'||e.newValue==='dark')){root.setAttribute('data-theme',e.newValue);skin(e.newValue);}
+});
+document.getElementById('yr').textContent=new Date().getFullYear();
+})();
+
+/* ---------- hero: Org tab member progress loop ---------- */
+(function(){
+var names=['aisha@ms.hart','omar@ms.hart','lina@ms.hart'];
+var box=document.getElementById('hm');
+box.innerHTML=names.map(function(n){return '<div class="mp"><div><b>'+n+'</b><span class="st not_started">(not started)</span></div><div class="acts"></div></div>';}).join('');
+var rows=box.querySelectorAll('.mp');
+function set(i,s){
+var st=rows[i].querySelector('.st'),a=rows[i].querySelector('.acts');
+st.className='st '+s;st.textContent='('+s.replace('_',' ')+')';
+a.innerHTML=s==='pending'?'<span class="rb">Verify</span><span class="rb d">Reject</span>':'';
 }
+/* [row, status] script: submit, verify, reject, resubmit */
+var script=[[0,'pending'],[1,'pending'],[0,'completed'],[2,'pending'],[1,'rejected'],[2,'completed'],[1,'pending'],[1,'completed']];
+function reset(){for(var i=0;i<3;i++)set(i,'not_started');}
+if(matchMedia('(prefers-reduced-motion:reduce)').matches){set(0,'completed');set(1,'pending');set(2,'rejected');return;}
+var k=0;reset();
+setInterval(function(){
+if(k<script.length){set(script[k][0],script[k][1]);k++;}
+else if(k<script.length+2){k++;}
+else{reset();k=0;}
+},1500);
+})();
+
+/* ---------- 60-day graph ---------- */
+(function(){
+var el=document.getElementById('g60');if(!el)return;
+var v=[],i,seed=7;
+for(i=0;i<60;i++){seed=(seed*37+11)%101;v.push(i%7===5||i%7===6?seed%2:1+seed%4);}
+var max=Math.max.apply(null,v),W=100,H=40,step=W/59,p='',a='M 0 '+H;
+v.forEach(function(c,j){var x=j*step,y=H-(c/max)*H*.92;p+=(j?' L ':'M ')+x.toFixed(2)+' '+y.toFixed(2);a+=' L '+x.toFixed(2)+' '+y.toFixed(2);});
+a+=' L '+W+' '+H+' Z';
+var g='';for(i=1;i<4;i++)g+='<line x1="0" y1="'+(H/4*i)+'" x2="'+W+'" y2="'+(H/4*i)+'"/>';
+el.innerHTML='<g class="ga-grid">'+g+'</g><path class="ga-area" d="'+a+'"/><path class="ga-line" d="'+p+'"/>';
+})();
+
+/* ---------- analytics trend bars ---------- */
+(function(){
+var el=document.getElementById('trend'),lab=document.getElementById('trendl');if(!el)return;
+var cols={done:'var(--ok)',late:'var(--warn)',review:'var(--acc)',open:'var(--mute)',missed:'var(--bad)'};
+var seed=3,h='',l='',i,d,mo=['Sep','Oct'];
+for(i=0;i<30;i++){
+seed=(seed*53+17)%97;
+var wk=((i+2)%7)>=5;
+if(wk&&seed%3){h+='<div class="w e"></div>';}
+else{
+var done=2+seed%5,late=seed%3===0?1:0,rev=i>26?1:0,open=i>27?2:0,miss=seed%11===0?1:0;
+var o={missed:miss,open:open,review:rev,late:late,done:done};
+h+='<div class="w">'+Object.keys(o).filter(function(k){return o[k]}).map(function(k){return '<i style="flex:'+o[k]+';background:'+cols[k]+'"></i>'}).join('')+'</div>';
+}
+d=new Date(2026,8,11+i);
+l+='<span>'+(i%5===0?mo[d.getMonth()===8?0:1]+' '+d.getDate():'')+'</span>';
+}
+el.innerHTML=h;lab.innerHTML=l;
+})();
+
+/* ---------- analytics ring ---------- */
+(function(){
+var el=document.getElementById('ringA');if(!el)return;
+var NS='http://www.w3.org/2000/svg',o=['done','done','done','done','done','done','done','done','late','review','open','missed'];
+var c={done:'var(--ok)',late:'var(--warn)',review:'var(--acc)',open:'var(--mute)',missed:'var(--bad)'};
+o.forEach(function(k,i){
+var a=(i/o.length)*2*Math.PI-Math.PI/2,co=Math.cos(a),si=Math.sin(a),l=document.createElementNS(NS,'line');
+l.setAttribute('x1',(75+co*54).toFixed(1));l.setAttribute('y1',(75+si*54).toFixed(1));
+l.setAttribute('x2',(75+co*70).toFixed(1));l.setAttribute('y2',(75+si*70).toFixed(1));
+l.setAttribute('style','stroke:'+c[k]+';stroke-width:5;stroke-linecap:round');
+el.appendChild(l);
 });
 })();
 
+/* ---------- partners marquee ---------- */
 (function(){
-var NS='http://www.w3.org/2000/svg',ring=document.getElementById('ring'),ticks=[],st=[],names=['Aisha','Omar','Lina','Yusuf'];
-for(var i=0;i<12;i++){var a=i*Math.PI/6,l=document.createElementNS(NS,'line');
-l.setAttribute('x1',60+Math.sin(a)*44);l.setAttribute('y1',60-Math.cos(a)*44);
-l.setAttribute('x2',60+Math.sin(a)*56);l.setAttribute('y2',60-Math.cos(a)*56);
-ring.appendChild(l);ticks.push(l);st.push(0);}
-var rows=document.getElementById('rows'),cnt=document.getElementById('count'),lab=['Not started','Pending','Completed'],cls=['','p','d'];
-rows.innerHTML=names.map(function(n){return '<div class="row"><span>'+n+'</span><span class="chip">Not started</span></div>'}).join('');
-var chips=rows.querySelectorAll('.chip');
-function paint(){
-var d=0;
-st.forEach(function(s,i){ticks[i].setAttribute('class',cls[s]);if(s==2)d++;});
-for(var i=0;i<4;i++){chips[i].className='chip '+cls[st[i]];chips[i].textContent=lab[st[i]];}
-cnt.textContent=d;return d;
-}
-var seed=[2,1,0,2,2,1,2,0,2,2,1,2];
-if(matchMedia('(prefers-reduced-motion:reduce)').matches){st=seed.slice();paint();}
-else{
-paint();
-setInterval(function(){
-var open=[];st.forEach(function(s,i){if(s<2)open.push(i)});
-if(!open.length){st=st.map(function(){return 0});paint();return;}
-var i=open[Math.floor(Math.random()*open.length)];st[i]++;paint();
-},1100);
-}
-/* 60-day sample grid */
-var g=document.getElementById('grid'),h='',p=[1,1,1,0,1,1,2,1,1,1,1,0,1,1,1,1,2,1,1,1,0,1,1,1,1,1,2,1,1,1];
-for(var j=0;j<60;j++){var v=p[j%30];if(j>=30&&j%7==3)v=0;h+='<i class="'+(v==1?'y':v==0?'n':'')+'"></i>';}
-g.innerHTML=h;
-document.getElementById('yr').textContent=new Date().getFullYear();
+var P=[['tabula.png','Tabula'],['smoothrec.png','SmoothRecorder'],['prod99.png','Prod99']];
+function set(hidden){
+var d=document.createElement('div');d.className='mq-set';if(hidden)d.setAttribute('aria-hidden','true');
+for(var r=0;r<(hidden?4:4);r++)P.forEach(function(p){
+var t=document.createElement('div');t.className='pl';
+var im=document.createElement('img');im.src=p[0];im.alt=hidden?'':p[1];im.loading='lazy';
+im.onerror=function(){var s=document.createElement('span');s.textContent=p[1];t.replaceChild(s,im);};
+t.appendChild(im);d.appendChild(t);});
+return d;}
+document.querySelectorAll('.mq-track').forEach(function(track){track.appendChild(set(false));track.appendChild(set(true));});
 })();
 </script>
 </body>
