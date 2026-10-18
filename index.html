@@ -483,6 +483,14 @@ details[open] summary:after{transform:rotate(180deg)}
 @media(max-width:700px){.sh.lg{--s:15vmin}.sh.md{--s:12vmin}.band .sh{display:none}.geo .sh:nth-child(3){display:none}}
 
 .ly.h{opacity:clamp(0,calc((.16 - var(--p))*30),1)}
+
+/* ===== selection + softer dark mode ===== */
+::selection{background:var(--acc);color:#18120E}
+::-moz-selection{background:var(--acc);color:#18120E}
+:root[data-theme="dark"]{--bg:#141414;--card:#1b1b1b;--soft-bg:#181818;--surface-2:#242424;--ink:#E2E2E2;--soft:#A9A9A9;--mute:#868686;--line:#2d2d2d;--acc-soft:#262626;--shadow:rgba(0,0,0,.5)}
+:root[data-theme="dark"] .aur i{background:radial-gradient(closest-side,rgba(255,255,255,.055),transparent)}
+:root[data-theme="dark"] .sh u,:root[data-theme="dark"] .cube u{background:rgba(255,255,255,.03)}
+:root[data-theme="dark"] .band{background:rgba(255,255,255,.035)}
 </style>
 </head>
 <body>
