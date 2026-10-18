@@ -387,14 +387,14 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 .ln{display:block;overflow:hidden;padding:.06em .04em .1em}
 .ln.sm{font:500 clamp(18px,2.4vw,30px)/1.2 var(--sans);letter-spacing:0;color:var(--soft);padding-bottom:.5em}
 .c{display:inline-block}
-.h .c{--o:clamp(0,calc((var(--p) - .02 - var(--i)*.005)*28),1);transform:translateY(calc(var(--o)*-110%));animation:up 1.1s cubic-bezier(.2,.7,.1,1) backwards;animation-delay:calc(var(--i)*38ms + 250ms)}
+.h .c{--o:clamp(0,calc((var(--p) - .005 - var(--i)*.004)*30),1);transform:translateY(calc(var(--o)*-110%));animation:up 1.1s cubic-bezier(.2,.7,.1,1) backwards;animation-delay:calc(var(--i)*38ms + 250ms)}
 @keyframes up{from{transform:translateY(110%)}}
 .ring{position:absolute;left:50%;top:50%;width:0;height:0;transform-style:preserve-3d;transform:scale(calc(1 - var(--k)*.9)) rotateX(calc(-10deg - var(--m)*12deg)) rotateY(calc(var(--p)*480deg));opacity:calc(1 - var(--k)*1.1)}
-.pn{--w:12vmin;--R:22.5vmin;--a:clamp(0,calc((var(--p) - .1 - var(--i)*.012)*7),1);--t:clamp(0,calc((var(--p) - .4 - var(--i)*.018)*18),1);position:absolute;width:var(--w);height:calc(var(--w)*1.35);margin:calc(var(--w)*-.675) 0 0 calc(var(--w)*-.5);border:1px solid color-mix(in srgb,var(--ink) 38%,transparent);border-radius:7px;opacity:var(--a);transform:translate3d(calc((1 - var(--a))*var(--sx)*1vmin),calc((1 - var(--a))*var(--sy)*1vmin),calc((1 - var(--a))*var(--sz)*1vmin)) rotateY(calc(var(--i)*30deg)) rotateX(calc(var(--m)*var(--l)*1deg)) translateZ(var(--R)) rotateZ(calc((1 - var(--a))*var(--sr)*1deg))}
-.pn i{position:absolute;inset:0;border-radius:6px;background:var(--c);opacity:calc(var(--t)*.16)}
-.pn:before,.pn:after{content:'';position:absolute;left:14%;height:2px;border-radius:2px}
+.pn{--w:17vmin;--R:31.7vmin;--a:clamp(0,calc((var(--p) - .03 - var(--i)*.012)*7),1);--t:clamp(0,calc((var(--p) - .36 - var(--i)*.018)*18),1);position:absolute;width:var(--w);height:calc(var(--w)*1.35);margin:calc(var(--w)*-.675) 0 0 calc(var(--w)*-.5);border:2px solid color-mix(in srgb,var(--ink) 72%,transparent);border-radius:9px;background:color-mix(in srgb,var(--bg) 70%,transparent);opacity:var(--a);transform:translate3d(calc((1 - var(--a))*var(--sx)*1vmin),calc((1 - var(--a))*var(--sy)*1vmin),calc((1 - var(--a))*var(--sz)*1vmin)) rotateY(calc(var(--i)*30deg)) rotateX(calc(var(--m)*var(--l)*1deg)) translateZ(var(--R)) rotateZ(calc((1 - var(--a))*var(--sr)*1deg))}
+.pn i{position:absolute;inset:0;border-radius:7px;background:var(--c);opacity:calc(var(--t)*.28)}
+.pn:before,.pn:after{content:'';position:absolute;left:14%;height:4px;border-radius:4px}
 .pn:before{right:14%;bottom:12%;background:var(--c);transform-origin:left;transform:scaleX(var(--t))}
-.pn:after{right:44%;top:14%;background:color-mix(in srgb,var(--ink) 30%,transparent)}
+.pn:after{right:44%;top:14%;background:color-mix(in srgb,var(--ink) 55%,transparent)}
 .cnt{opacity:min(clamp(0,calc((var(--p) - .42)*25),1),clamp(0,calc((.62 - var(--p))*25),1))}
 .cnt b{font:400 clamp(70px,19vmin,210px)/.9 var(--serif);letter-spacing:-.04em}
 .cnt span{margin-top:8px;font-size:clamp(14px,2vmin,20px);color:var(--soft)}
@@ -402,7 +402,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 .go .fin{visibility:visible}
 .mk{opacity:var(--f);transform:scale(calc(.5 + var(--f)*.5))}
 .mk img{width:clamp(72px,15vmin,130px);height:auto;display:block}
-.fin h2{font:400 clamp(46px,9vw,128px)/1 var(--serif);letter-spacing:-.035em;max-width:none;margin-top:22px}
+.fin h2{padding-bottom:.14em;font:400 clamp(46px,9vw,128px)/1 var(--serif);letter-spacing:-.035em;max-width:none;margin-top:22px}
 .fin .c{--q:clamp(0,calc((var(--p) - .82 - var(--i)*.008)*18),1);transform:translateY(calc((1 - var(--q))*110%))}
 .fin .btn{margin-top:26px;opacity:clamp(0,calc((var(--p) - .9)*20),1)}
 .go .fin .btn{pointer-events:auto}
@@ -423,21 +423,64 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 .hzp{position:sticky;top:0;height:100svh;overflow:hidden;perspective:1000px}
 .trk{display:flex;width:500vw;height:100%;transform:translateX(calc(var(--e,0)*-400vw))}
 .sl{width:100vw;height:100%;flex:none;display:flex;flex-direction:column;justify-content:flex-end;padding:0 8vw 12svh}
-.sl .n{font:400 clamp(120px,30vmin,360px)/.85 var(--serif);color:transparent;-webkit-text-stroke:1.5px var(--ink);letter-spacing:-.04em}
+.sl .n{font:400 clamp(120px,30vmin,360px)/.85 var(--serif);color:transparent;-webkit-text-stroke:2px var(--ink);letter-spacing:-.04em}
 .sl h3{font:400 clamp(36px,6.5vw,84px)/1.05 var(--serif);letter-spacing:-.025em;margin-top:10px}
 .sl p{margin-top:12px;max-width:420px;color:var(--soft);font-size:17px}
 .hzt{position:absolute;left:8vw;top:96px;font:400 22px var(--serif)}
 .bar{position:absolute;left:8vw;right:8vw;bottom:6svh;height:2px;background:var(--line)}
 .bar i{display:block;height:100%;background:var(--acc);transform-origin:left;transform:scaleX(var(--e,0))}
-.cube{--s:15vmin;--b:clamp(0,calc(var(--e,0)*9),1);position:absolute;right:14vw;top:30%;width:var(--s);height:var(--s);transform-style:preserve-3d;transform:rotateX(calc(-22deg + var(--e,0)*400deg)) rotateY(calc(var(--e,0)*620deg))}
-.cube u{position:absolute;inset:0;border:1px solid color-mix(in srgb,var(--ink) 55%,transparent);background:color-mix(in srgb,var(--acc) 6%,transparent);opacity:var(--b);transform:var(--f) translateZ(calc(var(--s)/2 + (1 - var(--b))*45vmin))}
+.cube{--s:22vmin;--b:clamp(0,calc(var(--e,0)*9),1);position:absolute;right:14vw;top:30%;width:var(--s);height:var(--s);transform-style:preserve-3d;transform:rotateX(calc(-22deg + var(--e,0)*400deg)) rotateY(calc(var(--e,0)*620deg))}
+.cube u{position:absolute;inset:0;border:2px solid color-mix(in srgb,var(--ink) 75%,transparent);background:color-mix(in srgb,var(--acc) 6%,transparent);opacity:var(--b);transform:var(--f) translateZ(calc(var(--s)/2 + (1 - var(--b))*45vmin))}
 .cube u:nth-child(1){--f:rotateY(0)}.cube u:nth-child(2){--f:rotateY(90deg)}.cube u:nth-child(3){--f:rotateY(180deg)}.cube u:nth-child(4){--f:rotateY(270deg)}.cube u:nth-child(5){--f:rotateX(90deg)}.cube u:nth-child(6){--f:rotateX(-90deg)}
 .band{background:color-mix(in srgb,var(--card) 55%,transparent);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
 .lite .aur{display:none}
 .lite .band,.lite nav{backdrop-filter:none;-webkit-backdrop-filter:none}
-.rm .story{height:auto}.rm .pin{position:relative}.rm .c,.rm .hint:after,.rm .aur i{animation:none}
-.rm .hz{height:auto}.rm .hzp{position:relative;height:auto}.rm .trk{width:auto;display:block;transform:none}.rm .sl{width:auto;height:auto;padding:8vh 8vw}.rm .cube,.rm .bar{display:none}
+.calm .c,.calm .hint:after,.calm .aur i{animation:none}
 @media(max-width:940px){.rl{grid-template-columns:1fr;gap:16px}.cube{right:10vw;top:18%;--s:20vmin}}
+
+/* ===== whole-page motion ===== */
+.pgb{position:fixed;left:0;top:0;width:100%;height:3px;background:var(--acc);transform-origin:left;transform:scaleX(var(--pg,0));z-index:30;pointer-events:none}
+nav{transition:background-color .3s,border-color .3s,color .3s,transform .5s cubic-bezier(.2,.7,.1,1)}
+nav.hide{transform:translateY(-100%)}
+.mh{overflow:hidden;padding-bottom:.14em}
+.mh>span{display:block;transform:translateY(calc((1 - var(--e,1))*105%))}
+.tx li{--n:0;--r:clamp(0,calc(var(--e,1)*2.4 - var(--n)*.3),1);opacity:var(--r);transform:translateX(calc((1 - var(--r))*-34px))}
+.tx li:nth-child(2){--n:1}.tx li:nth-child(3){--n:2}.tx li:nth-child(4){--n:3}.tx li:nth-child(5){--n:4}.tx li:nth-child(6){--n:5}
+.trend .w{transform-origin:bottom;transform:scaleY(clamp(0,calc(var(--e,1)*1.7 - .35),1))}
+#ringA{transform:rotate(calc((1 - var(--e,1))*-160deg));opacity:var(--e,1)}
+.stack{perspective:1100px}
+.card[data-sc]{opacity:var(--e,1);transform:rotateX(calc((1 - var(--e,1))*24deg)) translateY(calc((1 - var(--e,1))*70px)) scale(calc(.94 + var(--e,1)*.06));transform-origin:50% 100%}
+details[data-sc]{opacity:var(--e,1);transform:translateX(calc((1 - var(--e,1))*-60px))}
+details:nth-of-type(even)[data-sc]{transform:translateX(calc((1 - var(--e,1))*60px))}
+details[open] p{animation:dp .5s cubic-bezier(.2,.7,.1,1)}
+@keyframes dp{from{opacity:0;transform:translateY(-10px)}}
+details summary:after{transition:transform .4s cubic-bezier(.2,.7,.1,1)}
+details[open] summary:after{transform:rotate(180deg)}
+.pl{transform:translateY(calc((1 - var(--e,1))*0px))}
+.partners .mq{opacity:var(--e,1);transform:scaleX(calc(.9 + var(--e,1)*.1))}
+.bnd{opacity:calc(.1 + var(--e,1)*.9);transform:perspective(1200px) rotateX(calc((1 - var(--e,1))*16deg)) scale(calc(.88 + var(--e,1)*.12));transform-origin:50% 100%}
+.band .c{transform:translateY(calc((1 - clamp(0,calc(var(--e,1)*2.2 - var(--i)*.06),1))*110%))}
+.band .btn{opacity:clamp(0,calc(var(--e,1)*3 - 1.6),1)}
+.calm nav{transition:none}
+
+/* ===== 3D shapes everywhere ===== */
+#who,#stack,#faq,#partners,.band{position:relative}
+.geo{position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:calc(var(--gv,0)*.6)}
+.geo .sh{position:absolute;--r:calc(var(--g,0)*2.4)}
+.geo .sh:nth-child(1){left:2vw;top:62%;--s:15vmin;transform:translateY(calc(var(--g,0)*-34vh))}
+.geo .sh:nth-child(2){right:2vw;top:14%;--s:17vmin;transform:translateY(calc(var(--g,0)*42vh))}
+.geo .sh:nth-child(3){right:18vw;bottom:6%;--s:9vmin;transform:translateY(calc(var(--g,0)*-20vh))}
+.sh{--s:10vmin;--r:var(--e,0);position:relative;width:var(--s);height:var(--s);perspective:700px;pointer-events:none}
+.sh>div{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(calc(-25deg + var(--r)*540deg)) rotateY(calc(var(--r)*720deg))}
+.sh u{position:absolute;inset:0;display:block;border:1.5px solid color-mix(in srgb,var(--ink) 58%,transparent);background:color-mix(in srgb,var(--acc) 6%,transparent);text-decoration:none}
+.sh.pa{position:absolute}.sh.sm{--s:58px;margin-bottom:22px}.sh.lg{--s:24vmin}.sh.md{--s:15vmin}
+.k-cube u:nth-child(1){transform:translateZ(calc(var(--s)/2))}.k-cube u:nth-child(2){transform:rotateY(90deg) translateZ(calc(var(--s)/2))}.k-cube u:nth-child(3){transform:rotateY(180deg) translateZ(calc(var(--s)/2))}.k-cube u:nth-child(4){transform:rotateY(270deg) translateZ(calc(var(--s)/2))}.k-cube u:nth-child(5){transform:rotateX(90deg) translateZ(calc(var(--s)/2))}.k-cube u:nth-child(6){transform:rotateX(-90deg) translateZ(calc(var(--s)/2))}
+.k-gyro u{border-radius:50%;background:none;transform:rotateY(calc(var(--i)*30deg))}
+.k-gyro u:last-child{transform:rotateX(90deg);border-color:var(--acc);border-width:2px}
+.k-slabs u{border-radius:9px;transform:translateZ(calc((var(--i) - 2)*var(--s)*.22)) rotate(calc(var(--i)*var(--r)*42deg))}
+.k-torus u{inset:auto;width:34%;height:34%;left:33%;top:33%;border-radius:50%;background:none;transform:rotateY(calc(var(--i)*30deg)) translateX(calc(var(--s)*.33))}
+.card[data-sc]{transform:rotateX(calc((1 - var(--e,1))*24deg + var(--rx,0deg))) rotateY(var(--ry,0deg)) translateY(calc((1 - var(--e,1))*70px)) scale(calc(.94 + var(--e,1)*.06))}
+@media(max-width:700px){.sh.lg{--s:15vmin}.sh.md{--s:12vmin}.band .sh{display:none}.geo .sh:nth-child(3){display:none}}
 </style>
 </head>
 <body>
@@ -463,7 +506,8 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 <symbol id="lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
 </svg>
 
-<nav><div class="wrap">
+<i class="pgb" id="pgb" aria-hidden="true"></i>
+<nav id="nav"><div class="wrap">
 <a class="logo" href="#top" aria-label="Time12 home"><img class="lgl" src="taiwan.png" alt="" width="30" height="30"><img class="lgd" src="china.png" alt="" width="30" height="30">Time12</a>
 <div class="links"><a href="#how">How it works</a><a href="#tour">Inside the app</a><a href="#faq">FAQ</a></div>
 <div class="right">
@@ -477,6 +521,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 
 <!-- ============ STORY ============ -->
 <div class="aur" id="aur" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="geo" id="geo" aria-hidden="true"><div class="sh" data-k="cube"></div><div class="sh" data-k="gyro"></div><div class="sh" data-k="torus"></div></div>
 <section class="story" id="story"><div class="pin" id="pin">
 <div class="ring" id="ring" aria-hidden="true"></div>
 <header class="ly h"><h1 aria-label="Stop asking “Are you done?”"><span class="ln sm" data-sp>Stop asking</span><span class="ln" data-sp>“Are you done?”</span></h1></header>
@@ -486,7 +531,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 </div></section>
 
 <!-- ============ WHO ============ -->
-<section class="sec" id="who"><div class="wrap">
+<section class="sec" id="who"><div class="sh lg pa" data-k="gyro" data-sc="run" style="right:6vw;top:90px" aria-hidden="true"></div><div class="wrap">
 <h2 class="rv" data-sc>For whoever assigns, and whoever hands in.</h2>
 <div class="roles">
 <div class="rl" data-sc><h3><span>Teachers</span></h3><p>Post homework with a deadline. Verify every hand-in.</p></div>
@@ -516,7 +561,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 
 <!-- T1 Org tree -->
 <div class="tour">
-<div class="tx rv" data-sc="">
+<div class="tx rv" data-sc=""><div class="sh sm" data-k="cube" data-sc="run" aria-hidden="true"></div>
 <h3>Organize people into groups and sub-groups</h3>
 <p>The Org tab is where the organization account builds its structure.</p>
 <ul>
@@ -550,7 +595,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 
 <!-- T2 Create task -->
 <div class="tour flip">
-<div class="tx rv" data-sc="">
+<div class="tx rv" data-sc=""><div class="sh sm" data-k="slabs" data-sc="run" aria-hidden="true"></div>
 <h3>Assign a task with a real deadline</h3>
 <p>Every task goes to one group, and everyone in it receives it.</p>
 <ul>
@@ -574,7 +619,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 
 <!-- T3 My tasks -->
 <div class="tour">
-<div class="tx rv" data-sc="">
+<div class="tx rv" data-sc=""><div class="sh sm" data-k="gyro" data-sc="run" aria-hidden="true"></div>
 <h3>Members see exactly what is theirs</h3>
 <p>The My Tasks tab is a member's own dashboard.</p>
 <ul>
@@ -609,7 +654,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 
 <!-- T4 Submit + review -->
 <div class="tour flip">
-<div class="tx rv" data-sc="">
+<div class="tx rv" data-sc=""><div class="sh sm" data-k="torus" data-sc="run" aria-hidden="true"></div>
 <h3>Hand in text, links and files in one step</h3>
 <p>Members need at least one of the three. Leaders then review it from the Org tab.</p>
 <ul>
@@ -644,7 +689,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 
 <!-- T5 Analytics -->
 <div class="tour full">
-<div class="tx rv" data-sc="">
+<div class="tx rv" data-sc=""><div class="sh sm" data-k="cube" data-sc="run" aria-hidden="true"></div>
 <h3>Analytics that answer “who is behind?”</h3>
 <p>One organization-wide report, explored by period, person, group or task. Members see only their own history.</p>
 <ul>
@@ -655,7 +700,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 <li><b>Include sub-groups</b> rolls child groups into a parent. <b>Download Excel</b> exports the current view.</li>
 </ul>
 </div>
-<div class="win" role="img" aria-label="Time12 Analytics tab showing completion stats, a 30 day chart and ranked lists">
+<div class="win tilt" data-sc="" role="img" aria-label="Time12 Analytics tab showing completion stats, a 30 day chart and ranked lists">
 <div class="wbar"><i></i><i></i><i></i><span>time12.xin/dash</span></div>
 <div class="wbody"><div class="app" style="min-width:680px">
 <div class="top"><div class="l"><i></i>Ready</div><div class="pill"><span>Notes</span><span>My Tasks</span><span>Org</span><span class="on">Analytics</span></div><div class="r"><span class="ab">Refresh</span></div></div>
@@ -688,7 +733,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 </div></div></div>
 
 <div class="two-up" style="margin-top:20px">
-<div class="win" role="img" aria-label="Analytics task view with a ring and a people list">
+<div class="win tilt" data-sc="" role="img" aria-label="Analytics task view with a ring and a people list">
 <div class="wbody"><div class="app" style="min-width:0;padding-top:20px">
 <div class="an-top"><div class="ringw"><svg viewBox="0 0 150 150" id="ringA"></svg><b>9<small>of 12 done</small></b></div>
 <div><div class="an-name">Lab report: Pendulum</div><div class="an-s">Physics 10B · Due Oct 14, 2026, 11:59 PM</div></div></div>
@@ -698,7 +743,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 <div class="rw"><div class="m"><b>lina<span class="org">@ms.hart</span></b><small>Handed in Oct 13, 10:42 PM</small></div><span class="badge review n">In review</span></div>
 <div class="rw" style="margin-bottom:0"><div class="m"><b>aisha<span class="org">@ms.hart</span></b><small>Handed in Oct 12, 4:15 PM</small></div><span class="badge done n">On time</span></div>
 </div></div></div>
-<div class="win" role="img" aria-label="Analytics person view with a results table">
+<div class="win tilt" data-sc="" role="img" aria-label="Analytics person view with a results table">
 <div class="wbody"><div class="app" style="min-width:420px;padding-top:20px">
 <div class="an-name">omar<span class="org">@ms.hart</span></div><div class="an-s">Physics 10B</div>
 <div class="tbl" style="margin-top:14px"><table class="pt"><thead><tr><th>Task</th><th>Due</th><th>Result</th><th>Handed in</th></tr></thead><tbody>
@@ -713,7 +758,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 
 <!-- T6 Bulk import -->
 <div class="tour">
-<div class="tx rv" data-sc="">
+<div class="tx rv" data-sc=""><div class="sh sm" data-k="slabs" data-sc="run" aria-hidden="true"></div>
 <h3>Set up a whole class from one file</h3>
 <p>Add Account has a Single Account tab and an Import CSV/Excel tab.</p>
 <ul>
@@ -739,7 +784,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 
 <!-- T7 Notes -->
 <div class="tour flip">
-<div class="tx rv" data-sc="">
+<div class="tx rv" data-sc=""><div class="sh sm" data-k="gyro" data-sc="run" aria-hidden="true"></div>
 <h3>Notes that keep working without a connection</h3>
 <p>Every account also has a private notes tab.</p>
 <ul>
@@ -774,7 +819,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 
 <!-- T8 Palette -->
 <div class="tour">
-<div class="tx rv" data-sc="">
+<div class="tx rv" data-sc=""><div class="sh sm" data-k="torus" data-sc="run" aria-hidden="true"></div>
 <h3>Keyboard shortcuts and a command palette</h3>
 <p>Press <code>Ctrl K</code> to run a command or jump to a note without leaving the keyboard.</p>
 <ul>
@@ -807,47 +852,47 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 </div></section>
 
 <!-- ============ STACK ============ -->
-<section class="sec tint" id="stack"><div class="wrap">
+<section class="sec tint" id="stack"><div class="sh lg pa" data-k="slabs" data-sc="run" style="right:8vw;top:70px" aria-hidden="true"></div><div class="wrap">
 <h2>How it's built</h2>
 <p class="subh">Plain web technology, chosen to stay quick on school laptops and phones.</p>
 <div class="stack">
-<div class="card"><h3><span class="ic"><svg class="i"><use href="#code"/></svg></span>Vanilla JavaScript</h3><p>No front-end framework. The dashboard is a single page of ES modules, so there is nothing heavy to download or hydrate.</p></div>
-<div class="card"><h3><span class="ic"><svg class="i"><use href="#db"/></svg></span>Supabase</h3><p>Postgres and Edge Functions power sign-in, organizations, tasks, notes sync and file upload and download.</p></div>
-<div class="card"><h3><span class="ic"><svg class="i"><use href="#disk"/></svg></span>IndexedDB</h3><p>Notes live in your browser first, with a sync queue and an automatic sync every five seconds.</p></div>
-<div class="card"><h3><span class="ic"><svg class="i"><use href="#sheet"/></svg></span>SheetJS</h3><p>Reads <code>.xlsx</code>, <code>.xls</code> and <code>.csv</code> imports and writes your Excel exports, all inside the browser.</p></div>
-<div class="card"><h3><span class="ic"><svg class="i"><use href="#glow"/></svg></span>WebGL</h3><p>A shader draws the soft aurora behind sign-in and the app, with glass panels over it. Lower End mode switches it off.</p></div>
-<div class="card"><h3><span class="ic"><svg class="i"><use href="#type"/></svg></span>DM Serif Display and DM Sans</h3><p>One serif for titles and one sans for everything else, in light and dark themes you can toggle with <code>Ctrl J</code>.</p></div>
-<div class="card wide"><h3><span class="ic"><svg class="i"><use href="#device"/></svg></span>Tuned to your device</h3>
+<div data-sc="" class="card"><h3><span class="ic"><svg class="i"><use href="#code"/></svg></span>Vanilla JavaScript</h3><p>No front-end framework. The dashboard is a single page of ES modules, so there is nothing heavy to download or hydrate.</p></div>
+<div data-sc="" class="card"><h3><span class="ic"><svg class="i"><use href="#db"/></svg></span>Supabase</h3><p>Postgres and Edge Functions power sign-in, organizations, tasks, notes sync and file upload and download.</p></div>
+<div data-sc="" class="card"><h3><span class="ic"><svg class="i"><use href="#disk"/></svg></span>IndexedDB</h3><p>Notes live in your browser first, with a sync queue and an automatic sync every five seconds.</p></div>
+<div data-sc="" class="card"><h3><span class="ic"><svg class="i"><use href="#sheet"/></svg></span>SheetJS</h3><p>Reads <code>.xlsx</code>, <code>.xls</code> and <code>.csv</code> imports and writes your Excel exports, all inside the browser.</p></div>
+<div data-sc="" class="card"><h3><span class="ic"><svg class="i"><use href="#glow"/></svg></span>WebGL</h3><p>A shader draws the soft aurora behind sign-in and the app, with glass panels over it. Lower End mode switches it off.</p></div>
+<div data-sc="" class="card"><h3><span class="ic"><svg class="i"><use href="#type"/></svg></span>DM Serif Display and DM Sans</h3><p>One serif for titles and one sans for everything else, in light and dark themes you can toggle with <code>Ctrl J</code>.</p></div>
+<div data-sc="" class="card wide"><h3><span class="ic"><svg class="i"><use href="#device"/></svg></span>Tuned to your device</h3>
 <p>On your first visit, Time12 asks what you are using. It also reads reduced-motion and data-saver settings and drops to a lighter mode on its own if frames run slow. Switch any time from the button beside the theme toggle.</p>
 <div class="dev"><div><svg class="i"><use href="#device"/></svg><b>Higher End Device</b>Full visuals, glass effects and animations</div><div><svg class="i"><use href="#phone"/></svg><b>Lower End Device</b>No animations, lightweight and fast</div></div></div>
-<div class="card"><h3><span class="ic"><svg class="i"><use href="#lock"/></svg></span>UniClvrPass</h3><p>Accounts sign in with a username and password through UniClvrPass. No email address is required.</p></div>
+<div data-sc="" class="card"><h3><span class="ic"><svg class="i"><use href="#lock"/></svg></span>UniClvrPass</h3><p>Accounts sign in with a username and password through UniClvrPass. No email address is required.</p></div>
 </div>
 </div></section>
 
 <!-- ============ FAQ ============ -->
-<section class="sec" id="faq"><div class="wrap">
+<section class="sec" id="faq"><div class="sh lg pa" data-k="torus" data-sc="run" style="right:10vw;top:90px" aria-hidden="true"></div><div class="wrap">
 <h2>Common questions</h2>
 <div class="faq">
-<details><summary>Who creates tasks, groups and accounts?</summary><p>The organization account, meaning whoever registers. It adds groups, sub-groups and member accounts. Member accounts do not see the Add button in the Org tab.</p></details>
-<details><summary>What can a member hand in?</summary><p>Text, links and files, in any combination. Files can be up to 25 MB each. At least one of the three is required.</p></details>
-<details><summary>What happens when a submission is rejected?</summary><p>The task returns to the member as Rejected and they can submit again until the deadline. In Analytics it shows as Redo, and the task view says it needs resubmission.</p></details>
-<details><summary>What happens after the deadline?</summary><p>A task nobody handed in is marked overdue, and the member sees Deadline Passed — Submissions Closed. Analytics counts it as missed.</p></details>
-<details><summary>Can I export results?</summary><p>Yes. The Analytics tab has a Download Excel button for the current view: the whole organization, a group, a person or a single task.</p></details>
-<details><summary>Do I need an email address to sign up?</summary><p>No. You register with a username and a password. Accounts you create for members use the same, named under your organization.</p></details>
-<details><summary>Does it work offline?</summary><p>Notes do. They are saved on your device first and sync when you are back online. Tasks and submissions need a connection.</p></details>
+<details data-sc=""><summary>Who creates tasks, groups and accounts?</summary><p>The organization account, meaning whoever registers. It adds groups, sub-groups and member accounts. Member accounts do not see the Add button in the Org tab.</p></details>
+<details data-sc=""><summary>What can a member hand in?</summary><p>Text, links and files, in any combination. Files can be up to 25 MB each. At least one of the three is required.</p></details>
+<details data-sc=""><summary>What happens when a submission is rejected?</summary><p>The task returns to the member as Rejected and they can submit again until the deadline. In Analytics it shows as Redo, and the task view says it needs resubmission.</p></details>
+<details data-sc=""><summary>What happens after the deadline?</summary><p>A task nobody handed in is marked overdue, and the member sees Deadline Passed — Submissions Closed. Analytics counts it as missed.</p></details>
+<details data-sc=""><summary>Can I export results?</summary><p>Yes. The Analytics tab has a Download Excel button for the current view: the whole organization, a group, a person or a single task.</p></details>
+<details data-sc=""><summary>Do I need an email address to sign up?</summary><p>No. You register with a username and a password. Accounts you create for members use the same, named under your organization.</p></details>
+<details data-sc=""><summary>Does it work offline?</summary><p>Notes do. They are saved on your device first and sync when you are back online. Tasks and submissions need a connection.</p></details>
 </div>
 </div></section>
 
 <!-- ============ PARTNERS ============ -->
-<section class="sec partners" id="partners"><div class="wrap">
+<section class="sec partners" id="partners"><div class="sh md pa" data-k="cube" data-sc="run" style="right:9vw;top:34px" aria-hidden="true"></div><div class="wrap">
 <h2>Trusted partners</h2>
 <p class="subh">Tools and teams we work with and recommend.</p>
 </div>
-<div class="mq" aria-label="Trusted partners: Tabula, SmoothRecorder and Prod99"><div class="mq-track"></div></div>
+<div class="mq" data-sc="" aria-label="Trusted partners: Tabula, SmoothRecorder and Prod99"><div class="mq-track"></div></div>
 </section>
 
-<div class="final"><div class="wrap"><div class="band">
-<h2>Create your first group.</h2>
+<div class="final"><div class="wrap"><div class="band bnd" data-sc=""><div class="sh md pa" data-k="cube" data-sc="run" style="left:7%;top:20%" aria-hidden="true"></div><div class="sh md pa" data-k="gyro" data-sc="run" style="right:7%;bottom:18%" aria-hidden="true"></div>
+<h2 class="ln" data-sp>Create your first group.</h2>
 <p>Register with a username and password, create your first group, and see who is done, who is pending and who is late.</p>
 <a class="btn" href="https://time12.xin/dash">Open Time12 <svg class="i" width="18" height="18"><use href="#arrow"/></svg></a>
 </div></div></div>
@@ -926,11 +971,18 @@ el.appendChild(l);
 var d=document,de=d.documentElement,g=function(i){return d.getElementById(i)},pin=g('pin'),sty=g('story'),au=g('aur'),num=g('num'),ring=g('ring');
 d.querySelectorAll('[data-sp]').forEach(function(e){var t=e.textContent;e.setAttribute('aria-hidden','true');e.innerHTML=t.split('').map(function(c,i){return '<span class="c" style="--i:'+i+'">'+(c===' '?'\u00a0':c)+'</span>'}).join('')});
 var cs=['ok','ok','ok','ok','ok','ok','ok','ok','ok','acc','warn','bad'],L=[0,40,-40,20,-20,55,-55,10,-10,30,-30,0];
-ring.innerHTML=cs.map(function(c,i){return '<div class="pn" style="--i:'+i+';--c:var(--'+c+');--l:'+L[i]+';--sx:'+(((i*37)%11-5)*11)+';--sy:'+(((i*53)%9-4)*12)+';--sz:'+(((i*29)%7)*-6)+';--sr:'+(((i*41)%13-6)*28)+'"><i></i></div>'}).join('');
-var rm=matchMedia('(prefers-reduced-motion:reduce)').matches,cn=navigator.connection||{};
-if(rm)de.classList.add('rm');
-if(rm||cn.saveData||(navigator.deviceMemory&&navigator.deviceMemory<=2))de.classList.add('lite');
-var els=[].slice.call(d.querySelectorAll('[data-sc]')),vh=innerHeight,raf=0,lp=-1,ln=-1,lg=-1,lt=0,fr=0,sl=0;
+ring.innerHTML=cs.map(function(c,i){return '<div class="pn" style="--i:'+i+';--c:var(--'+c+');--l:'+L[i]+';--sx:'+(((i*37)%11-5)*11)+';--sy:'+(((i*53)%9-4)*12)+';--sz:'+(((i*29)%7)*-9)+';--sr:'+(((i*41)%13-6)*28)+'"><i></i></div>'}).join('');
+var SH={cube:'<div class="k-cube">'+'<u></u>'.repeat(6)+'</div>',gyro:'<div class="k-gyro">'+[0,1,2,3,4,5].map(function(i){return '<u style="--i:'+i+'"></u>'}).join('')+'<u></u></div>',slabs:'<div class="k-slabs">'+[0,1,2,3,4].map(function(i){return '<u style="--i:'+i+'"></u>'}).join('')+'</div>',torus:'<div class="k-torus">'+[0,1,2,3,4,5,6,7,8,9,10,11].map(function(i){return '<u style="--i:'+i+'"></u>'}).join('')+'</div>'};
+d.querySelectorAll('.sh[data-k]').forEach(function(e){e.innerHTML=SH[e.getAttribute('data-k')];});
+var geo=g('geo');
+if(matchMedia('(pointer:fine)').matches)d.querySelectorAll('.card').forEach(function(c){c.addEventListener('pointermove',function(e){var b=c.getBoundingClientRect();c.style.setProperty('--ry',((e.clientX-b.left)/b.width-.5)*14+'deg');c.style.setProperty('--rx',(.5-(e.clientY-b.top)/b.height)*14+'deg');});c.addEventListener('pointerleave',function(){c.style.setProperty('--rx','0deg');c.style.setProperty('--ry','0deg');});});
+['#tour','#stack','#faq','#partners'].forEach(function(q){var h=d.querySelector(q+' h2');if(h){h.classList.add('mh');h.setAttribute('data-sc','');h.innerHTML='<span>'+h.innerHTML+'</span>';}});
+d.querySelectorAll('#tour>.wrap>.subh,#stack .subh,#partners .subh').forEach(function(e){e.classList.add('rv');e.setAttribute('data-sc','');});
+d.querySelectorAll('footer .wrap').forEach(function(e){e.classList.add('rv');e.setAttribute('data-sc','');});
+var rm=false,cn=navigator.connection||{};
+if(matchMedia('(prefers-reduced-motion:reduce)').matches)de.classList.add('calm');
+if(cn.saveData||(navigator.deviceMemory&&navigator.deviceMemory<=2))de.classList.add('lite');
+var els=[].slice.call(d.querySelectorAll('[data-sc]')),pgb=g('pgb'),nav=g('nav'),ly=0,vh=innerHeight,raf=0,lp=-1,ln=-1,lg=-1,lt=0,fr=0,sl=0;
 function cl(v){return v<0?0:v>1?1:v}
 function run(t){
 raf=0;vh=innerHeight;
@@ -940,8 +992,9 @@ var p=rm?1:cl(-r.top/(r.height-vh));
 if(p!==lp){lp=p;pin.style.setProperty('--p',p.toFixed(3));
 var n=Math.round(cl((p-.44)/.14)*9);if(n!==ln){ln=n;num.textContent=n;}
 var o=p>.84?1:0;if(o!==lg){lg=o;pin.classList.toggle('go',!!o);}}
-if(!rm)au.style.setProperty('--sy',scrollY);
-els.forEach(function(e,i){var b=rs[i],m=e.getAttribute('data-sc'),v=rm?1:m==='pin'?cl(-b.top/(b.height-vh)):m==='tall'?cl((vh*.7-b.top)/b.height):cl((vh-b.top)/(vh*.55));
+var y=scrollY;au.style.setProperty('--sy',y);geo.style.setProperty('--g',(y/Math.max(1,de.scrollHeight-vh)).toFixed(4));geo.style.setProperty('--gv',cl((y-(sty.offsetHeight-vh)*.9)/(vh*.6)).toFixed(3));pgb.style.setProperty('--pg',(y/Math.max(1,de.scrollHeight-vh)).toFixed(4));
+if(y>vh*.8){if(y>ly+6)nav.classList.add('hide');else if(y<ly-6)nav.classList.remove('hide');}else nav.classList.remove('hide');ly=y;
+els.forEach(function(e,i){var b=rs[i],m=e.getAttribute('data-sc'),v=rm?1:m==='pin'?cl(-b.top/(b.height-vh)):m==='tall'?cl((vh*.7-b.top)/b.height):m==='run'?cl((vh-b.top)/(vh+b.height)):cl((vh-b.top)/(vh*.55));
 v=Math.round(v*500)/500;if(e._v!==v){e._v=v;e.style.setProperty('--e',v);}});
 }
 function tick(){if(!raf)raf=requestAnimationFrame(run);}
