@@ -387,7 +387,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 .ln{display:block;overflow:hidden;padding:.06em .04em .1em}
 .ln.sm{font:500 clamp(18px,2.4vw,30px)/1.2 var(--sans);letter-spacing:0;color:var(--soft);padding-bottom:.5em}
 .c{display:inline-block}
-.h .c{--o:clamp(0,calc((var(--p) - .005 - var(--i)*.004)*30),1);transform:translateY(calc(var(--o)*-110%));animation:up 1.1s cubic-bezier(.2,.7,.1,1) backwards;animation-delay:calc(var(--i)*38ms + 250ms)}
+.h .c{--o:clamp(0,calc((var(--p) - .005 - var(--i)*.004)*30),1);transform:translateY(calc(var(--o)*-190%));animation:up 1.1s cubic-bezier(.2,.7,.1,1) backwards;animation-delay:calc(var(--i)*38ms + 250ms)}
 @keyframes up{from{transform:translateY(110%)}}
 .ring{position:absolute;left:50%;top:50%;width:0;height:0;transform-style:preserve-3d;transform:scale(calc(1 - var(--k)*.9)) rotateX(calc(-10deg - var(--m)*12deg)) rotateY(calc(var(--p)*480deg));opacity:calc(1 - var(--k)*1.1)}
 .pn{--w:17vmin;--R:31.7vmin;--a:clamp(0,calc((var(--p) - .03 - var(--i)*.012)*7),1);--t:clamp(0,calc((var(--p) - .36 - var(--i)*.018)*18),1);position:absolute;width:var(--w);height:calc(var(--w)*1.35);margin:calc(var(--w)*-.675) 0 0 calc(var(--w)*-.5);border:2px solid color-mix(in srgb,var(--ink) 72%,transparent);border-radius:9px;background:color-mix(in srgb,var(--bg) 70%,transparent);opacity:var(--a);transform:translate3d(calc((1 - var(--a))*var(--sx)*1vmin),calc((1 - var(--a))*var(--sy)*1vmin),calc((1 - var(--a))*var(--sz)*1vmin)) rotateY(calc(var(--i)*30deg)) rotateX(calc(var(--m)*var(--l)*1deg)) translateZ(var(--R)) rotateZ(calc((1 - var(--a))*var(--sr)*1deg))}
@@ -395,9 +395,9 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 .pn:before,.pn:after{content:'';position:absolute;left:14%;height:4px;border-radius:4px}
 .pn:before{right:14%;bottom:12%;background:var(--c);transform-origin:left;transform:scaleX(var(--t))}
 .pn:after{right:44%;top:14%;background:color-mix(in srgb,var(--ink) 55%,transparent)}
-.cnt{opacity:min(clamp(0,calc((var(--p) - .42)*25),1),clamp(0,calc((.62 - var(--p))*25),1))}
-.cnt b{font:400 clamp(70px,19vmin,210px)/.9 var(--serif);letter-spacing:-.04em}
-.cnt span{margin-top:8px;font-size:clamp(14px,2vmin,20px);color:var(--soft)}
+.tally{opacity:min(clamp(0,calc((var(--p) - .42)*25),1),clamp(0,calc((.62 - var(--p))*25),1))}
+.tally b{font:400 clamp(70px,19vmin,210px)/.9 var(--serif);letter-spacing:-.04em}
+.tally span{margin-top:8px;font-size:clamp(14px,2vmin,20px);color:var(--soft)}
 .fin{--f:clamp(0,calc((var(--p) - .78)*12),1);visibility:hidden}
 .go .fin{visibility:visible}
 .mk{opacity:var(--f);transform:scale(calc(.5 + var(--f)*.5))}
@@ -481,6 +481,8 @@ details[open] summary:after{transform:rotate(180deg)}
 .k-torus u{inset:auto;width:34%;height:34%;left:33%;top:33%;border-radius:50%;background:none;transform:rotateY(calc(var(--i)*30deg)) translateX(calc(var(--s)*.33))}
 .card[data-sc]{transform:rotateX(calc((1 - var(--e,1))*24deg + var(--rx,0deg))) rotateY(var(--ry,0deg)) translateY(calc((1 - var(--e,1))*70px)) scale(calc(.94 + var(--e,1)*.06))}
 @media(max-width:700px){.sh.lg{--s:15vmin}.sh.md{--s:12vmin}.band .sh{display:none}.geo .sh:nth-child(3){display:none}}
+
+.ly.h{opacity:clamp(0,calc((.16 - var(--p))*30),1)}
 </style>
 </head>
 <body>
@@ -525,7 +527,7 @@ details[open] summary:after{transform:rotate(180deg)}
 <section class="story" id="story"><div class="pin" id="pin">
 <div class="ring" id="ring" aria-hidden="true"></div>
 <header class="ly h"><h1 aria-label="Stop asking “Are you done?”"><span class="ln sm" data-sp>Stop asking</span><span class="ln" data-sp>“Are you done?”</span></h1></header>
-<div class="ly cnt" aria-hidden="true"><b id="num">0</b><span>of 12 are done</span></div>
+<div class="ly tally" aria-hidden="true"><b id="num">0</b><span>of 12 are done</span></div>
 <div class="ly fin"><div class="mk"><img class="lgl" src="taiwan.png" alt="Time12"><img class="lgd" src="china.png" alt="Time12"></div><h2 class="ln" data-sp>Make time true.</h2><a class="btn" href="https://time12.xin/dash">Open Time12 <svg class="i" width="18" height="18"><use href="#arrow"/></svg></a></div>
 <div class="hint" aria-hidden="true">Scroll</div>
 </div></section>
