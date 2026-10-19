@@ -25,9 +25,9 @@
       if (nav.hardwareConcurrency) { if (nav.hardwareConcurrency <= 2) cap(0, 'cpu<=2'); else if (nav.hardwareConcurrency <= 4) cap(1, 'cpu<=4'); }
       var dpr = window.devicePixelRatio || 1, px = screen.width * screen.height * dpr * dpr;
       if (px > 8e6 && tier > 1) cap(1, 'huge-screen');
-      /* remembered result from a previous benchmark (valid 3 days) */
+      /* remembered result from a previous benchmark (valid 6 hours) */
       var c = JSON.parse(localStorage.getItem('time12_perf') || 'null');
-      if (c && RANK[c.tier] != null && Date.now() - c.ts < 259200000) cap(RANK[c.tier], 'cached');
+      if (c && RANK[c.tier] != null && Date.now() - c.ts < 21600000) cap(RANK[c.tier], 'cached');
     }
   } catch (e) {}
   var tierName = NAME[tier];
@@ -60,8 +60,8 @@
       var s = this._buf.slice().sort(function (a, b) { return a - b; }), med = s[20];
       this._buf.length = 0;
       var limit = this.tier === 'high' ? 22 : 30;            // ~45fps / ~33fps
-      if (med > limit) { this.down('fps ' + (1000 / med | 0)); this._skip = 12; }
-      else this._ok = (this._ok || 0) + 1;
+      if (med > limit) { this._bad = (this._bad || 0) + 1; if (this._bad >= 2) { this._bad = 0; this.down('fps ' + (1000 / med | 0)); this._skip = 12; } }
+      else { this._bad = 0; this._ok = (this._ok || 0) + 1; }
     }
   };
 })();
@@ -1644,11 +1644,11 @@
     contain: layout paint;
   }
   .geo-login { --gcm: 56%; }
-  .geo-app { position: fixed; z-index: 0; --gcm: 62%; opacity: 0.8; transition: opacity 0.6s ease; }
+  .geo-app { position: fixed; z-index: 0; --gcm: 74%; opacity: 1; transition: opacity 0.6s ease; }
   /* wide tabs (Org, My Tasks, Analytics) fill more of the screen, so the shapes sit back a little more */
-  html[data-tab]:not([data-tab="Notes"]) .geo-app { opacity: 0.5; }
+  html[data-tab]:not([data-tab="Notes"]) .geo-app { opacity: 0.8; }
   /* typing or filling a form: let the shapes step back so they never compete with the work */
-  html.geo-focus .geo-app { opacity: 0.16; }
+  html.geo-focus .geo-app { opacity: 0.45; }
   .geo-off { display: none; }
 
   .gs {
@@ -1730,6 +1730,36 @@
   .skeleton-line {
     position: relative; overflow: hidden; height: 12px; border-radius: 4px; margin-bottom: 8px;
     background: var(--surface-2); animation: none;
+  }
+
+  /* ============================================================
+     SEE-THROUGH PANELS — the geometry reads through the whole app,
+     text stays crisp (lighter glass + a soft reading veil behind copy)
+     ============================================================ */
+  html:not([data-perf="low"]) { --app-glass-bg: rgba(255, 250, 244, 0.42); }
+  html[data-theme="dark"]:not([data-perf="low"]) { --app-glass-bg: rgba(24, 24, 24, 0.44); }
+  /* lower end: no blur, so keep the glass a bit denser, but let the static shapes show */
+  html[data-perf="low"] { --app-glass-bg: rgba(255, 250, 244, 0.84); }
+  html[data-perf="low"][data-theme="dark"] { --app-glass-bg: rgba(24, 24, 24, 0.86); }
+
+  /* gentler blur on the big panels, so shapes behind them stay recognisable */
+  .sidebar {
+    -webkit-backdrop-filter: var(--bf, blur(calc(14px * var(--blur-k, 1))) saturate(150%));
+    backdrop-filter: var(--bf, blur(calc(14px * var(--blur-k, 1))) saturate(150%));
+  }
+  .editor-top-bar {
+    -webkit-backdrop-filter: var(--bf, blur(calc(16px * var(--blur-k, 1))) saturate(150%));
+    backdrop-filter: var(--bf, blur(calc(16px * var(--blur-k, 1))) saturate(150%));
+  }
+  /* reading veil: softens whatever drifts behind the writing / task column, fades out toward the edges
+     so the shapes in the margins stay crisp */
+  .editor-area::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: color-mix(in srgb, var(--surface) 30%, transparent);
+    -webkit-backdrop-filter: var(--bf, blur(calc(9px * var(--blur-k, 1))));
+    backdrop-filter: var(--bf, blur(calc(9px * var(--blur-k, 1))));
+    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 22%, #000 78%, transparent 100%);
+    mask-image: linear-gradient(90deg, transparent 0%, #000 22%, #000 78%, transparent 100%);
   }
 
 </style>
@@ -2554,13 +2584,14 @@
       ['cube', 6, 92, 9, 110], ['tetra', 58, 92, 6, 200], ['cubeocta', 34, 8, 9, 160], ['dodeca', 66, 84, 6, 190, 1],
     ];
     const APP = [
-      ['stella', 95, 16, 18, -170, 1], ['icosa', 27, 28, 9, 120], ['dodeca', 5, 74, 18, -130], ['cubocta', 96, 72, 16, -150],
-      ['icosa', 5, 22, 16, -150], ['gyro', 93, 44, 8, 60, 1], ['octa', 25, 66, 8, 100], ['torus', 70, 95, 8, 20],
-      ['cube', 92, 92, 8, 60], ['antiprism', 17, 94, 7, 100], ['globe', 94, 58, 7, 120], ['tetra', 11, 48, 8, 80],
-      ['bipyramid', 31, 90, 7, 130], ['prism', 97, 94, 6, 160], ['slabs', 62, 4, 6, 150], ['cubeocta', 27, 5, 7, 170],
-      ['octa', 79, 6, 6, 100], ['dodeca', 22, 48, 6, 150, 1], ['tetra', 90, 6, 6, 120], ['cube', 3, 96, 6, 140],
+      ['stella', 95, 16, 20, -170, 1], ['icosa', 27, 28, 10, 120], ['dodeca', 5, 74, 20, -130], ['cubocta', 96, 72, 18, -150],
+      ['icosa', 5, 22, 18, -150], ['gyro', 93, 44, 9, 60, 1], ['octa', 25, 66, 9, 100], ['torus', 70, 95, 9, 20],
+      ['cube', 92, 92, 9, 60], ['antiprism', 17, 94, 8, 100], ['globe', 94, 58, 8, 120], ['tetra', 11, 48, 9, 80],
+      ['bipyramid', 31, 90, 8, 130], ['prism', 97, 94, 7, 160], ['slabs', 62, 4, 7, 150], ['cubeocta', 27, 5, 8, 170],
+      ['octa', 79, 6, 7, 100], ['dodeca', 22, 48, 7, 150, 1], ['tetra', 90, 6, 7, 120], ['cube', 3, 96, 7, 140],
+      ['dodeca', 56, 64, 24, -280], ['icosa', 64, 26, 19, -250], ['cubocta', 44, 84, 17, -240], ['stella', 76, 52, 15, -210, 1],
     ];
-    const COUNT = { login: { high: 20, mid: 13, low: 8 }, app: { high: 20, mid: 11, low: 6 } };
+    const COUNT = { login: { high: 20, mid: 15, low: 8 }, app: { high: 24, mid: 14, low: 6 } };
     const CHEAP = { tetra: 1, cube: 1, octa: 1, icosa: 1, cubocta: 1, gyro: 1 };   /* lower end: fewest elements */
 
     function node(sp, r, inline) {
@@ -2616,7 +2647,7 @@
       if (app && !layers.has(app)) mount(app);
       clearTimeout(offTimer);
       offTimer = setTimeout(() => { const l = loginLayer(); if (l) l.classList.add('geo-off'); }, 480);
-      watch(true);
+      setTimeout(() => watch(true), 3500);   /* judge frame rate after the app has settled, not during the entrance */
     }
     function loginOn() {
       clearTimeout(offTimer);
@@ -2673,6 +2704,9 @@
     Geo.mount(document.getElementById('loginGeo'));
     loginScreen.classList.add('geo-active');
     Geo.watch(true);
+    /* prebuild the in-app backdrop while the login screen is idle */
+    const prebuild = () => Geo.mount(document.getElementById('appGeo'));
+    if (window.requestIdleCallback) requestIdleCallback(prebuild, { timeout: 1500 }); else setTimeout(prebuild, 600);
   }
   /* On a first visit the device picker comes first; it gets its own shapes right away */
   if (document.documentElement.hasAttribute('data-need-device')) { Geo.mount(document.querySelector('.geo-picker')); Geo.watch(true); }
