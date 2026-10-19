@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<script>try{if(localStorage.getItem("Time12-theme")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
 <script>
 /* ---------- Time12 performance tiers: high > mid > low ----------
    Start optimistic (high), downgrade from hardware hints now and from a live
@@ -109,7 +110,7 @@
     --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.65), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
 
     /* Lighter "liquid glass" used across the in-app chrome (sidebar, top
-       bar, toolbar, cards) so the WebGL backdrop reads through it. */
+       bar, toolbar, cards) so the 3D geometry backdrop reads through it. */
     --app-glass-bg: rgba(255, 250, 244, 0.6);
     --app-glass-border: rgba(24, 18, 14, 0.13);
     --app-glass-shadow: 0 8px 28px rgba(34, 24, 16, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
@@ -122,36 +123,37 @@
   }
 
   html[data-theme="dark"] {
-    --bg: #000000;
-    --surface: #0F0F0F;
-    --surface-2: #1A1A1A;
-    --text: #F5F5F5;
-    --text-soft: #B5B5B5;
-    --text-muted: #6B6B6B;
-    --border: #1F1F1F;
+    /* Softer dark, matched to the Time12 home page: charcoal instead of pure black */
+    --bg: #141414;
+    --surface: #181818;
+    --surface-2: #242424;
+    --text: #E2E2E2;
+    --text-soft: #A9A9A9;
+    --text-muted: #868686;
+    --border: #2d2d2d;
     --molding: #FF8A33;
     --accent: #FD7E14;
     --accent-hover: #FFA45C;
-    --accent-soft: #3A1F0A;
+    --accent-soft: #262626;
     --warn: #FFA45C;
     --success: #7AB560;
     --danger: #D97060;
-    --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.6);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+    --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.5);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
 
-    --glass-bg: rgba(18, 18, 18, 0.55);
-    --glass-border: rgba(255, 255, 255, 0.1);
-    --glass-sheen: rgba(255, 255, 255, 0.35);
-    --glass-highlight: rgba(255, 255, 255, 0.1);
-    --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.08), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    --glass-bg: rgba(27, 27, 27, 0.62);
+    --glass-border: rgba(255, 255, 255, 0.09);
+    --glass-sheen: rgba(255, 255, 255, 0.28);
+    --glass-highlight: rgba(255, 255, 255, 0.08);
+    --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
 
-    --app-glass-bg: rgba(15, 15, 15, 0.5);
-    --app-glass-border: rgba(255, 255, 255, 0.09);
-    --app-glass-shadow: 0 8px 28px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    --app-glass-bg: rgba(24, 24, 24, 0.64);
+    --app-glass-border: rgba(255, 255, 255, 0.08);
+    --app-glass-shadow: 0 8px 28px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
 
-    --liquid-sheen: linear-gradient(135deg, rgba(255, 255, 255, 0.10) 0%, rgba(255, 255, 255, 0.02) 35%, rgba(255, 255, 255, 0) 65%);
-    --liquid-pill-bg: rgba(255, 255, 255, 0.12);
-    --liquid-chip-bg: rgba(255, 255, 255, 0.08);
+    --liquid-sheen: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.015) 35%, rgba(255, 255, 255, 0) 65%);
+    --liquid-pill-bg: rgba(255, 255, 255, 0.10);
+    --liquid-chip-bg: rgba(255, 255, 255, 0.07);
   }
 
   html, body {
@@ -214,16 +216,6 @@
   }
   .btn-primary.main:hover, .btn-primary.destructive:hover { transform: translateY(-1px); }
 
-  /* ---------- Top progress bar ---------- */
-  .top-progress {
-    position: fixed; top: 0; left: 0; height: 3px; width: 0%;
-    background: linear-gradient(90deg, var(--accent), var(--accent-hover));
-    box-shadow: 0 0 10px var(--accent);
-    z-index: 3000; opacity: 0;
-    transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease;
-  }
-  .top-progress.active { opacity: 1; }
-
   /* ============================================================
      LOGIN SCREEN
      ============================================================ */
@@ -240,16 +232,6 @@
     transition: background 0.4s ease, opacity 0.4s ease;
   }
   .login-screen.hidden { opacity: 0; pointer-events: none; transform: scale(1.02); }
-  .login-webgl {
-    position: absolute; inset: 0; width: 100%; height: 100%;
-    z-index: 0; opacity: 0.65; pointer-events: none;
-    transition: opacity 0.8s ease;
-  }
-  .app-webgl {
-    position: fixed; inset: 0; width: 100%; height: 100%;
-    z-index: 0; opacity: 0.55; pointer-events: none;
-  }
-  html[data-theme="dark"] .app-webgl { opacity: 0.42; }
   .sidebar, .editor-area, .backdrop { position: relative; z-index: 1; }
   .login-screen::before, .login-screen::after {
     content: '';
@@ -272,7 +254,7 @@
     bottom: -26%; right: -14%;
     animation: orbFloatB 22s ease-in-out infinite;
   }
-  .login-screen.webgl-active::before, .login-screen.webgl-active::after { opacity: 0.3; }
+  .login-screen.geo-active::before, .login-screen.geo-active::after { opacity: 0.3; }
   @keyframes orbFloatA { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(6%, 8%) scale(1.15); } }
   @keyframes orbFloatB { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-7%, -6%) scale(1.1); } }
 
@@ -461,10 +443,10 @@
      APP LAYOUT
      ============================================================ */
   .app { display: grid; grid-template-columns: 300px 1fr; height: 100vh; height: 100dvh; }
-  .app.app-enter { animation: appFadeIn 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  .app.app-enter { animation: appFadeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; }
   @keyframes appFadeIn {
-    from { opacity: 0; transform: scale(0.985) translateY(6px); filter: blur(4px); }
-    to   { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
   .sidebar {
     background: var(--liquid-sheen), var(--app-glass-bg);
@@ -491,7 +473,7 @@
     opacity: 0.14; filter: blur(6px);
     animation: headerGlowDrift 14s ease-in-out infinite;
   }
-  html[data-theme="dark"] .sidebar-header::before { opacity: 0.22; }
+  html[data-theme="dark"] .sidebar-header::before { opacity: 0.09; }
   @keyframes headerGlowDrift {
     0%, 100% { transform: translate(0, 0) scale(1); }
     50% { transform: translate(18px, 14px) scale(1.18); }
@@ -787,7 +769,7 @@
   .textarea::placeholder { color: var(--text-muted); }
   .dialog-input::placeholder, .palette-input::placeholder { color: var(--text-muted); }
 
-  /* Login placeholders stay white so they read against the WebGL aurora
+  /* Login placeholders stay white so they read against the 3D geometry
      backdrop; everywhere else defaults back to dark so "Untitled",
      "The room is quiet. Begin.", "Search the shelves...", palette and
      dialog inputs render dark in light mode. */
@@ -1531,12 +1513,10 @@
     --shadow-soft: 0 2px 8px rgba(34, 24, 16, 0.08);
   }
   html[data-perf="low"][data-theme="dark"] {
-    --glass-bg: rgba(14, 14, 14, 0.97);
-    --app-glass-bg: rgba(12, 12, 12, 0.96);
+    --glass-bg: rgba(27, 27, 27, 0.97);
+    --app-glass-bg: rgba(24, 24, 24, 0.96);
     --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.5);
   }
-  html[data-perf="low"] .login-webgl,
-  html[data-perf="low"] .app-webgl { display: none; }
   html[data-perf="low"] .login-screen::before,
   html[data-perf="low"] .login-screen::after { filter: none; animation: none; opacity: 0.35; }
   html[data-perf="low"] .login-shell { transform: none !important; animation: none; }
@@ -1559,7 +1539,6 @@
   html[data-perf="low"] .graph-line { filter: none; }
   html[data-perf="low"] { --shadow-md: 0 1px 2px rgba(34, 24, 16, 0.08); --shadow-soft: 0 1px 4px rgba(34, 24, 16, 0.1); }
   html[data-perf="low"][data-theme="dark"] { --shadow-md: none; --shadow-soft: none; }
-  html[data-perf="low"] .top-progress { box-shadow: none; }
   @keyframes appFadeInLite { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 
   /* ================= DEVICE MODE (Higher End / Lower End) ================= */
@@ -1570,7 +1549,7 @@
   }
   html[data-need-device] .device-picker { display: flex; }
   .device-picker.closing { opacity: 0; pointer-events: none; }
-  .device-picker-inner { width: 100%; max-width: 560px; text-align: center; margin: auto; }
+  .device-picker-inner { position: relative; z-index: 2; width: 100%; max-width: 560px; text-align: center; margin: auto; }
   .device-picker-title {
     font-family: var(--serif); font-size: 32px; line-height: 1.15;
     color: var(--text); letter-spacing: -0.01em; margin-bottom: 8px;
@@ -1650,13 +1629,116 @@
   }
   .shortcut-keys { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-content: flex-end; }
   .shortcut-keys .shortcut-or { color: var(--text-muted); font-size: 11px; margin: 0 2px; }
+
+  /* ============================================================
+     3D GEOMETRY BACKDROP — pure CSS 3D, no WebGL, no canvas.
+     One preserve-3d container per shape; only that container's
+     transform animates, so the compositor does all the work.
+     ============================================================ */
+  .geo-layer {
+    --k: 1; --gw: 1.6px;
+    --gc: color-mix(in srgb, var(--text) var(--gcm, 52%), transparent);
+    position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none;
+    perspective: 1000px;
+    perspective-origin: calc(50% + var(--px, 0) * 7%) calc(42% + var(--py, 0) * 7%);
+    contain: layout paint;
+  }
+  .geo-login { --gcm: 56%; }
+  .geo-app { position: fixed; z-index: 0; --gcm: 62%; opacity: 0.8; transition: opacity 0.6s ease; }
+  /* wide tabs (Org, My Tasks, Analytics) fill more of the screen, so the shapes sit back a little more */
+  html[data-tab]:not([data-tab="Notes"]) .geo-app { opacity: 0.5; }
+  /* typing or filling a form: let the shapes step back so they never compete with the work */
+  html.geo-focus .geo-app { opacity: 0.16; }
+  .geo-off { display: none; }
+
+  .gs {
+    position: absolute; left: var(--x); top: var(--y); width: 0; height: 0;
+    transform-style: preserve-3d;
+    transform: translate3d(0, 0, var(--z, 0px));
+    animation: gFloat var(--fd, 24s) ease-in-out var(--fo, 0s) infinite alternate;
+  }
+  .gs.gs-acc { --gc: color-mix(in srgb, var(--accent) 78%, transparent); }
+  @keyframes gFloat {
+    from { transform: translate3d(0, 0, var(--z, 0px)); }
+    to   { transform: translate3d(var(--dx, 24px), var(--dy, -30px), var(--z, 0px)); }
+  }
+  .gp {
+    position: absolute; left: 0; top: 0; width: 0; height: 0; transform-style: preserve-3d;
+    transform: rotateX(var(--rx, -24deg)) rotateZ(var(--rz, 0deg));
+  }
+  .gr {
+    position: absolute; left: 0; top: 0; width: 0; height: 0; transform-style: preserve-3d;
+    transform: rotateY(var(--ry0, 20deg));
+    animation: gSpin var(--sp, 50s) linear var(--so, 0s) infinite var(--dir, normal);
+  }
+  @keyframes gSpin {
+    from { transform: rotateY(var(--ry0, 20deg)); }
+    to   { transform: rotateY(calc(var(--ry0, 20deg) + 360deg)); }
+  }
+  /* an edge of a wireframe solid: a thin ribbon laid between two vertices */
+  .ge { position: absolute; left: 0; top: 0; height: var(--gw); background: var(--gc); border-radius: 2px; }
+  /* a ring (gyroscope, globe, torus, slabs) */
+  .gq { position: absolute; left: 0; top: 0; border: var(--gw) solid var(--gc); border-radius: 50%; }
+
+  /* small inline solid (empty states) */
+  .gx {
+    --k: 1; --gw: 1.5px;
+    --gc: color-mix(in srgb, var(--text) 62%, transparent);
+    position: relative; display: block; width: var(--gxs, 88px); height: var(--gxs, 88px);
+    margin: 0 auto 22px; perspective: 520px; pointer-events: none;
+  }
+  .gx > .gs { --s: var(--gxs, 88px); left: 50%; top: 50%; animation: none; }
+  .gx .gr { animation-duration: 26s; }
+
+  @media (max-width: 700px) {
+    .geo-layer { --k: 1.7; }
+    .geo-app { --k: 1.4; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .geo-layer *, .gx * { animation: none !important; }
+  }
+
+  /* dark mode: calm neutral glow behind the login card (same as the home page aurora) */
+  html[data-theme="dark"] .login-screen::before,
+  html[data-theme="dark"] .login-screen::after {
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.07) 0%, transparent 70%);
+    opacity: 1;
+  }
+
+
+  /* ============================================================
+     SKELETONS (notes, tasks, orgs) — transform-only sweep, no repaint
+     ============================================================ */
+  .sk { position: relative; overflow: hidden; border-radius: 4px; background: var(--surface-2); }
+  .sk::after, .skeleton-line::after {
+    content: ''; position: absolute; inset: 0; transform: translateX(-100%);
+    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--text) 8%, transparent), transparent);
+    animation: skSweep 1.5s ease-in-out infinite;
+  }
+  @keyframes skSweep { to { transform: translateX(100%); } }
+  .sk-wrap { animation: fadeInTab 0.25s ease; }
+  .sk-meta { margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid var(--molding); }
+  .sk-card {
+    border: 1px solid var(--border); border-radius: var(--radius-lg);
+    padding: 20px 22px; margin-bottom: 14px; background: var(--app-glass-bg);
+  }
+  .sk-card .sk { margin-top: 12px; }
+  .sk-card .sk-row .sk { margin-top: 0; }
+  .sk-row { display: flex; align-items: center; gap: 12px; }
+  .sk-gap { flex: 1; }
+  .skeleton-note { padding: 14px 24px; border-bottom: 1px solid var(--border); }
+  .skeleton-line {
+    position: relative; overflow: hidden; height: 12px; border-radius: 4px; margin-bottom: 8px;
+    background: var(--surface-2); animation: none;
+  }
+
 </style>
 </head>
 <body>
-<div class="top-progress" id="topProgressBar"></div>
 
 <!-- ============ DEVICE PICKER (first visit) ============ -->
 <div class="device-picker" id="devicePicker" role="dialog" aria-modal="true" aria-labelledby="devicePickerTitle">
+  <div class="geo-layer geo-login geo-picker" data-geo="login" aria-hidden="true"></div>
   <div class="device-picker-inner">
     <h1 class="device-picker-title" id="devicePickerTitle">What are you using?</h1>
     <p class="device-picker-sub">Pick the option that fits your device so Time12 runs smoothly.</p>
@@ -1678,7 +1760,7 @@
 
 <!-- ============ LOGIN SCREEN ============ -->
 <div class="login-screen" id="loginScreen">
-  <canvas id="loginWebGL" class="login-webgl"></canvas>
+  <div class="geo-layer geo-login" id="loginGeo" data-geo="login" aria-hidden="true"></div>
   <div class="login-shell">
     <button class="login-theme-toggle magnetic" id="loginThemeToggle" title="Toggle theme">
       <svg id="loginThemeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
@@ -1720,7 +1802,7 @@
 
 <!-- ============ APP ============ -->
 <div class="app" id="Time12App" style="display:none;">
-  <canvas id="appWebGL" class="app-webgl"></canvas>
+  <div class="geo-layer geo-app" id="appGeo" data-geo="app" aria-hidden="true"></div>
   <div class="backdrop" id="backdrop"></div>
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
@@ -2162,7 +2244,7 @@
     canvas.width = 64;
     canvas.height = 64;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = theme === 'dark' ? '#000000' : '#F7F3EE';
+    ctx.fillStyle = theme === 'dark' ? '#141414' : '#F7F3EE';
     ctx.fillRect(0, 0, 64, 64);
     ctx.fillStyle = theme === 'dark' ? '#FD7E14' : '#FD7E14';
     ctx.font = 'bold 36px "DM Serif Display", Georgia, serif';
@@ -2224,12 +2306,14 @@
     Time12App.classList.remove('app-enter');
     void Time12App.offsetWidth; // restart animation
     Time12App.classList.add('app-enter');
+    Geo.appEnter();
     initTime12(isFreshLogin);
   }
 
   function showLogin() {
     try { anReset(); } catch {}
     Time12App.style.display = 'none';
+    Geo.loginOn();
     loginScreen.classList.remove('hidden');
     usernameInput.value = '';
     passwordInput.value = '';
@@ -2321,226 +2405,278 @@
   })();
 
   /* ---------- Random RED glow easter egg ---------- */
-  /* ---------- WebGL aurora backdrop (login screen) ---------- */
-  function initAuroraWebGL(canvas, hostEl, onReady) {
-    if (!canvas || !hostEl) return;
+  /* ---------- 3D geometry backdrop (CSS 3D, replaces the old WebGL aurora) ---------- */
+  const Geo = (function () {
+    const Perf = window.Time12Perf;
+    const PHI = (1 + Math.sqrt(5)) / 2, IPHI = 1 / PHI;
+    const dist = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
+    const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+    const f = (n) => Math.round(n * 1e4) / 1e4;
 
-    /* Lower End: don't even create a GL context until the user switches to Higher End */
-    if (window.Time12Perf.tier === 'low') {
-      let armed = true;
-      window.Time12Perf.on((t) => {
-        if (armed && t !== 'low') { armed = false; initAuroraWebGL(canvas, hostEl, onReady); }
+    /* every +/- sign combination of a coordinate triple (zeros are not mirrored) */
+    function pm(p) {
+      let out = [[]];
+      p.forEach((c) => {
+        const nxt = [];
+        out.forEach((o) => { nxt.push(o.concat(c)); if (c !== 0) nxt.push(o.concat(-c)); });
+        out = nxt;
       });
-      return;
+      return out;
     }
+    /* edges of a uniform solid = every pair at the minimum vertex distance */
+    function nearestEdges(v) {
+      let min = Infinity;
+      for (let i = 0; i < v.length; i++) for (let j = i + 1; j < v.length; j++) min = Math.min(min, dist(v[i], v[j]));
+      const e = [];
+      for (let i = 0; i < v.length; i++) for (let j = i + 1; j < v.length; j++) if (dist(v[i], v[j]) < min * 1.02) e.push([i, j]);
+      return e;
+    }
+    /* merge parts into one solid, normalised to circumradius 1 */
+    function build(parts) {
+      const V = [], E = [];
+      parts.forEach((p) => {
+        const off = V.length, ed = p.e || nearestEdges(p.v);
+        p.v.forEach((x) => V.push(x));
+        ed.forEach((q) => E.push([q[0] + off, q[1] + off]));
+      });
+      let r = 0; V.forEach((p) => { r = Math.max(r, Math.hypot(p[0], p[1], p[2])); });
+      return { v: V.map((p) => [p[0] / r, p[1] / r, p[2] / r]), e: E };
+    }
+    const polyRing = (n, y, rot) => Array.from({ length: n }, (_, i) => {
+      const a = rot + (i * 2 * Math.PI) / n;
+      return [Math.cos(a), y, Math.sin(a)];
+    });
+    function prism(n, h) {
+      const v = polyRing(n, -h, 0).concat(polyRing(n, h, 0)), e = [];
+      for (let i = 0; i < n; i++) e.push([i, (i + 1) % n], [n + i, n + ((i + 1) % n)], [i, n + i]);
+      return { v, e };
+    }
+    function antiprism(n, h) {
+      const v = polyRing(n, -h, 0).concat(polyRing(n, h, Math.PI / n)), e = [];
+      for (let i = 0; i < n; i++) e.push([i, (i + 1) % n], [n + i, n + ((i + 1) % n)], [i, n + i], [i, n + ((i + n - 1) % n)]);
+      return { v, e };
+    }
+    function bipyramid(n, h) {
+      const v = polyRing(n, 0, 0).concat([[0, h, 0], [0, -h, 0]]), e = [];
+      for (let i = 0; i < n; i++) e.push([i, (i + 1) % n], [i, n], [i, n + 1]);
+      return { v, e };
+    }
+    const TET = [[1, 1, 1], [1, -1, -1], [-1, 1, -1], [-1, -1, 1]];
+    const OCT = [[1, 0, 0], [-1, 0, 0], [0, 1, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]];
+    const SOLID = {
+      tetra: () => build([{ v: TET }]),
+      cube: () => build([{ v: pm([1, 1, 1]) }]),
+      octa: () => build([{ v: OCT }]),
+      icosa: () => build([{ v: [].concat(pm([0, 1, PHI]), pm([1, PHI, 0]), pm([PHI, 0, 1])) }]),
+      dodeca: () => build([{ v: [].concat(pm([1, 1, 1]), pm([0, IPHI, PHI]), pm([IPHI, PHI, 0]), pm([PHI, 0, IPHI])) }]),
+      cubocta: () => build([{ v: [].concat(pm([1, 1, 0]), pm([1, 0, 1]), pm([0, 1, 1])) }]),
+      stella: () => build([{ v: TET }, { v: TET.map((p) => p.map((c) => -c)) }]),
+      cubeocta: () => build([{ v: pm([1, 1, 1]) }, { v: OCT }]),
+      prism: () => build([prism(6, 0.7)]),
+      antiprism: () => build([antiprism(6, 0.6)]),
+      bipyramid: () => build([bipyramid(6, 1.3)]),
+    };
+    const solidCache = {};
+    const solid = (k) => solidCache[k] || (solidCache[k] = SOLID[k]());
 
-    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-    if (!gl) { window.Time12Perf.set('low', 'no-webgl'); return; } // CSS orb fallback remains visible
-
-    const vsSrc = `
-      attribute vec2 a_pos;
-      void main() { gl_Position = vec4(a_pos, 0.0, 1.0); }
-    `;
-    const fsSrc = `
-      #ifdef GL_FRAGMENT_PRECISION_HIGH
-      precision highp float;
-      #else
-      precision mediump float;
-      #endif
-      uniform float u_oct;
-      uniform vec2 u_resolution;
-      uniform float u_time;
-      uniform vec2 u_mouse;
-      uniform vec3 u_colorA;
-      uniform vec3 u_colorB;
-      uniform vec3 u_colorC;
-
-      float random(vec2 st) {
-        return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
-      }
-
-      float noise(vec2 st) {
-        vec2 i = floor(st);
-        vec2 f = fract(st);
-        float a = random(i);
-        float b = random(i + vec2(1.0, 0.0));
-        float c = random(i + vec2(0.0, 1.0));
-        float d = random(i + vec2(1.0, 1.0));
-        vec2 u = f * f * (3.0 - 2.0 * f);
-        return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-      }
-
-      float fbm(vec2 st) {
-        float value = 0.0;
-        float amplitude = 0.5;
-        for (int i = 0; i < 5; i++) {
-          if (float(i) >= u_oct) break;
-          value += amplitude * noise(st);
-          st *= 2.0;
-          amplitude *= 0.5;
+    function edgeEl(a, b) {
+      const dx = b[0] - a[0], dy = b[1] - a[1], dz = b[2] - a[2];
+      const L = Math.hypot(dx, dy, dz);
+      const e1 = [dx / L, dy / L, dz / L];
+      const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2];
+      /* ribbon faces outward: its normal is the radial direction made perpendicular to the edge */
+      const d = m[0] * e1[0] + m[1] * e1[1] + m[2] * e1[2];
+      let e3 = [m[0] - d * e1[0], m[1] - d * e1[1], m[2] - d * e1[2]];
+      let n = Math.hypot(e3[0], e3[1], e3[2]);
+      if (n < 1e-4) { e3 = cross(e1, Math.abs(e1[1]) < 0.9 ? [0, 1, 0] : [1, 0, 0]); n = Math.hypot(e3[0], e3[1], e3[2]); }
+      e3 = [e3[0] / n, e3[1] / n, e3[2] / n];
+      const e2 = cross(e3, e1);
+      const u = 0.5;                                  /* --s is the diameter, so 1 unit = s/2 */
+      const el = document.createElement('i');
+      el.className = 'ge';
+      el.style.cssText =
+        'width:calc(var(--s)*' + f(L * u) + ');margin:calc(var(--gw)*-.5) 0 0 calc(var(--s)*' + f(-L * u / 2) + ');' +
+        'transform:translate3d(calc(var(--s)*' + f(m[0] * u) + '),calc(var(--s)*' + f(m[1] * u) + '),calc(var(--s)*' + f(m[2] * u) + ')) matrix3d(' +
+        [e1[0], e1[1], e1[2], 0, e2[0], e2[1], e2[2], 0, e3[0], e3[1], e3[2], 0, 0, 0, 0, 1].map(f).join(',') + ')';
+      return el;
+    }
+    const SZ = (k) => 'calc(var(--s)*' + f(k) + ')';
+    function circle(w, tf, extra) {
+      const el = document.createElement('i');
+      el.className = 'gq';
+      el.style.cssText = 'width:' + SZ(w) + ';height:' + SZ(w) + ';margin:' + SZ(-w / 2) + ' 0 0 ' + SZ(-w / 2) + ';' +
+        (tf ? 'transform:' + tf + ';' : '') + (extra || '');
+      return el;
+    }
+    const RING = {
+      gyro: () => [
+        circle(1), circle(1, 'rotateY(90deg)'), circle(0.62, 'rotateY(45deg)'),
+        circle(1, 'rotateX(90deg)', 'border-color:var(--accent);'),
+      ],
+      globe: () => {
+        const o = [];
+        for (let i = 0; i < 6; i++) o.push(circle(1, 'rotateY(' + i * 30 + 'deg)'));
+        o.push(circle(1, 'rotateX(90deg)'));
+        [0.25, -0.25].forEach((h) => o.push(circle(0.866, 'rotateX(90deg) translateZ(' + SZ(h) + ')')));
+        [0.43, -0.43].forEach((h) => o.push(circle(0.5, 'rotateX(90deg) translateZ(' + SZ(h) + ')')));
+        return o;
+      },
+      torus: () => {
+        const o = [], n = 14;
+        for (let i = 0; i < n; i++) o.push(circle(0.34, 'rotateY(' + f((i * 360) / n) + 'deg) translateX(' + SZ(0.33) + ')'));
+        return o;
+      },
+      slabs: () => {
+        const o = [];
+        for (let i = 0; i < 5; i++) {
+          const el = circle(0.8, 'translateZ(' + SZ((i - 2) * 0.2) + ') rotate(' + i * 34 + 'deg)', 'border-radius:12%;');
+          o.push(el);
         }
-        return value;
-      }
-
-      void main(){
-        vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-        vec2 p = uv * 2.0 - 1.0;
-        p.x *= u_resolution.x / u_resolution.y;
-
-        // shift into a noise-friendly positive domain while keeping the
-        // same aspect-corrected clip space the pointer tracking already uses
-        vec2 st = p * 0.9 + 1.0;
-
-        float t = u_time * 0.05;
-
-        vec2 mouseSt = u_mouse * 0.9 + 1.0;
-        vec2 dist = st - mouseSt;
-        float mouseInfluence = exp(-dot(dist, dist) * 1.5) * 0.5;
-
-        // domain-warped fbm — soft drifting cloud/marble motion
-        vec2 q = vec2(fbm(st + t), fbm(st - t + vec2(5.2, 1.3)));
-        vec2 r = vec2(fbm(st + 4.0 * q + vec2(1.7, 9.2) + t * 1.5), fbm(st + 4.0 * q + vec2(8.3, 2.8) - t * 1.5));
-        float f = fbm(st + 4.0 * r + mouseInfluence);
-
-        vec3 col = mix(u_colorA, u_colorB, f);
-        col = mix(col, u_colorC, smoothstep(0.4, 0.8, f) * smoothstep(0.0, 0.5, length(q)));
-
-        // soft light sweep that tracks the pointer through the cloud
-        col += u_colorC * mouseInfluence * 0.3;
-
-        float vign = 1.0 - smoothstep(0.5, 1.4, length(p));
-        col *= mix(0.75, 1.0, vign);
-
-        gl_FragColor = vec4(col, 1.0);
-      }
-    `;
-
-    function compile(type, src) {
-      const sh = gl.createShader(type);
-      gl.shaderSource(sh, src);
-      gl.compileShader(sh);
-      if (!gl.getShaderParameter(sh, gl.COMPILE_STATUS)) {
-        console.warn('Shader compile error:', gl.getShaderInfoLog(sh));
-        gl.deleteShader(sh);
-        return null;
-      }
-      return sh;
+        return o;
+      },
+    };
+    function parts(kind) {
+      if (SOLID[kind]) { const s = solid(kind); return s.e.map((q) => edgeEl(s.v[q[0]], s.v[q[1]])); }
+      return RING[kind]();
     }
 
-    const vs = compile(gl.VERTEX_SHADER, vsSrc);
-    const fs = compile(gl.FRAGMENT_SHADER, fsSrc);
-    if (!vs || !fs) return;
-
-    const program = gl.createProgram();
-    gl.attachShader(program, vs);
-    gl.attachShader(program, fs);
-    gl.linkProgram(program);
-    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-      console.warn('Program link error:', gl.getProgramInfoLog(program));
-      return;
+    /* tiny seeded PRNG, so every visit gets the same composition */
+    function rng(seed) {
+      let a = seed >>> 0;
+      return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
     }
-    gl.useProgram(program);
+    /* [kind, x%, y%, size (vmin), depth (px), accent?] — most important first */
+    const LOGIN = [
+      ['dodeca', 88, 16, 26, -160], ['icosa', 10, 20, 22, -100], ['cubocta', 13, 80, 22, -60], ['stella', 87, 78, 20, -120, 1],
+      ['gyro', 72, 30, 11, 120, 1], ['cube', 30, 26, 9, 140], ['torus', 24, 64, 12, 80], ['octa', 50, 7, 11, 70],
+      ['globe', 5, 48, 13, -40], ['slabs', 95, 48, 15, -80], ['antiprism', 75, 68, 11, 100], ['bipyramid', 40, 90, 9, 130],
+      ['prism', 62, 10, 8, 150], ['tetra', 92, 30, 8, 160, 1], ['octa', 20, 6, 7, 180], ['icosa', 82, 92, 8, 150],
+      ['cube', 6, 92, 9, 110], ['tetra', 58, 92, 6, 200], ['cubeocta', 34, 8, 9, 160], ['dodeca', 66, 84, 6, 190, 1],
+    ];
+    const APP = [
+      ['stella', 95, 16, 18, -170, 1], ['icosa', 27, 28, 9, 120], ['dodeca', 5, 74, 18, -130], ['cubocta', 96, 72, 16, -150],
+      ['icosa', 5, 22, 16, -150], ['gyro', 93, 44, 8, 60, 1], ['octa', 25, 66, 8, 100], ['torus', 70, 95, 8, 20],
+      ['cube', 92, 92, 8, 60], ['antiprism', 17, 94, 7, 100], ['globe', 94, 58, 7, 120], ['tetra', 11, 48, 8, 80],
+      ['bipyramid', 31, 90, 7, 130], ['prism', 97, 94, 6, 160], ['slabs', 62, 4, 6, 150], ['cubeocta', 27, 5, 7, 170],
+      ['octa', 79, 6, 6, 100], ['dodeca', 22, 48, 6, 150, 1], ['tetra', 90, 6, 6, 120], ['cube', 3, 96, 6, 140],
+    ];
+    const COUNT = { login: { high: 20, mid: 13, low: 8 }, app: { high: 20, mid: 11, low: 6 } };
+    const CHEAP = { tetra: 1, cube: 1, octa: 1, icosa: 1, cubocta: 1, gyro: 1 };   /* lower end: fewest elements */
 
-    const posBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
-    const posLoc = gl.getAttribLocation(program, 'a_pos');
-    gl.enableVertexAttribArray(posLoc);
-    gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
-
-    const uRes = gl.getUniformLocation(program, 'u_resolution');
-    const uTime = gl.getUniformLocation(program, 'u_time');
-    const uMouse = gl.getUniformLocation(program, 'u_mouse');
-    const uColorA = gl.getUniformLocation(program, 'u_colorA');
-    const uColorB = gl.getUniformLocation(program, 'u_colorB');
-    const uColorC = gl.getUniformLocation(program, 'u_colorC');
-    const uOct = gl.getUniformLocation(program, 'u_oct');
-
-    const targetMouse = [0, 0.15];
-    const currentMouse = [0, 0.15];
-    function updateMouseFromClient(clientX, clientY) {
-      const rect = canvas.getBoundingClientRect();
-      const nx = ((clientX - rect.left) / rect.width) * 2 - 1;
-      const ny = -(((clientY - rect.top) / rect.height) * 2 - 1);
-      targetMouse[0] = nx * (rect.width / rect.height);
-      targetMouse[1] = ny;
+    function node(sp, r, inline) {
+      const wrap = document.createElement('div');
+      wrap.className = 'gs' + (sp.a ? ' gs-acc' : '');
+      wrap.style.cssText = inline
+        ? '--x:50%;--y:50%;--z:0px'
+        : '--x:' + sp.x + '%;--y:' + sp.y + '%;--s:calc(' + sp.s + 'vmin*var(--k));--z:' + sp.z + 'px;' +
+          '--dx:' + f((r() - 0.5) * 70) + 'px;--dy:' + f((r() - 0.5) * 70) + 'px;--fd:' + f(20 + r() * 18) + 's;--fo:-' + f(r() * 30) + 's';
+      const gp = document.createElement('div');
+      gp.className = 'gp';
+      gp.style.cssText = '--rx:' + f(-34 + r() * 22) + 'deg;--rz:' + f((r() - 0.5) * 16) + 'deg';
+      const gr = document.createElement('div');
+      gr.className = 'gr';
+      const sp2 = f(36 + r() * 40);
+      gr.style.cssText = '--ry0:' + f(r() * 90) + 'deg;--sp:' + sp2 + 's;--so:-' + f(r() * sp2) + 's;--dir:' + (r() < 0.4 ? 'reverse' : 'normal');
+      parts(sp.k).forEach((el) => gr.appendChild(el));
+      gp.appendChild(gr);
+      wrap.appendChild(gp);
+      return wrap;
     }
-    hostEl.addEventListener('pointermove', (e) => updateMouseFromClient(e.clientX, e.clientY), { passive: true });
-    hostEl.addEventListener('touchmove', (e) => {
-      if (e.touches && e.touches[0]) updateMouseFromClient(e.touches[0].clientX, e.touches[0].clientY);
+
+    const layers = new Set();
+    function fill(layer) {
+      const which = layer.dataset.geo === 'app' ? 'app' : 'login';
+      const tier = Perf.tier;
+      let list = (which === 'app' ? APP : LOGIN).map((a) => ({ k: a[0], x: a[1], y: a[2], s: a[3], z: a[4], a: a[5] }));
+      if (tier === 'low') list = list.filter((s) => CHEAP[s.k]);
+      list = list.slice(0, COUNT[which][tier]);
+      const r = rng(which === 'app' ? 7 : 11);
+      const frag = document.createDocumentFragment();
+      list.forEach((sp) => frag.appendChild(node(sp, r, false)));
+      layer.textContent = '';
+      layer.appendChild(frag);
+    }
+    function mount(layer) { if (!layer) return; layers.add(layer); fill(layer); }
+    function unmount(layer) { if (!layer) return; layers.delete(layer); layer.textContent = ''; }
+    Perf.on(() => layers.forEach(fill));
+
+    /* inline solids: <span class="gx" data-g="icosa" style="--gxs:96px"></span> */
+    function hydrate(root) {
+      (root || document).querySelectorAll('.gx:not([data-ready])').forEach((el) => {
+        el.dataset.ready = '1';
+        el.appendChild(node({ k: el.dataset.g || 'icosa', a: el.dataset.a }, rng(5), true));
+      });
+    }
+
+    /* the login layer sleeps while the app is open */
+    let offTimer = null;
+    const loginLayer = () => document.getElementById('loginGeo');
+    function appEnter() {
+      const app = document.getElementById('appGeo');
+      if (app && !layers.has(app)) mount(app);
+      clearTimeout(offTimer);
+      offTimer = setTimeout(() => { const l = loginLayer(); if (l) l.classList.add('geo-off'); }, 480);
+      watch(true);
+    }
+    function loginOn() {
+      clearTimeout(offTimer);
+      const l = loginLayer();
+      if (l) l.classList.remove('geo-off');
+    }
+
+    /* the shapes step back while someone is typing */
+    const FIELD = 'textarea, .editor-title-input, .dialog-input, .search-input';
+    document.addEventListener('focusin', (e) => { if (e.target.matches && e.target.matches(FIELD)) document.documentElement.classList.add('geo-focus'); });
+    document.addEventListener('focusout', () => {
+      setTimeout(() => {
+        const a = document.activeElement;
+        if (!a || !a.matches || !a.matches(FIELD)) document.documentElement.classList.remove('geo-focus');
+      }, 80);
+    });
+
+    /* gentle pointer parallax (high tier, mouse only) */
+    let pTick = false, px = 0, py = 0;
+    window.addEventListener('pointermove', (e) => {
+      if (Perf.tier !== 'high' || e.pointerType === 'touch') return;
+      px = (e.clientX / innerWidth) * 2 - 1; py = (e.clientY / innerHeight) * 2 - 1;
+      if (pTick) return;
+      pTick = true;
+      requestAnimationFrame(() => {
+        layers.forEach((l) => { if (!l.classList.contains('geo-off')) { l.style.setProperty('--px', px.toFixed(3)); l.style.setProperty('--py', py.toFixed(3)); } });
+        pTick = false;
+      });
     }, { passive: true });
 
-    const PALETTES = {
-      light: { a: [0.72, 0.62, 0.46], b: [0.99, 0.58, 0.18], c: [0.82, 0.26, 0.02] },
-      dark:  { a: [0.02, 0.02, 0.02],   b: [0.13, 0.07, 0.02], c: [0.992, 0.494, 0.078] }
-    };
-    function currentPalette() {
-      return document.documentElement.getAttribute('data-theme') === 'dark' ? PALETTES.dark : PALETTES.light;
+    /* feed frame times to the perf governor for a few seconds: weak GPUs fall back to a lighter tier on their own */
+    let watching = false;
+    function watch(reset) {
+      if (reset) Perf._ok = 0;
+      if (watching) return;
+      watching = true;
+      let last = 0;
+      (function tick(now) {
+        if (Perf.tier === 'low' || (Perf._ok || 0) >= 3) { watching = false; return; }
+        requestAnimationFrame(tick);
+        if (document.hidden) { last = 0; return; }
+        if (last) Perf.sample(now - last);
+        last = now;
+      })(performance.now());
     }
 
-    function resize() {
-      const P = window.Time12Perf;
-      const scale = P.tier === 'high' ? Math.min(window.devicePixelRatio || 1, 2) : 0.5;
-      const w = Math.max(1, Math.floor(canvas.clientWidth * scale));
-      const h = Math.max(1, Math.floor(canvas.clientHeight * scale));
-      if (canvas.width !== w || canvas.height !== h) {
-        canvas.width = w; canvas.height = h;
-        gl.viewport(0, 0, w, h);
-      }
-    }
+    return { mount, unmount, hydrate, appEnter, loginOn, watch };
+  })();
 
-    let rafId = null;
-    let startTime = performance.now();
-    let lastNow = 0;
-    const Perf = window.Time12Perf;
-    function stop() { if (rafId) { cancelAnimationFrame(rafId); rafId = null; } }
-    function start() { if (!rafId && Perf.tier !== 'low') { lastNow = 0; rafId = requestAnimationFrame(frame); } }
-    Perf.on((t) => { if (t === 'low') stop(); else start(); resize(); });
-    canvas.addEventListener('webglcontextlost', (e) => { e.preventDefault(); stop(); Perf.set('low', 'gl-context-lost'); });
-    document.addEventListener('visibilitychange', () => { lastNow = 0; });
-    function frame(now) {
-      if (Perf.tier === 'low') { rafId = null; return; }
-      rafId = requestAnimationFrame(frame);
-      if (document.hidden || canvas.offsetParent === null) { lastNow = 0; return; }
-      if (lastNow) Perf.sample(now - lastNow);
-      lastNow = now;
-      resize();
-      gl.uniform1f(uOct, Perf.tier === 'high' ? 5.0 : 3.0);
-      const t = (now - startTime) / 1000;
-      const pal = currentPalette();
-      currentMouse[0] += (targetMouse[0] - currentMouse[0]) * 0.06;
-      currentMouse[1] += (targetMouse[1] - currentMouse[1]) * 0.06;
-      gl.uniform2f(uRes, canvas.width, canvas.height);
-      gl.uniform1f(uTime, t);
-      gl.uniform2f(uMouse, currentMouse[0], currentMouse[1]);
-      gl.uniform3fv(uColorA, pal.a);
-      gl.uniform3fv(uColorB, pal.b);
-      gl.uniform3fv(uColorC, pal.c);
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
-    }
-
-    /* software / weak GPUs: skip WebGL entirely */
-    try {
-      if (Perf.forced) throw 0;   // the user picked Higher/Lower End themselves: don't second-guess them
-      const dbg = gl.getExtension('WEBGL_debug_renderer_info');
-      const r = dbg ? String(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)) : '';
-      if (/swiftshader|llvmpipe|software|softpipe|basic render|mali-4|mali-t[0-7]|adreno \(tm\) [2-3]\d\d|powervr sgx/i.test(r)) Perf.set('low', 'gpu:' + r);
-      else if (gl.getParameter(gl.MAX_TEXTURE_SIZE) < 4096) Perf.down('small-gpu');
-    } catch (e) {}
-
-    resize();
-    window.addEventListener('resize', resize);
-    if (Perf.tier !== 'low' && onReady) onReady();
-    start();
-  }
-
-  window.Time12Perf.on((t) => { if (t === 'low') loginScreen.classList.remove('webgl-active'); });
+  let geoStarted = false;
   function startBackdrops() {
-    initAuroraWebGL(document.getElementById('loginWebGL'), loginScreen, () => loginScreen.classList.add('webgl-active'));
-    initAuroraWebGL(document.getElementById('appWebGL'), document.getElementById('Time12App'));
+    if (geoStarted) return;
+    geoStarted = true;
+    Geo.mount(document.getElementById('loginGeo'));
+    loginScreen.classList.add('geo-active');
+    Geo.watch(true);
   }
-  /* On a first visit wait for the device choice before starting any WebGL */
-  if (!document.documentElement.hasAttribute('data-need-device')) startBackdrops();
+  /* On a first visit the device picker comes first; it gets its own shapes right away */
+  if (document.documentElement.hasAttribute('data-need-device')) { Geo.mount(document.querySelector('.geo-picker')); Geo.watch(true); }
+  else startBackdrops();
 
   /* ---------- Device mode: Higher End (laptop) / Lower End (phone) ---------- */
   const LAPTOP_ICON = `<path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"/>`;
@@ -2598,6 +2734,7 @@
         devicePicker.classList.add('closing');
         setTimeout(() => {
           document.documentElement.removeAttribute('data-need-device');
+          Geo.unmount(document.querySelector('.geo-picker'));
           devicePicker.classList.remove('closing');
           if (!loginScreen.classList.contains('hidden')) usernameInput.focus();
         }, 260);
@@ -2796,12 +2933,14 @@
       }
     }
     async fetchAllNotes() {
+      // Resolves to null (not []) when the request fails, so an offline start
+      // never wipes the list the user can already see.
       try {
         const result = await this.callEdgeFunction('fetch_all');
         return (result && result.notes) || [];
       } catch (error) {
         console.error('Failed to fetch notes from Supabase:', error);
-        return [];
+        return null;
       }
     }
     async syncNote(noteId, action) {
@@ -2905,6 +3044,9 @@
   let orgAccounts = [];
   let orgTasks = [];
   let userAssignedTasks = [];
+  let orgLoaded = { groups: false, accounts: false, tasks: false };
+  let userTasksLoaded = false;
+  const orgLoading = () => !(orgLoaded.groups && orgLoaded.accounts && orgLoaded.tasks);
   let currentTab = "Notes"; 
   let isSubAccount = false; // To adjust view if user is not an org owner
   
@@ -3061,23 +3203,64 @@
       selectionBar.style.display = 'none';
     }
 
+    orgLoaded = { groups: false, accounts: false, tasks: false };
+    userTasksLoaded = false;
     fetchGroups();
     fetchAccounts();
     fetchOrgTasks();
     fetchUserTasks();
   }
 
+  /* ---------- Loading skeletons (orgs + tasks) ---------- */
+  const skb = (w, h, extra) => '<div class="sk" style="width:' + w + ';height:' + h + 'px;' + (extra || '') + '"></div>';
+  function skCards(n) {
+    let h = '';
+    for (let i = 0; i < n; i++) {
+      h += '<div class="sk-card"><div class="sk-row">' + skb((40 - i * 5) + '%', 18) + '<span class="sk-gap"></span>' +
+        skb('78px', 22, 'border-radius:999px') + '</div>' + skb('92%', 12) + skb((66 - i * 8) + '%', 12) + '</div>';
+    }
+    return h;
+  }
+  function renderOrgSkeleton() {
+    if (orgMainContentEl.querySelector('.sk-wrap')) return;   // already showing: don't restart the sweep
+    orgMainContentEl.innerHTML =
+      '<div class="sk-wrap" aria-busy="true" aria-label="Loading organization">' +
+        '<div class="org-header">' + skb('280px', 40) + '</div>' +
+        '<div class="sk-meta">' + skb('200px', 11) + '</div>' + skCards(3) +
+      '</div>';
+  }
+  function renderUserTasksSkeleton() {
+    if (myTasksMainContentEl.querySelector('.sk-wrap')) return;
+    myTasksMainContentEl.innerHTML =
+      '<div class="sk-wrap" aria-busy="true" aria-label="Loading tasks">' +
+        '<div class="org-header"><div><div class="org-title">My Assigned Tasks</div></div></div>' +
+        '<div class="sk-meta">' + skb('220px', 11) + '</div>' +
+        skb('100%', 120, 'margin-bottom:28px;border-radius:8px') + skCards(3) +
+      '</div>';
+  }
+  function renderUserTasksError() {
+    myTasksMainContentEl.innerHTML = `
+      <div class="org-header"><div><div class="org-title">My Assigned Tasks</div></div></div>
+      <div class="empty-state">
+        <span class="gx" data-g="octa" style="--gxs:84px"></span>
+        <div class="empty-state-title">Couldn't load your tasks</div>
+        <div class="empty-state-text">Check your connection and try again.</div>
+        <button class="btn-action primary magnetic" id="retryTasksBtn" style="margin: 0 auto;">Try again</button>
+      </div>`;
+    Geo.hydrate(myTasksMainContentEl);
+    document.getElementById('retryTasksBtn')?.addEventListener('click', () => fetchUserTasks());
+  }
+
   async function fetchAccounts() {
     try {
       const res = await orgApiCall({ action: "list_accounts" });
-      if (res.success && Array.isArray(res.accounts)) {
-        orgAccounts = res.accounts;
-        if (currentTab === 'Org') renderOrgState();
-      }
+      if (res.success && Array.isArray(res.accounts)) orgAccounts = res.accounts;
     } catch (error) {
       console.error("Failed to fetch accounts:", error);
       // Sub-accounts might get an error here if they don't own accounts, that's fine.
       orgAccounts = [];
+    } finally {
+      orgLoaded.accounts = true;
       if (currentTab === 'Org') renderOrgState();
     }
   }
@@ -3086,65 +3269,58 @@
     try {
       setStatus('saving');
       const res = await orgApiCall({ action: "list_groups" });
-      if (res.success && Array.isArray(res.groups)) {
-        orgGroups = res.groups; 
-      } else {
-        orgGroups = [];
-      }
-      if (currentTab === 'Org') renderOrgState();
+      orgGroups = (res.success && Array.isArray(res.groups)) ? res.groups : [];
     } catch (error) {
       orgGroups = [];
-      if (currentTab === 'Org') renderOrgState();
     } finally {
       setStatus('ready');
+      orgLoaded.groups = true;
+      if (currentTab === 'Org') renderOrgState();
     }
   }
 
   async function fetchOrgTasks() {
     try {
       const res = await orgApiCall({ action: "list_tasks" });
-      if (res.success && Array.isArray(res.tasks)) {
-        orgTasks = res.tasks;
-        if (currentTab === 'Org') renderOrgState();
-      }
+      if (res.success && Array.isArray(res.tasks)) orgTasks = res.tasks;
     } catch (error) {
       console.error("Failed to fetch tasks:", error);
       toast(error.message, 'error');
+    } finally {
+      orgLoaded.tasks = true;
+      if (currentTab === 'Org') renderOrgState();
     }
   }
 
   async function fetchUserTasks() {
     try {
+      // First visit: skeleton. Every visit after: show what we have instantly, refresh quietly.
       if (currentTab === 'MyTasks') {
-        myTasksMainContentEl.innerHTML = `
-          <div class="skeleton-note"><div class="skeleton-line" style="width: 100%"></div><div class="skeleton-line short"></div></div>
-          <div class="skeleton-note"><div class="skeleton-line" style="width: 100%"></div><div class="skeleton-line short"></div></div>
-        `;
+        if (!userTasksLoaded) renderUserTasksSkeleton(); else renderUserTasksState();
       }
       const res = await orgApiCall({ action: "get_user_tasks" });
       if (res.success && Array.isArray(res.tasks)) {
+        const changed = !userTasksLoaded || JSON.stringify(res.tasks) !== JSON.stringify(userAssignedTasks);
         userAssignedTasks = res.tasks;
-        if (currentTab === 'MyTasks') renderUserTasksState();
+        userTasksLoaded = true;
+        if (currentTab === 'MyTasks' && changed) renderUserTasksState();
       }
     } catch (error) {
       console.error("Failed to fetch user tasks:", error);
       toast(error.message, 'error');
+      if (!userTasksLoaded && currentTab === 'MyTasks') renderUserTasksError();
     }
   }
   function renderEmptyOrgState() {
     orgMainContentEl.innerHTML = `
       <div class="empty-state empty-state-org">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 64px; height: 64px; color: var(--text-muted);">
-          <circle cx="12" cy="12" r="9.5"/>
-          <path d="M8.5 15.5c1-1.3 2.2-2 3.5-2s2.5.7 3.5 2"/>
-          <line x1="8.75" y1="9.25" x2="8.75" y2="10.25"/>
-          <line x1="15.25" y1="9.25" x2="15.25" y2="10.25"/>
-        </svg>
+        <span class="gx" data-g="icosa" style="--gxs:104px"></span>
         <div class="empty-state-title">You're not part of a group</div>
         <div class="empty-state-text">${isSubAccount ? 'Ask whoever manages your organization to add you to a group so tasks and teammates show up here.' : 'Create sub-accounts and groups to start building your organization — it gets lonely in here otherwise.'}</div>
         ${!isSubAccount ? `<button class="btn-action primary magnetic" id="emptyOrgAddGroupBtn" style="margin: 0 auto;">Add your first group</button>` : ''}
       </div>
     `;
+    Geo.hydrate(orgMainContentEl);
     if (!isSubAccount) {
       document.getElementById('emptyOrgAddGroupBtn')?.addEventListener('click', () => openCreateGroupDialog());
     }
@@ -3155,6 +3331,8 @@
     const hasAccounts = orgAccounts && orgAccounts.length > 0;
     const hasTasks = orgTasks && orgTasks.length > 0;
     const hasUserTasks = userAssignedTasks && userAssignedTasks.length > 0;
+
+    if (orgLoading()) { renderOrgSkeleton(); return; }
 
     if (!hasGroups && !hasAccounts && !hasTasks && !hasUserTasks) {
       renderEmptyOrgState();
@@ -5357,13 +5535,12 @@ Marketing,alex99,</div>
           <span>Member Dashboard</span><span class="dot"></span><span>No tasks assigned</span>
         </div>
         <div class="empty-state">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 64px; height: 64px; color: var(--text-muted); filter: grayscale(1);">
-            <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-          </svg>
+          <span class="gx" data-g="dodeca" style="--gxs:96px"></span>
           <div class="empty-state-title">All caught up!</div>
           <div class="empty-state-text">You have no tasks assigned right now.</div>
         </div>
       `;
+      Geo.hydrate(myTasksMainContentEl);
       return;
     }
 
@@ -5660,6 +5837,7 @@ Marketing,alex99,</div>
 
   function switchTab(target) {
     currentTab = target;
+    document.documentElement.setAttribute('data-tab', target);
     tabItems.forEach(t => t.classList.toggle("active", t.dataset.tab === target));
     dropdownItems.forEach(d => d.classList.toggle("active", d.dataset.tab === target));
     if (dropdownLabel) dropdownLabel.textContent = target;
@@ -5827,21 +6005,140 @@ Marketing,alex99,</div>
     }
   }
 
-  async function loadNotes() {
-    if (!notesList.querySelector('.skeleton-note')) renderSkeletons();
-    const notes = await syncManager.fetchAllNotes();
-    notes.forEach(n => { n.synced = true; });
-    allNotes = notes;
+  /* ---------- Notes snapshot: instant first paint ----------
+     The last server list is kept in its own tiny IndexedDB. On load the list
+     paints from it in a few milliseconds, then the network result is merged in
+     behind the scenes. Sign-out wipes it. */
+  const notesCache = (function () {
+    let dbp = null;
+    function open() {
+      if (dbp) return dbp;
+      dbp = new Promise((resolve) => {
+        try {
+          const r = indexedDB.open('Time12NotesCache', 1);
+          r.onupgradeneeded = () => r.result.createObjectStore('kv');
+          r.onsuccess = () => resolve(r.result);
+          r.onerror = () => resolve(null);
+        } catch (e) { resolve(null); }
+      });
+      return dbp;
+    }
+    async function run(mode, fn) {
+      const cdb = await open();
+      if (!cdb) return null;
+      return new Promise((resolve) => {
+        try {
+          const tx = cdb.transaction('kv', mode);
+          const req = fn(tx.objectStore('kv'));
+          tx.oncomplete = () => resolve(req && 'result' in req ? req.result : true);
+          tx.onerror = tx.onabort = () => resolve(null);
+        } catch (e) { resolve(null); }
+      });
+    }
+    return {
+      get: (k) => run('readonly', (st) => st.get(k)),
+      set: (k, v) => run('readwrite', (st) => st.put(v, k)),
+      clear: () => run('readwrite', (st) => st.clear()),
+    };
+  })();
+  const noteIsBlank = (n) => !((n.title || '').trim() || (n.content || '').trim());
+  let notesCacheOn = false;
+  let notesCacheTimer = null;
+  function notesCacheKey() {
+    const sess = getStoredSession();
+    return sess ? 'notes:' + sess.userId : null;
+  }
+  function persistNotesCache() {
+    if (!notesCacheOn) return;
+    clearTimeout(notesCacheTimer);
+    notesCacheTimer = setTimeout(() => {
+      const key = notesCacheKey();
+      if (!key || !notesCacheOn) return;
+      const notes = allNotes
+        .filter((n) => n.synced && !noteIsBlank(n))
+        .map((n) => ({ id: n.id, title: n.title, content: n.content, created: n.created, modified: n.modified }));
+      notesCache.set(key, { ts: Date.now(), notes });
+    }, 700);
+  }
 
-    const freshNote = await db.createNote('');
-    allNotes.unshift(freshNote);
+  /* notes written offline that haven't reached the server yet */
+  async function getPendingLocalNotes() {
+    try {
+      const [queue, local] = await Promise.all([db.getSyncQueue(), db.getAllNotes()]);
+      const ids = new Set(queue.filter((q) => q.action === 'save').map((q) => q.noteId));
+      return local.filter((n) => ids.has(n.id) && !noteIsBlank(n)).map((n) => ({ ...n, synced: false }));
+    } catch (e) { return []; }
+  }
 
+  /* merge the server list into what's on screen without touching anything being edited */
+  function applyServerNotes(server, fetchStart) {
+    const local = new Map(allNotes.map((n) => [n.id, n]));
+    const seen = new Set();
+    const merged = [];
+    for (const sn of server) {
+      seen.add(sn.id);
+      const ln = local.get(sn.id);
+      const editing = sn.id === currentNoteId && hasUnsavedChanges;
+      if (ln && (!ln.synced || editing)) merged.push(ln);
+      else merged.push({ ...sn, synced: true });
+    }
+    const localOnly = allNotes.filter((n) => !seen.has(n.id) &&
+      (n.id === currentNoteId || !n.synced || Date.parse(n.modified) >= fetchStart - 1000));
+    allNotes = localOnly.concat(merged);
     renderNotesList();
 
-    if (allNotes.length > 0) {
-      selectNote(allNotes[0].id);
+    /* the open note picks up newer server text only if the person hasn't touched it */
+    const cur = allNotes.find((n) => n.id === currentNoteId);
+    if (cur && cur.synced && !hasUnsavedChanges && document.activeElement !== contentInput && document.activeElement !== titleInput) {
+      if (titleInput.value !== (cur.title || '') || contentInput.value !== (cur.content || '')) {
+        titleInput.value = cur.title || '';
+        contentInput.value = cur.content || '';
+        metaModified.textContent = longDate(cur.modified);
+        updateCounters();
+      }
     }
+  }
+
+  /* upload anything queued offline, after first paint instead of before it */
+  function flushQueueInBackground() {
+    syncManager.processSyncQueue().then(async () => {
+      const left = new Set((await db.getSyncQueue()).map((q) => q.noteId));
+      let changed = false;
+      allNotes.forEach((n) => {
+        if (!n.synced && !left.has(n.id) && !noteIsBlank(n) && !(n.id === currentNoteId && hasUnsavedChanges)) {
+          n.synced = true;
+          changed = true;
+          const el = document.querySelector('[data-id="' + n.id + '"]');
+          if (el) el.classList.remove('unsynced');
+        }
+      });
+      if (changed) persistNotesCache();
+    }).catch((e) => console.warn('Background sync failed:', e));
+  }
+
+  async function loadNotes(serverP, fetchStart) {
+    const key = notesCacheKey();
+    const [snap, pending] = await Promise.all([key ? notesCache.get(key) : null, getPendingLocalNotes()]);
+    const cached = snap && Array.isArray(snap.notes) ? snap.notes.map((n) => ({ ...n, synced: true })) : null;
+
+    /* the editor is usable immediately: a blank note is ready before the network answers */
+    const freshNote = await db.createNote('');
+    if (cached || pending.length) {
+      const ids = new Set(pending.map((n) => n.id));
+      allNotes = [freshNote].concat(pending, (cached || []).filter((n) => !ids.has(n.id)));
+      renderNotesList();
+    } else {
+      allNotes = [freshNote];
+      renderSkeletons();
+    }
+    await selectNote(freshNote.id);
     updateSyncBadge();
+
+    /* network result merges in behind the scenes; init does not wait for it */
+    Promise.resolve(serverP).then((server) => {
+      if (server) { applyServerNotes(server, fetchStart || Date.now()); persistNotesCache(); }
+      else if (!cached && !pending.length) renderNotesList();
+    }).catch((e) => console.warn('Notes refresh failed:', e));
   }
 
   function renderNotesList() {
@@ -5863,6 +6160,7 @@ Marketing,alex99,</div>
       return;
     }
 
+    const frag = document.createDocumentFragment();
     notesList.innerHTML = '';
     filtered.forEach(note => {
       const div = document.createElement('div');
@@ -5871,7 +6169,6 @@ Marketing,alex99,</div>
       if (note.id === currentNoteId) div.classList.add('active');
       if (!note.synced) div.classList.add('unsynced');
 
-      const preview = (note.content || '').replace(/[#*`_\-\[\]]/g, '').trim().slice(0, 60);
       const titleText = note.title || '';
       const displayTitle = escapeHtml(titleText);
 
@@ -5901,8 +6198,9 @@ Marketing,alex99,</div>
         showDeleteConfirmation(note.id);
       });
 
-      notesList.appendChild(div);
+      frag.appendChild(div);
     });
+    notesList.appendChild(frag);
   }
 
   function updateNoteElement(id, title, modifiedIso) {
@@ -5959,6 +6257,7 @@ Marketing,alex99,</div>
       allNotes = allNotes.filter(n => n.id !== id);
       renderNotesList();
       updateSyncBadge();
+      persistNotesCache();
     } catch (error) {
       console.error('Failed to auto-delete blank note:', error);
     }
@@ -6019,6 +6318,7 @@ Marketing,alex99,</div>
 
       hasUnsavedChanges = false;
       updateSyncBadge();
+      persistNotesCache();
     } catch (error) {
       console.error('Failed to save note:', error);
       setStatus('ready');
@@ -6382,7 +6682,9 @@ Marketing,alex99,</div>
   function doLogout() {
     const finishLogout = () => {
       syncManager.stopAutoSync();
-      db.clearAll().then(() => {
+      notesCacheOn = false;
+      clearTimeout(notesCacheTimer);
+      Promise.all([db.clearAll(), notesCache.clear()]).then(() => {
         clearSession();
         currentNoteId = null;
         hasUnsavedChanges = false;
@@ -6428,36 +6730,12 @@ Marketing,alex99,</div>
     }
   });
 
-  /* ---------- Top progress bar helpers ---------- */
-  const topProgress = document.getElementById('topProgressBar');
-  let progressTimer = null;
-  function startProgress() {
-    if (!topProgress) return;
-    clearInterval(progressTimer);
-    topProgress.style.transition = 'none';
-    topProgress.style.width = '0%';
-    void topProgress.offsetWidth;
-    topProgress.style.transition = 'width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease';
-    topProgress.classList.add('active');
-    let w = 0;
-    progressTimer = setInterval(() => {
-      w += (90 - w) * 0.12;
-      topProgress.style.width = Math.min(w, 90) + '%';
-    }, 180);
-  }
-  function doneProgress() {
-    if (!topProgress) return;
-    clearInterval(progressTimer);
-    topProgress.style.width = '100%';
-    setTimeout(() => {
-      topProgress.classList.remove('active');
-      setTimeout(() => { topProgress.style.width = '0%'; }, 300);
-    }, 200);
-  }
-
   /* ---------- Init ---------- */
   async function initTime12(isFreshLogin = false) {
-    startProgress();
+    const t0 = Date.now();
+    notesCacheOn = true;
+    // Fire the notes request first: the network works while IndexedDB opens.
+    const serverNotesP = syncManager.fetchAllNotes();
     const session = getStoredSession();
     if (session) {
       footerUsername.textContent = session.username;
@@ -6470,21 +6748,17 @@ Marketing,alex99,</div>
       await db.init(scopeKey);
     }
 
-    if (isFreshLogin) {
-      await db.clearAll();
-    } else {
-      await syncManager.processSyncQueue();
-    }
+    if (isFreshLogin) await db.clearAll();
 
-    await loadNotes();
+    await loadNotes(serverNotesP, t0);   // paints from cache; the server merge happens in the background
     initOrgManager();
     switchTab('Notes'); // Ensure initial tab state is correctly set
+    if (!isFreshLogin) flushQueueInBackground();
 
     if (!syncManager.syncInterval) {
       syncManager.startAutoSync();
       setInterval(updateSyncBadge, 8000);
     }
-    doneProgress();
   }
 
   window.addEventListener('beforeunload', async () => {
