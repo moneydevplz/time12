@@ -1762,6 +1762,85 @@
     mask-image: linear-gradient(90deg, transparent 0%, #000 22%, #000 78%, transparent 100%);
   }
 
+
+  /* ---------- Automated (AI-marked) tasks ---------- */
+  .auto-badge {
+    display: inline-flex; align-items: center; gap: 5px; margin-left: 8px; padding: 2px 8px;
+    border-radius: 999px; font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent);
+    vertical-align: middle; white-space: nowrap;
+  }
+  .auto-badge svg, .ai-result-label svg { width: 12px; height: 12px; flex-shrink: 0; }
+  .auto-section {
+    border: 1px dashed var(--accent); background: var(--accent-soft);
+    border-radius: var(--radius-lg); padding: 14px 14px 2px; margin-bottom: 16px;
+  }
+  .auto-note { font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-top: 6px; }
+  .auto-error {
+    display: none; margin-top: 8px; padding: 10px 12px; border-radius: var(--radius);
+    background: rgba(162, 59, 42, 0.08); border: 1px solid rgba(162, 59, 42, 0.35);
+    border-left: 4px solid var(--danger); color: var(--text); font-size: 13px; line-height: 1.5;
+  }
+  .auto-error.show { display: block; }
+  .ai-center { text-align: center; }
+  .ai-spinner {
+    width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--border);
+    border-top-color: var(--accent); animation: aiSpin 0.8s linear infinite; margin: 8px auto 16px;
+  }
+  @keyframes aiSpin { to { transform: rotate(360deg); } }
+  @media (prefers-reduced-motion: reduce) { .ai-spinner { animation-duration: 2.4s; } }
+  .ai-result {
+    background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--accent);
+    border-radius: var(--radius); padding: 14px; margin-top: 14px; text-align: left;
+  }
+  .ai-result-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+  .ai-result-label {
+    display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.1em; color: var(--accent);
+  }
+  .ai-score { font-family: var(--serif); font-size: 34px; line-height: 1; color: var(--text); white-space: nowrap; }
+  .ai-score small { font-family: var(--sans); font-size: 14px; color: var(--text-muted); margin-left: 4px; }
+  .ai-score.good { color: var(--success); }
+  .ai-score.mid { color: var(--warn); }
+  .ai-score.low { color: var(--danger); }
+  .ai-feedback { font-size: 14px; line-height: 1.6; color: var(--text); white-space: pre-wrap; word-break: break-word; }
+  .ai-sub { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin: 14px 0 6px; }
+  .ai-steps { margin: 0; padding-left: 20px; font-size: 13.5px; color: var(--text-soft); line-height: 1.55; }
+  .ai-steps li + li { margin-top: 5px; }
+  .ai-details { margin-top: 10px; }
+  .ai-details > summary {
+    cursor: pointer; font-size: 12px; font-weight: 600; color: var(--text-soft); list-style: none;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 2px 0;
+  }
+  .ai-details > summary::-webkit-details-marker { display: none; }
+  .ai-details > summary::before {
+    content: ''; width: 6px; height: 6px; flex-shrink: 0; border-right: 2px solid var(--text-muted);
+    border-bottom: 2px solid var(--text-muted); transform: rotate(-45deg); transition: transform 0.15s;
+  }
+  .ai-details[open] > summary::before { transform: rotate(45deg); }
+  .ai-wtcf {
+    white-space: pre-wrap; word-break: break-word; font-size: 12.5px; color: var(--text-soft);
+    line-height: 1.55; padding: 8px 10px; background: var(--surface-2); border-radius: var(--radius); margin-top: 6px;
+  }
+  .ai-crit {
+    display: flex; gap: 12px; justify-content: space-between; align-items: flex-start;
+    font-size: 12.5px; color: var(--text-soft); padding: 7px 0; border-top: 1px dashed var(--border); line-height: 1.45;
+  }
+  .ai-crit-note { display: block; color: var(--text-muted); font-size: 12px; margin-top: 2px; }
+  .ai-crit-pts { flex-shrink: 0; font-weight: 700; color: var(--text); }
+  .ai-chip {
+    display: inline-flex; align-items: center; padding: 1px 8px; border-radius: 999px; font-size: 11px;
+    font-weight: 700; background: var(--accent-soft); color: var(--accent);
+  }
+  .ai-chip.good { background: rgba(95, 122, 58, 0.15); color: var(--success); }
+  .ai-chip.mid { background: rgba(176, 136, 50, 0.15); color: var(--warn); }
+  .ai-chip.low, .ai-chip.warn { background: rgba(162, 59, 42, 0.15); color: var(--danger); }
+  .ai-when { font-size: 11px; font-weight: 400; color: var(--text-muted); }
+  .ai-flag {
+    display: flex; align-items: flex-start; gap: 8px; margin-top: 12px; padding: 9px 11px; font-size: 12.5px; line-height: 1.5;
+    color: var(--text); background: rgba(176, 136, 50, 0.12); border: 1px solid rgba(176, 136, 50, 0.4); border-radius: var(--radius);
+  }
+  .ai-flag svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px; color: var(--warn); }
 </style>
 </head>
 <body>
@@ -2080,6 +2159,7 @@
   const FILE_API_URL = 'https://bukeabrzlgcwzwtzmwld.supabase.co/functions/v1';              
   const FILE_LINK_PREFIX = FILE_API_URL + '/download-file/';
   const MAX_UPLOAD_BYTES = 25 * 1024 * 1024;
+  const AUTO_API_URL = SUPABASE_URL + '/functions/v1/automated-task';
 
   async function uploadFileToServer(file, { groupId, taskId } = {}) {
     const token = localStorage.getItem('authToken');
@@ -3078,6 +3158,10 @@
   let orgAccounts = [];
   let orgTasks = [];
   let userAssignedTasks = [];
+  let automatedMeta = {};      // taskId -> { totalMarks, owner, wtcf?, criteria? }
+  let automatedResults = {};   // taskId -> userId -> latest AI result
+  let automatedLoaded = false;
+  let _autoRefreshP = null;
   let orgLoaded = { groups: false, accounts: false, tasks: false };
   let userTasksLoaded = false;
   const orgLoading = () => !(orgLoaded.groups && orgLoaded.accounts && orgLoaded.tasks);
@@ -3316,7 +3400,7 @@
   async function fetchOrgTasks() {
     try {
       const res = await orgApiCall({ action: "list_tasks" });
-      if (res.success && Array.isArray(res.tasks)) orgTasks = res.tasks;
+      if (res.success && Array.isArray(res.tasks)) { orgTasks = res.tasks; refreshAutomated(); }
     } catch (error) {
       console.error("Failed to fetch tasks:", error);
       toast(error.message, 'error');
@@ -3337,6 +3421,7 @@
         const changed = !userTasksLoaded || JSON.stringify(res.tasks) !== JSON.stringify(userAssignedTasks);
         userAssignedTasks = res.tasks;
         userTasksLoaded = true;
+        refreshAutomated();
         if (currentTab === 'MyTasks' && changed) renderUserTasksState();
       }
     } catch (error) {
@@ -3456,6 +3541,7 @@
                   ${subDetails}
                   ${reasonLine}
                   ${memberHistoryHtml}
+                  ${aiResultTeacherHtml(t.id, member.user_id)}
                 </div>
                 <div class="row-actions" style="flex-shrink: 0;">${memberActions}</div>
               </div>
@@ -3473,9 +3559,10 @@
         return `
           <tr>
             <td style="min-width: 300px;">
-              <strong style="font-size: 15px;">${escapeHtml(t.title)}</strong>
+              <strong style="font-size: 15px;">${escapeHtml(t.title)}</strong>${autoBadgeHtml(t.id)}
               ${t.description ? `<div style="font-size: 13px; color: var(--text-muted); margin-top: 4px;">${escapeHtml(t.description)}</div>` : ''}
               ${originalLinksHtml}
+              ${autoTeacherInfoHtml(t.id)}
               ${memberStatusHtml}
             </td>
             <td>${escapeHtml(groupName)}</td>
@@ -3902,6 +3989,210 @@
     }
   }
 
+  /* ============================================================
+   * Automated (AI-marked) tasks
+   * Teacher: pick "Automated Task", write a WTCF, choose total marks.
+   * Student: submits as usual, then the edge function marks it.
+   * ============================================================ */
+  const AUTO_MARK_OPTIONS = [1, 2, 3, 4, 5, 6, 8, 10, 12, 15, 20, 25, 30, 40, 50, 100];
+  const NOT_WTCF_TEXT = "Sorry, please try again, as what you have provided isn't a WTCF (What to Check For)/ marking scheme.";
+  const NO_AI_TEXT = 'Sorry, no AI today :(';
+  const AI_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg>';
+  const WARN_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
+
+  async function autoApiCall(body) {
+    const session = getStoredSession();
+    const token = localStorage.getItem('authToken');
+    if (!session || !token) { showLogin(); throw new Error('Not authenticated'); }
+    let res, data = {};
+    try {
+      res = await fetch(AUTO_API_URL, {
+        method: 'POST', mode: 'cors',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify(body)
+      });
+    } catch (e) {
+      const err = new Error('Could not reach the AI service. Check your connection and try again.');
+      err.code = 'NETWORK';
+      throw err;
+    }
+    try { data = await res.json(); } catch (e) {}
+    if (!res.ok || !data.success) {
+      const err = new Error(data.error || `AI service error (HTTP ${res.status})`);
+      err.code = data.code || 'ERROR';
+      throw err;
+    }
+    return data;
+  }
+
+  function extractTaskId(res) {
+    if (!res) return null;
+    const c = [res.taskId, res.task_id, res.id, res.task && (res.task.id ?? res.task.taskId), res.data && (res.data.id ?? res.data.taskId)];
+    for (const v of c) if (v !== undefined && v !== null && v !== '') return v;
+    return null;
+  }
+
+  function refreshAutomated() {
+    if (_autoRefreshP) return _autoRefreshP;
+    _autoRefreshP = (async () => {
+      try {
+        if (!getStoredSession()) return;
+        const ids = new Set();
+        (orgTasks || []).forEach(t => { if (t && t.id != null) ids.add(String(t.id)); });
+        (userAssignedTasks || []).forEach(t => { if (t && t.taskId != null) ids.add(String(t.taskId)); });
+        if (!ids.size) { automatedLoaded = true; return; }
+        const res = await autoApiCall({ action: 'overview', taskIds: Array.from(ids) });
+        const before = JSON.stringify([automatedMeta, automatedResults]);
+        automatedMeta = res.tasks || {};
+        const map = {};
+        (res.results || []).forEach(r => {
+          const byUser = map[r.taskId] || (map[r.taskId] = {});
+          const cur = byUser[r.userId];
+          if (!cur || r.versionNo > cur.versionNo) byUser[r.userId] = r;
+        });
+        automatedResults = map;
+        automatedLoaded = true;
+        if (JSON.stringify([automatedMeta, automatedResults]) !== before) {
+          if (currentTab === 'Org') renderOrgState();
+          if (currentTab === 'MyTasks') renderUserTasksState();
+        }
+      } catch (e) {
+        console.warn('Automated task refresh failed:', e.message);
+      } finally {
+        _autoRefreshP = null;
+      }
+    })();
+    return _autoRefreshP;
+  }
+
+  function autoBadgeHtml(taskId) {
+    const m = automatedMeta[String(taskId)];
+    if (!m) return '';
+    return `<span class="auto-badge" title="Marked by AI against the teacher's WTCF">${AI_ICON}Automated &middot; ${m.totalMarks} ${m.totalMarks === 1 ? 'mark' : 'marks'}</span>`;
+  }
+
+  function aiScoreClass(r) {
+    const p = r.outOf ? r.mark / r.outOf : 0;
+    return p >= 0.75 ? 'good' : p >= 0.5 ? 'mid' : 'low';
+  }
+
+  function aiResultBodyHtml(r, teacher) {
+    const steps = (r.nextSteps || []).map(x => `<li>${escapeHtml(x)}</li>`).join('');
+    const crit = (r.breakdown || []).map(b => `
+      <div class="ai-crit">
+        <span>${escapeHtml(b.text)}${b.comment ? `<span class="ai-crit-note">${escapeHtml(b.comment)}</span>` : ''}</span>
+        <span class="ai-crit-pts">${b.awarded}/${b.max}</span>
+      </div>`).join('');
+    const notes = (r.readNotes || []).map(n => `<div class="auto-note">${escapeHtml(n)}</div>`).join('');
+    const flag = r.flagged
+      ? `<div class="ai-flag">${WARN_ICON}<span>${teacher ? escapeHtml(r.flagNote || 'This work may contain an attempt to influence the AI. Review it before relying on the mark.') : 'This submission was flagged for your teacher to review.'}</span></div>`
+      : '';
+    return `
+      <div class="ai-feedback">${escapeHtml(r.feedback)}</div>
+      ${steps ? `<div class="ai-sub">What to do next</div><ol class="ai-steps">${steps}</ol>` : ''}
+      ${crit ? `<details class="ai-details"><summary>Mark breakdown</summary>${crit}</details>` : ''}
+      ${notes}
+      ${flag}`;
+  }
+
+  function aiResultCardHtml(r, latestNo) {
+    const older = latestNo && r.versionNo < latestNo;
+    return `
+      <div class="ai-result">
+        <div class="ai-result-head">
+          <div>
+            <div class="ai-result-label">${AI_ICON}AI marking${(r.versionNo > 1 || older) ? ` &middot; attempt ${r.versionNo}` : ''}</div>
+            ${older ? '<div class="auto-note">From an earlier attempt.</div>' : ''}
+          </div>
+          <div class="ai-score ${aiScoreClass(r)}">${r.mark}<small>/ ${r.outOf}</small></div>
+        </div>
+        ${aiResultBodyHtml(r, false)}
+      </div>`;
+  }
+
+  function autoTeacherInfoHtml(taskId) {
+    const m = automatedMeta[String(taskId)];
+    if (!m || !m.owner) return '';
+    const crit = (m.criteria || []).map(c => `<div class="ai-crit"><span>${escapeHtml(c.text)}</span><span class="ai-crit-pts">${c.marks}</span></div>`).join('');
+    return `
+      <details class="ai-details">
+        <summary>WTCF (${m.totalMarks} ${m.totalMarks === 1 ? 'mark' : 'marks'})</summary>
+        <div class="ai-wtcf">${escapeHtml(m.wtcf || '')}</div>
+        ${crit ? `<div class="ai-sub">How the AI splits the marks</div>${crit}` : ''}
+      </details>`;
+  }
+
+  function aiResultTeacherHtml(taskId, userId) {
+    const r = (automatedResults[String(taskId)] || {})[String(userId)];
+    if (!r) return '';
+    return `
+      <details class="ai-details">
+        <summary><span class="ai-chip ${aiScoreClass(r)}">AI ${r.mark}/${r.outOf}</span>${r.flagged ? '<span class="ai-chip warn">Review</span>' : ''}<span class="ai-when">attempt ${r.versionNo}</span></summary>
+        ${aiResultBodyHtml(r, true)}
+      </details>`;
+  }
+
+  function aiStudentBlockHtml(t, myVersions) {
+    const tid = String(t.taskId);
+    const meta = automatedMeta[tid];
+    if (!meta) return '';
+    const sess = getStoredSession();
+    const r = sess ? (automatedResults[tid] || {})[String(sess.userId)] : null;
+    const latestNo = (myVersions && myVersions.length) ? myVersions[myVersions.length - 1].versionNo : (r ? r.versionNo : 1);
+    const submitted = t.status === 'pending' || t.status === 'completed';
+    let html = '';
+    if (r) html += aiResultCardHtml(r, latestNo);
+    if (submitted && (!r || r.versionNo < latestNo)) {
+      html += `
+        <div class="ai-result ai-center">
+          <div class="ai-feedback" style="margin-bottom:12px;">The AI hasn't marked this attempt yet.</div>
+          <button class="btn-action primary" data-task-action="ai-mark" data-task-id="${escapeHtml(tid)}">Get AI marking</button>
+        </div>`;
+    } else if (!submitted && !r) {
+      html += `<div class="auto-note" style="margin-top:12px;">Automated task: the AI marks your work out of ${meta.totalMarks} and tells you how to improve. It reads typed text and PDF, Word, PowerPoint, text and code files.</div>`;
+    }
+    return html;
+  }
+
+  async function runAiMarking(taskId) {
+    dialogBox.innerHTML = `
+      <div class="ai-center">
+        <div class="ai-spinner"></div>
+        <div class="dialog-title" style="font-size:22px;">AI is marking your work</div>
+        <div class="dialog-text" style="margin-bottom:0;">Checking it against your teacher's WTCF. This usually takes a few seconds.</div>
+      </div>`;
+    dialogOverlay.classList.add('active');
+    try {
+      const res = await autoApiCall({ action: 'mark', taskId });
+      const r = res.result;
+      const byUser = automatedResults[String(taskId)] || (automatedResults[String(taskId)] = {});
+      byUser[String(r.userId)] = r;
+      dialogBox.innerHTML = `
+        <div class="dialog-title">Your AI marking</div>
+        <div class="ai-result" style="margin-top:0;">
+          <div class="ai-result-head">
+            <div class="ai-result-label">${AI_ICON}Out of ${r.outOf}</div>
+            <div class="ai-score ${aiScoreClass(r)}">${r.mark}<small>/ ${r.outOf}</small></div>
+          </div>
+          ${aiResultBodyHtml(r, false)}
+        </div>
+        <div class="dialog-actions" style="margin-top:20px;">
+          <button class="btn-primary main" id="aiDone">Done</button>
+        </div>`;
+      document.getElementById('aiDone').onclick = closeDialog;
+    } catch (e) {
+      const noAi = e.code === 'NO_AI';
+      dialogBox.innerHTML = `
+        <div class="dialog-title" style="font-size:24px;">${escapeHtml(noAi ? NO_AI_TEXT : 'Couldn\'t mark this yet')}</div>
+        <div class="dialog-text">${noAi ? 'Your work is submitted and waiting for your teacher.' : escapeHtml(e.message) + ' Your work is submitted. You can ask for AI marking again from the task card.'}</div>
+        <div class="dialog-actions"><button class="btn-primary main" id="aiDone">Close</button></div>`;
+      document.getElementById('aiDone').onclick = closeDialog;
+    } finally {
+      setStatus('ready');
+      fetchUserTasks();
+    }
+  }
+
   function openCreateTaskDialog() {
     if (!orgGroups || orgGroups.length === 0) {
       toast('You need to create a group before making a task.', 'warn');
@@ -3915,10 +4206,28 @@
     const pad = (n) => String(n).padStart(2, '0');
     const defaultDueValue = `${defaultDue.getFullYear()}-${pad(defaultDue.getMonth() + 1)}-${pad(defaultDue.getDate())}T${pad(defaultDue.getHours())}:${pad(defaultDue.getMinutes())}`;
 
+    const chevron = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+    const marksOptions = AUTO_MARK_OPTIONS.map(n => `<div class="custom-select-option${n === 10 ? ' selected' : ''}" data-value="${n}">${n} ${n === 1 ? 'mark' : 'marks'}</div>`).join('');
+
     dialogBox.innerHTML = `
       <div class="dialog-title">Create New Task</div>
-      <div class="dialog-text">Assign a new task to one of your groups.</div>
-      
+      <div class="dialog-text" id="createIntro">Assign a new task to one of your groups.</div>
+
+      <div class="dialog-input-group">
+        <label>Task Type</label>
+        <div class="custom-select-wrapper" id="taskTypeSelectWrapper">
+          <div class="custom-select-toggle" id="taskTypeToggle">
+            <span id="taskTypeLabel">Standard Task</span>
+            ${chevron}
+          </div>
+          <div class="custom-select-menu" id="taskTypeMenu">
+            <div class="custom-select-option selected" data-value="standard">Standard Task</div>
+            <div class="custom-select-option" data-value="automated">Automated Task (AI-marked)</div>
+          </div>
+        </div>
+        <input type="hidden" id="taskTypeValue" value="standard">
+      </div>
+
       <div class="dialog-input-group">
         <label>Task Title</label>
         <input type="text" id="taskTitleInput" class="dialog-input" placeholder="e.g. Finish Q3 Report" autocomplete="off">
@@ -3934,7 +4243,7 @@
         <div class="custom-select-wrapper" id="taskGroupSelectWrapper">
           <div class="custom-select-toggle" id="taskGroupToggle">
             <span id="taskGroupLabel">Select a group</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            ${chevron}
           </div>
           <div class="custom-select-menu" id="taskGroupMenu">${groupOptions}</div>
         </div>
@@ -3944,6 +4253,27 @@
       <div class="dialog-input-group">
         <label>Due Date &amp; Time</label>
         <input type="datetime-local" id="taskDueInput" class="dialog-input" value="${defaultDueValue}">
+      </div>
+
+      <div class="auto-section" id="autoSection" style="display:none;">
+        <div class="dialog-input-group">
+          <label>What to Check For (WTCF)</label>
+          <textarea id="wtcfInput" class="dialog-input" rows="6" maxlength="4000" style="resize: vertical;"
+            placeholder="Your marking scheme. e.g.&#10;- Names at least 2 causes of the event (4)&#10;- Backs each point with evidence from the source (4)&#10;- Clear conclusion in the student's own words (2)"></textarea>
+          <div class="auto-note">The AI checks this is a real marking scheme first, then marks each submission against it. Students see their mark, feedback and a per-point breakdown, not this raw text.</div>
+          <div class="auto-error" id="wtcfError" role="alert"></div>
+        </div>
+        <div class="dialog-input-group">
+          <label>Total Marks</label>
+          <div class="custom-select-wrapper" id="taskMarksSelectWrapper">
+            <div class="custom-select-toggle" id="taskMarksToggle">
+              <span id="taskMarksLabel">10 marks</span>
+              ${chevron}
+            </div>
+            <div class="custom-select-menu" id="taskMarksMenu">${marksOptions}</div>
+          </div>
+          <input type="hidden" id="taskMarksValue" value="10">
+        </div>
       </div>
 
       <div class="dialog-input-group">
@@ -3966,23 +4296,43 @@
     `;
     dialogOverlay.classList.add('active');
 
-    const taskGroupToggle = document.getElementById('taskGroupToggle');
-    const taskGroupWrapper = document.getElementById('taskGroupSelectWrapper');
-    const taskGroupLabel = document.getElementById('taskGroupLabel');
-    const taskGroupValue = document.getElementById('taskGroupValue');
-
-    taskGroupToggle.addEventListener('click', (e) => {
-      e.stopPropagation();
-      taskGroupWrapper.classList.toggle('open');
-    });
-    
-    document.querySelectorAll('#taskGroupMenu .custom-select-option').forEach(opt => {
-      opt.addEventListener('click', () => {
-        taskGroupLabel.textContent = opt.textContent;
-        taskGroupValue.value = opt.dataset.value;
-        taskGroupWrapper.classList.remove('open');
+    const wireSelect = (wrapId, toggleId, labelId, valueId, optSel, onPick) => {
+      const wrap = document.getElementById(wrapId);
+      document.getElementById(toggleId).addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.querySelectorAll('#dialogBox .custom-select-wrapper.open').forEach(w => { if (w !== wrap) w.classList.remove('open'); });
+        wrap.classList.toggle('open');
       });
-    });
+      document.querySelectorAll(optSel).forEach(opt => {
+        opt.addEventListener('click', () => {
+          document.querySelectorAll(optSel).forEach(o => o.classList.toggle('selected', o === opt));
+          document.getElementById(labelId).textContent = opt.textContent;
+          document.getElementById(valueId).value = opt.dataset.value;
+          wrap.classList.remove('open');
+          if (onPick) onPick(opt.dataset.value);
+        });
+      });
+    };
+
+    const syncType = (v) => {
+      const auto = v === 'automated';
+      document.getElementById('autoSection').style.display = auto ? '' : 'none';
+      document.getElementById('createIntro').textContent = auto
+        ? 'The AI marks each submission against your WTCF and tells students what to do next.'
+        : 'Assign a new task to one of your groups.';
+      document.getElementById('confirmCreateTask').textContent = auto ? 'Check WTCF & Create' : 'Create';
+    };
+    wireSelect('taskTypeSelectWrapper', 'taskTypeToggle', 'taskTypeLabel', 'taskTypeValue', '#taskTypeMenu .custom-select-option', syncType);
+    wireSelect('taskGroupSelectWrapper', 'taskGroupToggle', 'taskGroupLabel', 'taskGroupValue', '#taskGroupMenu .custom-select-option', null);
+    wireSelect('taskMarksSelectWrapper', 'taskMarksToggle', 'taskMarksLabel', 'taskMarksValue', '#taskMarksMenu .custom-select-option', null);
+
+    const wtcfErr = document.getElementById('wtcfError');
+    const showWtcfError = (msg) => {
+      wtcfErr.textContent = msg;
+      wtcfErr.classList.add('show');
+      wtcfErr.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    };
+    document.getElementById('wtcfInput').addEventListener('input', () => wtcfErr.classList.remove('show'));
 
     document.getElementById('addLinkBtn').addEventListener('click', () => {
       const container = document.getElementById('taskLinksContainer');
@@ -3999,6 +4349,7 @@
 
     document.getElementById('cancelDialog').onclick = closeDialog;
     document.getElementById('confirmCreateTask').onclick = async () => {
+      const isAuto = document.getElementById('taskTypeValue').value === 'automated';
       const title = document.getElementById('taskTitleInput').value.trim();
       const description = document.getElementById('taskDescInput').value.trim();
       const groupId = document.getElementById('taskGroupValue').value;
@@ -4013,6 +4364,25 @@
       // so the exact time (not just the day) is preserved server-side.
       const dueDate = new Date(dueDateRaw).toISOString();
 
+      // Automated tasks: the AI must confirm the text is a real WTCF BEFORE anything is created.
+      let proof = null;
+      if (isAuto) {
+        wtcfErr.classList.remove('show');
+        const wtcf = document.getElementById('wtcfInput').value.trim();
+        const marks = Number(document.getElementById('taskMarksValue').value);
+        if (wtcf.replace(/\s/g, '').length < 10) { showWtcfError(NOT_WTCF_TEXT); return; }
+        try {
+          setStatus('saving');
+          toast('Checking your WTCF…', 'success');
+          const v = await autoApiCall({ action: 'validate_wtcf', wtcf, marks });
+          proof = v.proof;
+        } catch (e) {
+          setStatus('ready');
+          showWtcfError(e.message);
+          return;
+        }
+      }
+
       const links = [];
       document.querySelectorAll('#taskLinksContainer > div').forEach(div => {
         const url = div.querySelector('[data-link-url]').value.trim();
@@ -4024,8 +4394,25 @@
         setStatus('saving');
         const uploadedFiles = await uploadSelectedFiles(document.getElementById('taskFilesInput').files, { groupId });
         links.push(...uploadedFiles);
-        await orgApiCall({ action: 'create_task', title, description, groupId, dueDate, links });
-        toast('Task created successfully!');
+        const created = await orgApiCall({ action: 'create_task', title, description, groupId, dueDate, links });
+        if (isAuto) {
+          const newId = extractTaskId(created);
+          try {
+            if (newId == null) throw new Error('The task id was missing from the server reply.');
+            await autoApiCall({ action: 'configure', proof, taskId: newId });
+          } catch (cfgErr) {
+            let rolledBack = false;
+            if (newId != null) {
+              try { await orgApiCall({ action: 'delete_task', taskId: newId }); rolledBack = true; } catch (e) {}
+            }
+            if (rolledBack) throw new Error('Could not attach AI marking, so the task was not created: ' + cfgErr.message);
+            toast('Task created, but AI marking could not be attached. Delete it and try again.', 'warn');
+            closeDialog();
+            fetchOrgTasks();
+            return;
+          }
+        }
+        toast(isAuto ? 'Automated task created successfully!' : 'Task created successfully!');
         closeDialog();
         fetchOrgTasks();
       } catch(e) {
@@ -4034,7 +4421,7 @@
       }
     };
 
-    guardDialogButton('confirmCreateTask', 'create_task');
+    guardDialogButton('confirmCreateTask', 'create_task', { reassureText: 'Working on it. Automated tasks are checked by the AI first.' });
   }
 
   async function rerollPassword(username) {
@@ -5753,7 +6140,7 @@ Marketing,alex99,</div>
         <div class="task-card">
           <div class="task-card-header">
             <div>
-              <div class="task-card-title">${escapeHtml(t.title)}</div>
+              <div class="task-card-title">${escapeHtml(t.title)}${autoBadgeHtml(t.taskId)}</div>
               <div class="task-card-meta">
                 <span>${escapeHtml(t.groupName || 'Unassigned')}</span>
                 <span class="dot"></span>
@@ -5765,6 +6152,7 @@ Marketing,alex99,</div>
           ${t.description ? `<div class="task-description">${escapeHtml(t.description)}</div>` : ''}
           ${feedbackHtml}
           ${submissionHtml}
+          ${aiStudentBlockHtml(t, myVersions)}
           ${linksHtml}
           ${myHistoryHtml}
           ${actionButton ? `<div style="margin-top: 16px; text-align: right;">${actionButton}</div>` : ''}
@@ -5777,16 +6165,21 @@ Marketing,alex99,</div>
     document.querySelectorAll('[data-task-action="submit"]').forEach(btn => {
       btn.addEventListener('click', () => openSubmitTaskDialog(btn.dataset.taskId));
     });
+    document.querySelectorAll('[data-task-action="ai-mark"]').forEach(btn => {
+      btn.addEventListener('click', () => { btn.disabled = true; runAiMarking(btn.dataset.taskId); });
+    });
   }
 
   function openSubmitTaskDialog(taskId) {
     const __task = (userAssignedTasks || []).find(x => String(x.taskId) === String(taskId)) || {};
+    const __meta = automatedMeta[String(taskId)] || null;
     const __rej = __task.status === 'rejected'
       ? latestRejection((__task.versions || []).slice().sort((a, b) => a.versionNo - b.versionNo)) : null;
     dialogBox.innerHTML = `
       <div class="dialog-title">${__rej ? 'Resubmit Task' : 'Submit Task'}</div>
       ${__rej && __rej.note ? feedbackCalloutHtml(__rej) : ''}
       <div class="dialog-text">${__rej ? 'Fix what was asked above, then send it back for review. Your earlier attempt stays in History.' : 'Provide your text response and attach any relevant links for review.'}</div>
+      ${__meta ? `<div class="auto-note" style="margin:-12px 0 18px;">Automated task: after you submit, the AI marks your work out of ${__meta.totalMarks} and tells you what to improve. It can read typed text and PDF, Word, PowerPoint, text and code files, but not links or images.</div>` : ''}
       
       <div class="dialog-input-group">
         <label>Submission Text</label>
@@ -5808,7 +6201,7 @@ Marketing,alex99,</div>
 
       <div class="dialog-actions">
         <button class="btn-primary" id="cancelDialog">Cancel</button>
-        <button class="btn-primary main" id="confirmSubmit">${__rej ? 'Resubmit' : 'Submit'}</button>
+        <button class="btn-primary main" id="confirmSubmit">${__rej ? 'Resubmit' : (__meta ? 'Submit for AI marking' : 'Submit')}</button>
       </div>
     `;
     dialogOverlay.classList.add('active');
@@ -5850,6 +6243,13 @@ Marketing,alex99,</div>
         links.push(...uploadedFiles);
         await orgApiCall({ action: 'submit_task', taskId, submissionText, links });
         toast('Task submitted successfully!');
+        let isAuto = !!__meta;
+        if (!isAuto && !automatedLoaded) { await refreshAutomated(); isAuto = !!automatedMeta[String(taskId)]; }
+        if (isAuto) {
+          fetchUserTasks();
+          await runAiMarking(taskId);
+          return;
+        }
         closeDialog();
         fetchUserTasks();
       } catch(e) {
