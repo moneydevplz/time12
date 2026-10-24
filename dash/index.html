@@ -935,54 +935,138 @@
   .btn-row:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); transform: translateY(-1px); }
   .btn-row.danger:hover { border-color: var(--danger); color: var(--danger); background: rgba(162, 59, 42, 0.08); }
 
-  .task-card {
+
+  /* ============================================================
+     MY TASKS: calmer cards, grouped, with folds for Overdue / Completed
+     ============================================================ */
+  .tk-section { margin-bottom: 36px; animation: fadeInTab 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  #userTaskList > :nth-child(2) { animation-delay: 0.05s; }
+  #userTaskList > :nth-child(3) { animation-delay: 0.1s; }
+  #userTaskList > :nth-child(4) { animation-delay: 0.15s; }
+  .tk-section-head { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .tk-section-title { font-family: var(--serif); font-size: 26px; font-weight: 400; letter-spacing: -0.01em; line-height: 1.2; color: var(--text); }
+  .tk-count {
+    display: inline-grid; place-items: center; min-width: 24px; height: 24px; padding: 0 8px;
+    border-radius: 999px; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums;
+    background: var(--surface-2); color: var(--text-soft);
+  }
+  .tk-count.danger { background: rgba(162, 59, 42, 0.14); color: var(--danger); }
+  .tk-count.good { background: rgba(95, 122, 58, 0.16); color: color-mix(in srgb, var(--success) 78%, var(--text)); }
+  .tk-list { display: flex; flex-direction: column; gap: 10px; }
+  .tk-empty {
+    padding: 18px 20px; border: 1px dashed var(--border); border-radius: var(--radius-lg);
+    font-size: 14px; color: var(--text-muted);
+  }
+
+  /* Folds (Overdue, Completed): closed by default */
+  .tk-fold {
+    margin-bottom: 12px; overflow: hidden;
     background: var(--app-glass-bg);
-    -webkit-backdrop-filter: var(--bf, blur(calc(20px * var(--blur-k, 1))) saturate(160%));
-    backdrop-filter: var(--bf, blur(calc(20px * var(--blur-k, 1))) saturate(160%));
-    border: 1px solid var(--app-glass-border);
-    border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px;
-    box-shadow: var(--app-glass-shadow);
-    transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease, border-color 0.2s ease;
-    animation: fadeInTab 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    -webkit-backdrop-filter: var(--bf, blur(calc(14px * var(--blur-k, 1))) saturate(150%));
+    backdrop-filter: var(--bf, blur(calc(14px * var(--blur-k, 1))) saturate(150%));
+    border: 1px solid var(--app-glass-border); border-radius: var(--radius-lg);
+    animation: fadeInTab 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
-  .task-card:nth-of-type(1) { animation-delay: 0.02s; } .task-card:nth-of-type(2) { animation-delay: 0.07s; }
-  .task-card:nth-of-type(3) { animation-delay: 0.12s; } .task-card:nth-of-type(4) { animation-delay: 0.17s; }
-  .task-card:nth-of-type(n+5) { animation-delay: 0.22s; }
-  .task-card:hover { box-shadow: var(--shadow-soft); transform: translateY(-2px); }
-  .task-card:has(.task-status-badge.pending) { border-top: 3px solid var(--warn); }
-  .task-card:has(.task-status-badge.completed) { border-top: 3px solid var(--success); }
-  .task-card:has(.task-status-badge.rejected) { border-top: 3px solid var(--danger); }
-  .task-card:has(.task-status-badge.not_started) { border-top: 3px solid var(--border); }
-  .task-card-header {
-    display: flex; justify-content: space-between; align-items: flex-start;
-    margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border);
+  .tk-fold-head {
+    display: flex; align-items: center; gap: 10px; width: 100%; padding: 15px 20px;
+    background: transparent; border: 0; cursor: pointer; text-align: left;
+    font-family: var(--sans); font-size: 15px; font-weight: 600; color: var(--text);
   }
-  .task-card-title {
-    font-family: var(--serif); font-size: 22px; color: var(--text);
-    margin-bottom: 4px;
+  .tk-fold-head:hover { background: color-mix(in srgb, var(--surface-2) 45%, transparent); }
+  .tk-fold-head:focus-visible, .tc-head:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: -2px; box-shadow: none; border-radius: 0;
   }
-  .task-card-meta {
-    display: flex; gap: 12px; font-size: 11px; color: var(--text-muted);
-    text-transform: uppercase; letter-spacing: 0.1em;
+  .tk-fold-hint { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 400; color: var(--text-muted); }
+  .tk-fold-chev, .tc-chev { display: inline-flex; flex-shrink: 0; color: var(--text-muted); transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .tk-fold-chev { margin-left: auto; }
+  .tk-fold-chev svg, .tc-chev svg { width: 16px; height: 16px; }
+  .tk-fold.open .tk-fold-chev, .task-card.open .tc-chev { transform: rotate(180deg); }
+  .tk-fold-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.32s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .tk-fold.open > .tk-fold-body { grid-template-rows: 1fr; }
+  .tk-fold-inner { min-height: 0; overflow: hidden; visibility: hidden; transition: visibility 0s linear 0.32s; }
+  .tk-fold.open > .tk-fold-body > .tk-fold-inner { visibility: visible; transition-delay: 0s; }
+  .tk-fold-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 12px 12px; }
+  .tk-fold .task-card { background: var(--bg); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+
+  /* Task card */
+  .task-card {
+    position: relative; overflow: hidden;
+    background: var(--app-glass-bg);
+    -webkit-backdrop-filter: var(--bf, blur(calc(14px * var(--blur-k, 1))) saturate(150%));
+    backdrop-filter: var(--bf, blur(calc(14px * var(--blur-k, 1))) saturate(150%));
+    border: 1px solid var(--app-glass-border); border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    transition: border-color 0.2s ease;
   }
+  .task-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--rail, transparent); }
+  .task-card.is-rejected, .task-card.is-overdue { --rail: var(--danger); }
+  .task-card.is-pending { --rail: var(--warn); }
+  .task-card.is-completed { --rail: color-mix(in srgb, var(--success) 55%, transparent); }
+  .task-card:hover { border-color: color-mix(in srgb, var(--text) 22%, var(--app-glass-border)); }
+
+  .tc-head {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto 16px; grid-template-areas: "main badge chev";
+    align-items: center; column-gap: 14px; width: 100%; padding: 16px 20px 16px 24px;
+    background: transparent; border: 0; text-align: left; color: inherit; font: inherit; cursor: pointer;
+  }
+  button.tc-head:hover { background: color-mix(in srgb, var(--surface-2) 45%, transparent); }
+  .tc-head.static { cursor: default; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "main badge"; }
+  .tc-main { grid-area: main; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+  .tc-head .task-status-badge { grid-area: badge; }
+  .tc-head .tc-chev { grid-area: chev; }
+  .task-card-title { display: block; font-family: var(--serif); font-size: 20px; line-height: 1.25; color: var(--text); overflow-wrap: anywhere; }
+  .tc-meta { display: flex; flex-wrap: wrap; gap: 4px 16px; font-size: 13px; color: var(--text-muted); }
+  .tc-meta-item { display: inline-flex; align-items: center; gap: 6px; }
+  .tc-meta-item svg { width: 13px; height: 13px; flex-shrink: 0; }
+  .tc-meta-item.is-overdue { color: var(--danger); font-weight: 600; }
+
   .task-status-badge {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 6px 12px; border-radius: 999px; font-size: 11px; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.08em; white-space: nowrap;
-    background: var(--surface-2); color: var(--text-muted);
+    display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px; border-radius: 999px;
+    font-size: 12px; font-weight: 600; white-space: nowrap;
+    background: var(--surface-2); color: var(--text-soft);
   }
   .task-status-badge::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
-  .task-status-badge.pending { background: rgba(176, 136, 50, 0.15); color: var(--warn); }
+  .task-status-badge.pending { background: rgba(176, 136, 50, 0.16); color: color-mix(in srgb, var(--warn) 78%, var(--text)); }
   .task-status-badge.pending::before { animation: messagePulse 1.4s ease-in-out infinite; }
-  .task-status-badge.completed { background: rgba(95, 122, 58, 0.15); color: var(--success); }
-  .task-status-badge.rejected { background: rgba(162, 59, 42, 0.15); color: var(--danger); }
-  .task-status-badge.not_started { background: var(--surface-2); color: var(--text-muted); }
+  .task-status-badge.completed { background: rgba(95, 122, 58, 0.16); color: color-mix(in srgb, var(--success) 78%, var(--text)); }
+  .task-status-badge.rejected { background: rgba(162, 59, 42, 0.14); color: var(--danger); }
+  .task-status-badge.overdue { background: rgba(162, 59, 42, 0.14); color: var(--danger); }
+  .task-status-badge.not_started { background: var(--surface-2); color: var(--text-soft); }
 
-  .task-description { font-size: 14px; color: var(--text-soft); margin-bottom: 16px; line-height: 1.6; }
+  .tc-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+  .task-card.open > .tc-body { grid-template-rows: 1fr; }
+  .tc-inner { min-height: 0; overflow: hidden; visibility: hidden; transition: visibility 0s linear 0.3s; }
+  .task-card.open > .tc-body > .tc-inner { visibility: visible; transition-delay: 0s; }
+  .tc-content { display: flex; flex-direction: column; gap: 14px; padding: 4px 24px 22px; }
+  .tc-content::before { content: ''; height: 1px; background: var(--border); margin-bottom: 2px; }
+  .tc-label { display: block; margin-bottom: 4px; font-size: 12px; font-weight: 600; color: var(--text-muted); }
+
+  .task-description { margin: 0; max-width: 68ch; font-size: 14.5px; line-height: 1.65; color: var(--text-soft); white-space: pre-line; overflow-wrap: anywhere; }
   .task-submission-review {
-    background: var(--accent-soft); border: 1px solid var(--accent); border-radius: var(--radius);
-    padding: 16px; margin-bottom: 16px; font-size: 14px; color: var(--text);
+    background: var(--surface-2); border-radius: var(--radius); padding: 12px 14px;
+    font-size: 14px; line-height: 1.6; color: var(--text); white-space: pre-wrap; overflow-wrap: anywhere;
   }
+  .tc-content .feedback-callout, .tc-content .ai-result, .tc-content .auto-note { margin: 0; }
+  .tc-content > .hist-toggle { align-self: flex-start; margin-top: 0; }
+  .tc-content > .hist-panel { margin-top: -6px; }
+  .tc-actions { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 12px; }
+  .tc-note { display: flex; align-items: center; gap: 8px; margin-right: auto; font-size: 13px; color: var(--text-muted); }
+  .tc-note.danger { color: var(--danger); }
+
+  @media (max-width: 520px) {
+    .tk-section-title { font-size: 23px; }
+    .tc-head { grid-template-columns: minmax(0, 1fr) 16px; grid-template-areas: "main chev" "badge ."; row-gap: 10px; align-items: start; padding: 14px 16px 14px 20px; }
+    .tc-head.static { grid-template-columns: minmax(0, 1fr); grid-template-areas: "main" "badge"; }
+    .tc-head .task-status-badge { justify-self: start; }
+    .tc-head .tc-chev { margin-top: 4px; }
+    .task-card-title { font-size: 18px; }
+    .tc-content { padding: 4px 20px 20px; }
+    .tk-fold-hint { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .tc-body, .tk-fold-body, .tc-chev, .tk-fold-chev { transition: none; }
+  }
+
   /* ---------- Rejection feedback + submission history ---------- */
   .feedback-callout {
     background: rgba(162, 59, 42, 0.08); border: 1px solid rgba(162, 59, 42, 0.35);
@@ -1055,14 +1139,16 @@
   .row-reason { margin-top: 4px; font-size: 12px; color: var(--text-soft); line-height: 1.5; word-break: break-word; }
   .row-reason strong { color: var(--danger); }
 
-  .task-links { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+  .task-links { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .task-links .tc-label { flex-basis: 100%; margin-bottom: 0; }
   .task-link-item {
-    display: flex; gap: 8px; align-items: center;
-    font-size: 13px; color: var(--accent); transition: var(--t);
-    width: fit-content; border-radius: var(--radius);
+    display: inline-flex; align-items: center; gap: 7px; max-width: 100%; padding: 6px 12px;
+    border: 1px solid var(--border); border-radius: 999px; background: var(--bg);
+    font-size: 13px; font-weight: 500; color: var(--text); text-decoration: none; transition: var(--t);
   }
-  .task-link-item:hover { transform: translateX(2px); color: var(--accent-hover); }
-  .task-link-item svg { width: 12px; height: 12px; }
+  .task-link-item span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .task-link-item:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .task-link-item svg { width: 12px; height: 12px; flex-shrink: 0; color: var(--accent); }
 
   .graph-card {
     background: var(--app-glass-bg);
@@ -1073,10 +1159,10 @@
     box-shadow: var(--app-glass-shadow); animation: fadeInTab 0.4s ease;
   }
   .graph-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-  .graph-title { font-size: 14px; font-weight: 600; color: var(--text-soft); text-transform: uppercase; letter-spacing: 0.08em; }
-  .graph-svg { width: 100%; height: 120px; overflow: visible; }
-  .graph-grid line { stroke: var(--border); stroke-width: 1; }
-  .graph-line { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 2px 4px rgba(253, 126, 20, 0.35)); }
+  .graph-title { font-size: 15px; font-weight: 600; color: var(--text-soft); }
+  .graph-svg { width: 100%; height: 100px; overflow: visible; }
+  .graph-grid line { stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+  .graph-line { fill: none; stroke: var(--accent); stroke-width: 2.5; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 2px 4px rgba(253, 126, 20, 0.35)); }
   .graph-area { fill: var(--accent-soft); opacity: 0.6; }
 
   /* ---------- Performance table (per-user check/fail history) ---------- */
@@ -1256,7 +1342,6 @@
 
   /* Overdue indicators */
   .due-overdue { color: var(--danger, #e5484d) !important; font-weight: 600; }
-  .task-status-badge.overdue { background: var(--danger, #e5484d); color: #fff; }
 
   .toggle-group { display: flex; gap: 8px; margin-bottom: 16px; }
   .toggle-btn {
@@ -1848,6 +1933,99 @@
   .ai-outcome.ok { background: rgba(95, 122, 58, 0.12); border-color: rgba(95, 122, 58, 0.4); }
   .ai-outcome.bad { background: rgba(162, 59, 42, 0.08); border-color: rgba(162, 59, 42, 0.35); }
   .ai-outcome.wait { background: rgba(176, 136, 50, 0.12); border-color: rgba(176, 136, 50, 0.4); }
+  /* ============================================================
+     NOTES ENTRANCE: same motion the other three tabs use
+     ============================================================ */
+  .editor-scroll { animation: fadeInTab 0.3s ease; }
+  .editor-inner.note-enter > .editor-title-input { animation: loginItemRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+  .editor-inner.note-enter > .editor-meta { animation: loginItemRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both; animation-delay: 0.05s; }
+  .editor-inner.note-enter > .textarea { animation: loginItemRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) backwards; animation-delay: 0.1s; }
+
+  /* ============================================================
+     DIALOGS: use width instead of scroll
+     ============================================================ */
+  .dialog-overlay { padding: 16px; }
+  .dialog-box { padding: 28px 32px; max-width: 520px; max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); }
+  /* drop zones are <label>s, so they were inheriting the tracked all-caps field-label style */
+  .dialog-input-group label.csv-dropzone { text-transform: none; letter-spacing: normal; font-size: 13px; font-weight: 500; color: var(--text-muted); }
+  .dialog-input-group label.csv-dropzone:hover, .dialog-input-group label.csv-dropzone.dragover { color: var(--accent); }
+  .dialog-box[data-size="mid"] { max-width: 760px; }
+  .dialog-box[data-size="wide"] { max-width: 980px; }
+  .dialog-title { font-size: 26px; margin-bottom: 6px; }
+  .dialog-text { margin-bottom: 18px; }
+  .dialog-input-group { margin-bottom: 14px; }
+  .dialog-actions { margin-top: 18px; }
+  .auto-section { margin-bottom: 14px; }
+
+  .dlg-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); column-gap: 20px; align-items: start; }
+  .dlg-grid > .c4 { grid-column: span 4; } .dlg-grid > .c5 { grid-column: span 5; }
+  .dlg-grid > .c7 { grid-column: span 7; } .dlg-grid > .c8 { grid-column: span 8; }
+  .dlg-col { min-width: 0; display: flex; flex-direction: column; }
+
+  @media (min-width: 761px) {
+    .dialog-box[data-size="mid"] #addSingleContent,
+    .dialog-box[data-size="mid"] #addImportContent,
+    .dialog-box[data-size="mid"] #newTabContent { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 20px; align-items: start; }
+    .dialog-box[data-size="mid"] #addImportContent > .dialog-input-group:first-child { grid-row: span 2; }
+    .dialog-box[data-size="mid"] #addImportContent > details,
+    .dialog-box[data-size="mid"] #addImportContent > .dialog-input-group:last-child { grid-column: 1 / -1; }
+  }
+  @media (max-width: 900px) {
+    .dlg-grid > .c4 { grid-column: span 6; }
+    .dlg-grid > .c4:last-child { grid-column: 1 / -1; }
+  }
+  @media (max-width: 640px) {
+    .dlg-grid > * { grid-column: 1 / -1 !important; }
+    .dialog-box { padding: 22px 20px; }
+    #taskDescInput { height: 84px; min-height: 84px; }
+    /* when a phone dialog has to scroll, keep its buttons in reach */
+    .dialog-box > .dialog-actions {
+      position: sticky; bottom: -22px; z-index: 3; margin: 14px -20px -22px; padding: 12px 20px 16px;
+      background: color-mix(in srgb, var(--bg) 90%, transparent); border-top: 1px solid var(--border);
+      -webkit-backdrop-filter: var(--bf, blur(10px)); backdrop-filter: var(--bf, blur(10px));
+    }
+  }
+  /* short screens (small laptops, landscape phones): tighter spacing so forms still fit */
+  @media (max-height: 760px) {
+    .dialog-box { padding: 20px 28px; }
+    .dialog-title { font-size: 23px; margin-bottom: 4px; }
+    .dialog-text { margin-bottom: 12px; }
+    .dialog-input-group { margin-bottom: 10px; }
+    .dialog-actions { margin-top: 12px; }
+    .auto-section { margin-bottom: 10px; padding-top: 10px; }
+  }
+
+  /* ============================================================
+     DESKTOP / MOBILE FIXES
+     ============================================================ */
+  /* The top bar sits beside a 300px sidebar, so the full tab pill crushes Save / Create Task /
+     Add long before 860px. Use the compact tab menu up to 1100px. */
+  @media (max-width: 1100px) {
+    .tabs-container { display: none; }
+    .tabs-dropdown { display: block; }
+  }
+  /* Summary lines wrap instead of stretching the page on phones. */
+  .org-meta { flex-wrap: wrap; row-gap: 6px; }
+  .org-meta > span:not(.dot) { white-space: nowrap; }
+  @media (max-width: 860px) {
+    /* a bare 1fr column can't shrink below its widest child, so one wide element used to widen the whole page */
+    .app { grid-template-columns: minmax(0, 1fr); }
+    .editor-area { min-width: 0; }
+    .table-wrapper { overflow-x: auto; }
+  }
+  @media (max-width: 520px) {
+    .org-meta { gap: 6px 14px; }
+    .org-meta .dot { display: none; }
+  }
+  /* Content starts under the real top bar height (it wraps on small screens), measured in JS. */
+  .editor-scroll, .org-tab-content { padding-top: var(--topbar-h, 56px); }
+  /* 16px inputs stop iOS from zooming the page on focus. */
+  @media (max-width: 860px), (pointer: coarse) {
+    .dialog-input, .tag-input-container input, .palette-input, .login-form-group input { font-size: 16px; }
+    .custom-select-toggle, .custom-select-option { font-size: 15px; }
+  }
+  /* No keyboard on touch devices, so the shortcuts link is just noise there. */
+  @media (hover: none) and (pointer: coarse) { #shortcutsLink { display: none; } }
 </style>
 </head>
 <body>
@@ -2036,7 +2214,7 @@
     </div>
 
     <div class="editor-scroll" id="notesTabContent">
-      <div class="editor-inner">
+      <div class="editor-inner note-enter">
         <input type="text" class="editor-title-input" id="titleInput" placeholder="Untitled" autocomplete="off" spellcheck="false">
         <div class="editor-meta">
           <span id="metaModified">—</span>
@@ -4248,96 +4426,102 @@
     const passOptions = [50, 60, 70, 80, 90, 100].map(n => `<div class="custom-select-option${n === 60 ? ' selected' : ''}" data-value="${n}">${n}%</div>`).join('');
 
     dialogBox.innerHTML = `
-      <div class="dialog-title">Create New Task</div>
+      <div class="dialog-title" data-dlg-size="wide">Create New Task</div>
       <div class="dialog-text" id="createIntro">Assign a new task to one of your groups.</div>
 
-      <div class="dialog-input-group">
-        <label>Task Type</label>
-        <div class="custom-select-wrapper" id="taskTypeSelectWrapper">
-          <div class="custom-select-toggle" id="taskTypeToggle">
-            <span id="taskTypeLabel">Standard Task</span>
-            ${chevron}
+      <div class="dlg-grid">
+        <div class="dlg-col c4">
+          <div class="dialog-input-group">
+            <label>Task Title</label>
+            <input type="text" id="taskTitleInput" class="dialog-input" placeholder="e.g. Finish Q3 Report" autocomplete="off">
           </div>
-          <div class="custom-select-menu" id="taskTypeMenu">
-            <div class="custom-select-option selected" data-value="standard">Standard Task</div>
-            <div class="custom-select-option" data-value="automated">Automated Task (AI-marked)</div>
+          <div class="dialog-input-group">
+            <label>Description (Optional)</label>
+            <textarea id="taskDescInput" class="dialog-input" rows="7" placeholder="Provide details..." style="resize: vertical;"></textarea>
           </div>
         </div>
-        <input type="hidden" id="taskTypeValue" value="standard">
-      </div>
 
-      <div class="dialog-input-group">
-        <label>Task Title</label>
-        <input type="text" id="taskTitleInput" class="dialog-input" placeholder="e.g. Finish Q3 Report" autocomplete="off">
-      </div>
-
-      <div class="dialog-input-group">
-        <label>Description (Optional)</label>
-        <textarea id="taskDescInput" class="dialog-input" rows="3" placeholder="Provide details..." style="resize: vertical;"></textarea>
-      </div>
-
-      <div class="dialog-input-group">
-        <label>Assign to Group</label>
-        <div class="custom-select-wrapper" id="taskGroupSelectWrapper">
-          <div class="custom-select-toggle" id="taskGroupToggle">
-            <span id="taskGroupLabel">Select a group</span>
-            ${chevron}
+        <div class="dlg-col c4">
+          <div class="dialog-input-group">
+            <label>Task Type</label>
+            <div class="custom-select-wrapper" id="taskTypeSelectWrapper">
+              <div class="custom-select-toggle" id="taskTypeToggle">
+                <span id="taskTypeLabel">Standard Task</span>
+                ${chevron}
+              </div>
+              <div class="custom-select-menu" id="taskTypeMenu">
+                <div class="custom-select-option selected" data-value="standard">Standard Task</div>
+                <div class="custom-select-option" data-value="automated">Automated Task (AI-marked)</div>
+              </div>
+            </div>
+            <input type="hidden" id="taskTypeValue" value="standard">
           </div>
-          <div class="custom-select-menu" id="taskGroupMenu">${groupOptions}</div>
+          <div class="dialog-input-group">
+            <label>Assign to Group</label>
+            <div class="custom-select-wrapper" id="taskGroupSelectWrapper">
+              <div class="custom-select-toggle" id="taskGroupToggle">
+                <span id="taskGroupLabel">Select a group</span>
+                ${chevron}
+              </div>
+              <div class="custom-select-menu" id="taskGroupMenu">${groupOptions}</div>
+            </div>
+            <input type="hidden" id="taskGroupValue">
+          </div>
+          <div class="dialog-input-group">
+            <label>Due Date &amp; Time</label>
+            <input type="datetime-local" id="taskDueInput" class="dialog-input" value="${defaultDueValue}">
+          </div>
         </div>
-        <input type="hidden" id="taskGroupValue">
+
+        <div class="dlg-col c4">
+          <div class="dialog-input-group">
+            <label>Attach Links (Optional)</label>
+            <div id="taskLinksContainer">
+              <div style="display:flex; gap:8px; margin-bottom:8px;">
+                <input type="text" class="dialog-input" placeholder="URL" data-link-url style="flex: 2;">
+                <input type="text" class="dialog-input" placeholder="Label" data-link-label style="flex: 1;">
+              </div>
+            </div>
+            <button class="btn-primary" id="addLinkBtn" style="margin-top:4px;">+ Add Link</button>
+          </div>
+          ${filePickerHtml('taskFilesInput')}
+        </div>
       </div>
 
-      <div class="dialog-input-group">
-        <label>Due Date &amp; Time</label>
-        <input type="datetime-local" id="taskDueInput" class="dialog-input" value="${defaultDueValue}">
-      </div>
-
-      <div class="auto-section" id="autoSection" style="display:none;">
-        <div class="dialog-input-group">
+      <div class="auto-section dlg-grid" id="autoSection" style="display:none;">
+        <div class="dialog-input-group c8">
           <label>What to Check For (WTCF)</label>
-          <textarea id="wtcfInput" class="dialog-input" rows="6" maxlength="4000" style="resize: vertical;"
+          <textarea id="wtcfInput" class="dialog-input" rows="4" maxlength="4000" style="resize: vertical;"
             placeholder="Your marking scheme. e.g.&#10;- Names at least 2 causes of the event (4)&#10;- Backs each point with evidence from the source (4)&#10;- Clear conclusion in the student's own words (2)"></textarea>
           <div class="auto-note">The AI checks this is a real marking scheme first, then marks each submission against it. Students see their mark, feedback and a per-point breakdown, not this raw text.</div>
           <div class="auto-error" id="wtcfError" role="alert"></div>
         </div>
-        <div class="dialog-input-group">
-          <label>Total Marks</label>
-          <div class="custom-select-wrapper" id="taskMarksSelectWrapper">
-            <div class="custom-select-toggle" id="taskMarksToggle">
-              <span id="taskMarksLabel">10 marks</span>
-              ${chevron}
+        <div class="dlg-col c4">
+          <div class="dialog-input-group">
+            <label>Total Marks</label>
+            <div class="custom-select-wrapper" id="taskMarksSelectWrapper">
+              <div class="custom-select-toggle" id="taskMarksToggle">
+                <span id="taskMarksLabel">10 marks</span>
+                ${chevron}
+              </div>
+              <div class="custom-select-menu" id="taskMarksMenu">${marksOptions}</div>
             </div>
-            <div class="custom-select-menu" id="taskMarksMenu">${marksOptions}</div>
+            <input type="hidden" id="taskMarksValue" value="10">
           </div>
-          <input type="hidden" id="taskMarksValue" value="10">
-        </div>
-        <div class="dialog-input-group">
-          <label>Accept When Score Is At Least</label>
-          <div class="custom-select-wrapper" id="taskPassSelectWrapper">
-            <div class="custom-select-toggle" id="taskPassToggle">
-              <span id="taskPassLabel">60%</span>
-              ${chevron}
+          <div class="dialog-input-group">
+            <label>Accept When Score Is At Least</label>
+            <div class="custom-select-wrapper" id="taskPassSelectWrapper">
+              <div class="custom-select-toggle" id="taskPassToggle">
+                <span id="taskPassLabel">60%</span>
+                ${chevron}
+              </div>
+              <div class="custom-select-menu" id="taskPassMenu">${passOptions}</div>
             </div>
-            <div class="custom-select-menu" id="taskPassMenu">${passOptions}</div>
+            <input type="hidden" id="taskPassValue" value="60">
+            <div class="auto-note">At or above this, the work is accepted and marked complete, with feedback. Below it, it is sent back and the student fixes it and resubmits.</div>
           </div>
-          <input type="hidden" id="taskPassValue" value="60">
-          <div class="auto-note">At or above this, the work is accepted and marked complete, with feedback. Below it, the work is sent back with feedback and the student fixes it and resubmits.</div>
         </div>
       </div>
-
-      <div class="dialog-input-group">
-        <label>Attach Links (Optional)</label>
-        <div id="taskLinksContainer">
-          <div style="display:flex; gap:8px; margin-bottom:8px;">
-            <input type="text" class="dialog-input" placeholder="URL" data-link-url style="flex: 2;">
-            <input type="text" class="dialog-input" placeholder="Label" data-link-label style="flex: 1;">
-          </div>
-        </div>
-        <button class="btn-primary" id="addLinkBtn" style="margin-top:8px;">+ Add Link</button>
-      </div>
-
-      ${filePickerHtml('taskFilesInput')}
 
       <div class="dialog-actions">
         <button class="btn-primary" id="cancelDialog">Cancel</button>
@@ -4611,7 +4795,7 @@
 
   function openAddMemberDialog(groupId) {
     dialogBox.innerHTML = `
-      <div class="dialog-title">Add Members</div>
+      <div class="dialog-title" data-dlg-size="mid">Add Members</div>
       <div class="dialog-text">Choose to add existing accounts to this group or create entirely new accounts and assign them immediately.</div>
       
       <div class="toggle-group">
@@ -4709,13 +4893,13 @@
     existingTabBtn.onclick = () => {
       existingTabBtn.classList.add('active');
       newTabBtn.classList.remove('active');
-      existingTabContent.style.display = 'block';
+      existingTabContent.style.display = '';
       newTabContent.style.display = 'none';
     };
     newTabBtn.onclick = () => {
       newTabBtn.classList.add('active');
       existingTabBtn.classList.remove('active');
-      newTabContent.style.display = 'block';
+      newTabContent.style.display = '';
       existingTabContent.style.display = 'none';
     };
 
@@ -4866,7 +5050,7 @@
 
   function openAddAccountDialog() {
     dialogBox.innerHTML = `
-      <div class="dialog-title">Add Account</div>
+      <div class="dialog-title" data-dlg-size="mid">Add Account</div>
       <div class="dialog-text">Create a new account under your organization namespace (${orgNamespace}), or import many at once from a CSV/Excel file.</div>
 
       <div class="toggle-group">
@@ -4974,14 +5158,14 @@ Marketing,alex99,</div>
     singleTabBtn.onclick = () => {
       singleTabBtn.classList.add('active');
       importTabBtn.classList.remove('active');
-      singleContent.style.display = 'block';
+      singleContent.style.display = '';
       importContent.style.display = 'none';
       confirmBtn.textContent = 'Add';
     };
     importTabBtn.onclick = () => {
       importTabBtn.classList.add('active');
       singleTabBtn.classList.remove('active');
-      importContent.style.display = 'block';
+      importContent.style.display = '';
       singleContent.style.display = 'none';
       confirmBtn.textContent = 'Import';
     };
@@ -6022,7 +6206,7 @@ Marketing,alex99,</div>
       </div>
       <div class="org-meta">
         <span>Member Dashboard</span><span class="dot"></span>
-        <span>Loading 60-day graph...</span>
+        ${taskSummaryHtml(userAssignedTasks)}
       </div>
       <div id="userGraphContainer" style="margin-bottom: 32px;">
         <div class="skeleton-note"><div class="skeleton-line" style="width: 100%"></div><div class="skeleton-line short"></div></div>
@@ -6101,7 +6285,7 @@ Marketing,alex99,</div>
     return `
       <div class="graph-card">
         <div class="graph-header">
-          <div class="graph-title">Last 60 Days</div>
+          <div class="graph-title">Last 60 days</div>
           <span style="font-size: 11px; color: var(--text-muted);">Task Volume Over Time</span>
         </div>
         <svg class="graph-svg" viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">
@@ -6113,110 +6297,185 @@ Marketing,alex99,</div>
     `;
   }
 
+  /* ---------- My Tasks: grouped, collapsible ---------- */
+  const taskUI = { fold: { overdue: false, completed: false }, card: {} };
+  const TASK_LABELS = { not_started: 'Not started', pending: 'In review', rejected: 'Needs fixing', completed: 'Completed' };
+  const TK_ICON = {
+    cal: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>',
+    group: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>',
+    chev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>',
+    link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>'
+  };
+
+  // Overdue = the deadline passed and the student can still not act on it (never submitted, or sent back).
+  function taskIsOverdue(t) {
+    const d = t.dueDate ? new Date(t.dueDate) : null;
+    return !!d && !isNaN(d) && d < new Date() && (t.status === 'not_started' || t.status === 'rejected' || !t.status);
+  }
+
+  function taskBuckets(list) {
+    const b = { todo: [], review: [], overdue: [], done: [] };
+    (list || []).forEach(t => {
+      if (t.status === 'completed') b.done.push(t);
+      else if (taskIsOverdue(t)) b.overdue.push(t);
+      else if (t.status === 'pending') b.review.push(t);
+      else b.todo.push(t);
+    });
+    const due = t => (t.dueDate ? new Date(t.dueDate).getTime() : Infinity);
+    b.todo.sort((a, c) => ((a.status === 'rejected' ? 0 : 1) - (c.status === 'rejected' ? 0 : 1)) || (due(a) - due(c)));
+    b.review.sort((a, c) => due(a) - due(c));
+    b.overdue.sort((a, c) => due(c) - due(a));
+    b.done.sort((a, c) => due(c) - due(a));
+    return b;
+  }
+
+  function taskSummaryHtml(list) {
+    const b = taskBuckets(list);
+    const parts = [];
+    if (b.todo.length) parts.push(`${b.todo.length} to do`);
+    if (b.review.length) parts.push(`${b.review.length} in review`);
+    if (b.overdue.length) parts.push(`${b.overdue.length} overdue`);
+    parts.push(`${b.done.length} completed`);
+    return parts.map(p => `<span>${p}</span>`).join('<span class="dot"></span>');
+  }
+
+  function taskDueText(t, overdue) {
+    const d = t.dueDate ? new Date(t.dueDate) : null;
+    if (!d || isNaN(d)) return 'No due date';
+    const time = d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+    const date = d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    const sod = x => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+    const dd = Math.round((sod(d) - sod(new Date())) / 86400000);
+    if (t.status === 'completed') return `Due ${date}`;
+    if (overdue) return dd === 0 ? `Was due today, ${time}` : dd === -1 ? `Was due yesterday, ${time}` : `Was due ${date}, ${time}`;
+    if (dd === 0) return `Due today, ${time}`;
+    if (dd === 1) return `Due tomorrow, ${time}`;
+    if (dd > 1 && dd < 7) return `Due ${d.toLocaleDateString(undefined, { weekday: 'long' })}, ${time}`;
+    return `Due ${date}, ${time}`;
+  }
+
+  function taskLinkChip(l) {
+    return `<a href="${escapeHtml(histSafeUrl(l.url))}" target="_blank" rel="noopener noreferrer" class="task-link-item">${TK_ICON.link}<span>${escapeHtml(l.label || l.url)}</span></a>`;
+  }
+
+  function taskCardHtml(t, section) {
+    const id = String(t.taskId);
+    const status = t.status || 'not_started';
+    const overdue = taskIsOverdue(t);
+    const state = overdue ? 'overdue' : status;
+    const label = overdue ? 'Overdue' : (TASK_LABELS[status] || String(status).replace(/_/g, ' '));
+    const dueObj = t.dueDate ? new Date(t.dueDate) : null;
+    const full = dueObj && !isNaN(dueObj) ? dueObj.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'No due date';
+
+    const versions = (t.versions || []).slice().sort((a, b) => a.versionNo - b.versionNo);
+    const rejection = latestRejection(versions);
+    const feedbackHtml = (status === 'rejected' && rejection && rejection.note) ? feedbackCalloutHtml(rejection) : '';
+
+    const submissionHtml = ((status === 'pending' || status === 'completed' || status === 'rejected') && t.submissionText)
+      ? `<div class="task-submission-review"><span class="tc-label">Your submission</span>${escapeHtml(t.submissionText)}</div>` : '';
+
+    const refLinks = (t.links || []).filter(l => !l.is_submission_link);
+    const myLinks = (t.links || []).filter(l => l.is_submission_link);
+    const linkBlock = (title, arr) => arr.length
+      ? `<div class="task-links"><span class="tc-label">${title}</span>${arr.map(taskLinkChip).join('')}</div>` : '';
+    const linksHtml = linkBlock('Reference materials', refLinks) + linkBlock('Your submitted links', myLinks);
+
+    const canAct = status === 'not_started' || status === 'rejected';
+    let actionHtml = '';
+    if (canAct && !overdue) {
+      actionHtml = `<div class="tc-actions"><button class="btn-action primary" data-task-action="submit" data-task-id="${escapeHtml(id)}">${status === 'rejected' ? 'Resubmit' : 'Submit task'}</button></div>`;
+    } else if (overdue) {
+      actionHtml = `<div class="tc-actions"><span class="tc-note danger">The deadline has passed, so submissions are closed for this task.</span></div>`;
+    }
+
+    const body = [
+      t.description ? `<p class="task-description">${escapeHtml(t.description)}</p>` : '',
+      feedbackHtml, submissionHtml, aiStudentBlockHtml(t, versions), linksHtml, historyHtml(versions), actionHtml
+    ].join('');
+
+    const expandable = body.trim() !== '';
+    const open = expandable && (taskUI.card[id] !== undefined ? taskUI.card[id] : section === 'todo');
+
+    const head = `
+      <span class="tc-main">
+        <span class="task-card-title">${escapeHtml(t.title)}${autoBadgeHtml(t.taskId)}</span>
+        <span class="tc-meta">
+          <span class="tc-meta-item">${TK_ICON.group}${escapeHtml(t.groupName || 'Unassigned')}</span>
+          <span class="tc-meta-item${overdue ? ' is-overdue' : ''}" title="${escapeHtml(full)}">${TK_ICON.cal}${escapeHtml(taskDueText(t, overdue))}</span>
+          ${versions.length > 1 ? `<span class="tc-meta-item">Attempt ${versions.length}</span>` : ''}
+        </span>
+      </span>
+      <span class="task-status-badge ${state}">${escapeHtml(label)}</span>
+      ${expandable ? `<span class="tc-chev">${TK_ICON.chev}</span>` : ''}`;
+
+    return `
+      <article class="task-card is-${state}${open ? ' open' : ''}" data-task-card="${escapeHtml(id)}">
+        ${expandable
+          ? `<button type="button" class="tc-head" data-tc-toggle aria-expanded="${open}" aria-controls="tcb-${escapeHtml(id)}">${head}</button>`
+          : `<div class="tc-head static">${head}</div>`}
+        ${expandable ? `<div class="tc-body" id="tcb-${escapeHtml(id)}"><div class="tc-inner"><div class="tc-content">${body}</div></div></div>` : ''}
+      </article>`;
+  }
+
+  function taskFoldHtml(key, title, hint, countCls, tasks) {
+    const open = !!taskUI.fold[key];
+    return `
+      <section class="tk-fold${open ? ' open' : ''}">
+        <button type="button" class="tk-fold-head" data-tk-fold="${key}" aria-expanded="${open}" aria-controls="tkf-${key}">
+          <span>${title}</span><span class="tk-count ${countCls}">${tasks.length}</span>
+          <span class="tk-fold-hint">${hint}</span>
+          <span class="tk-fold-chev">${TK_ICON.chev}</span>
+        </button>
+        <div class="tk-fold-body" id="tkf-${key}"><div class="tk-fold-inner"><div class="tk-fold-list">${tasks.map(t => taskCardHtml(t, key)).join('')}</div></div></div>
+      </section>`;
+  }
+
   function renderUserTaskCards() {
     const container = document.getElementById('userTaskList');
     if (!container) return;
 
-    const taskCards = userAssignedTasks.map(t => {
-      const dueDateObj = t.dueDate ? new Date(t.dueDate) : null;
-      const dueDate = dueDateObj ? dueDateObj.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A';
-      const isOverdue = dueDateObj ? dueDateObj < new Date() : false;
-      const statusClass = t.status || 'not_started';
-      const statusText = (t.status || 'Not Started').replace('_', ' ');
+    const b = taskBuckets(userAssignedTasks);
+    const section = (title, count, inner) =>
+      `<section class="tk-section"><div class="tk-section-head"><h2 class="tk-section-title">${title}</h2><span class="tk-count">${count}</span></div>${inner}</section>`;
 
-      let submissionHtml = '';
-      if (t.status === 'pending' || t.status === 'completed' || t.status === 'rejected') {
-        if (t.submissionText) {
-          submissionHtml = `
-            <div class="task-submission-review">
-              <strong style="display: block; margin-bottom: 8px; font-size: 12px; color: var(--accent);">YOUR SUBMISSION</strong>
-              ${escapeHtml(t.submissionText)}
-            </div>
-          `;
+    let html = section('To do', b.todo.length, b.todo.length
+      ? `<div class="tk-list">${b.todo.map(t => taskCardHtml(t, 'todo')).join('')}</div>`
+      : `<div class="tk-empty">You're all caught up. New tasks will show up here.</div>`);
+    if (b.review.length) {
+      html += section('Waiting for review', b.review.length, `<div class="tk-list">${b.review.map(t => taskCardHtml(t, 'review')).join('')}</div>`);
+    }
+    if (b.overdue.length) html += taskFoldHtml('overdue', 'Overdue', 'Deadline passed, submissions closed', 'danger', b.overdue);
+    if (b.done.length) html += taskFoldHtml('completed', 'Completed', 'Finished and accepted', 'good', b.done);
+
+    container.innerHTML = html;
+
+    if (!container.dataset.tkWired) {
+      container.dataset.tkWired = '1';
+      container.addEventListener('click', (e) => {
+        const f = e.target.closest('[data-tk-fold]');
+        if (f) {
+          const wrap = f.closest('.tk-fold');
+          const open = !wrap.classList.contains('open');
+          wrap.classList.toggle('open', open);
+          f.setAttribute('aria-expanded', String(open));
+          taskUI.fold[f.dataset.tkFold] = open;
+          return;
         }
-      }
+        const h = e.target.closest('[data-tc-toggle]');
+        if (h) {
+          const card = h.closest('.task-card');
+          const open = !card.classList.contains('open');
+          card.classList.toggle('open', open);
+          h.setAttribute('aria-expanded', String(open));
+          taskUI.card[card.dataset.taskCard] = open;
+        }
+      });
+    }
 
-      let linksHtml = '';
-      
-      // 1. Show Original Task Links (Reference Materials)
-      const originalTaskLinks = (t.links || []).filter(l => !l.is_submission_link);
-      if (originalTaskLinks.length > 0) {
-        linksHtml += `
-          <div class="task-links">
-            <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Reference Materials</div>
-            ${originalTaskLinks.map(l => `
-              <a href="${escapeHtml(l.url)}" target="_blank" class="task-link-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-                </svg>
-                ${escapeHtml(l.label || l.url)}
-              </a>
-            `).join('')}
-          </div>
-        `;
-      }
-
-      // 2. Show User's Own Submitted Links
-      const userSubmissionLinks = (t.links || []).filter(l => l.is_submission_link);
-      if (userSubmissionLinks.length > 0) {
-        linksHtml += `
-          <div class="task-links" style="margin-top: 12px;">
-            <div style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px;">Your Submitted Links</div>
-            ${userSubmissionLinks.map(l => `
-              <a href="${escapeHtml(l.url)}" target="_blank" class="task-link-item">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/>
-                </svg>
-                ${escapeHtml(l.label || l.url)}
-              </a>
-            `).join('')}
-          </div>
-        `;
-      }
-
-      const myVersions = (t.versions || []).slice().sort((a, b) => a.versionNo - b.versionNo);
-      const myRejection = latestRejection(myVersions);
-      const feedbackHtml = (t.status === 'rejected' && myRejection && myRejection.note) ? feedbackCalloutHtml(myRejection) : '';
-      const myHistoryHtml = historyHtml(myVersions);
-      const canStillAct = t.status === 'not_started' || t.status === 'rejected';
-      const canSubmit = canStillAct && !isOverdue;
-      let actionButton = '';
-      if (canSubmit) {
-        actionButton = `<button class="btn-action primary" data-task-action="submit" data-task-id="${t.taskId}">${t.status === 'rejected' ? 'Resubmit' : 'Submit Task'}</button>`;
-      } else if (canStillAct && isOverdue) {
-        actionButton = `<span style="font-size: 12px; font-weight: 600; color: var(--danger, #e5484d); text-transform: uppercase; letter-spacing: 0.05em;">Deadline Passed — Submissions Closed</span>`;
-      }
-
-      return `
-        <div class="task-card">
-          <div class="task-card-header">
-            <div>
-              <div class="task-card-title">${escapeHtml(t.title)}${autoBadgeHtml(t.taskId)}</div>
-              <div class="task-card-meta">
-                <span>${escapeHtml(t.groupName || 'Unassigned')}</span>
-                <span class="dot"></span>
-                <span class="${isOverdue ? 'due-overdue' : ''}">Due: ${dueDate}</span>${myVersions.length > 1 ? `<span class="dot"></span><span>Attempt ${myVersions.length}</span>` : ''}
-              </div>
-            </div>
-            <span class="task-status-badge ${isOverdue && canStillAct ? 'overdue' : statusClass}">${isOverdue && canStillAct ? 'Overdue' : statusText}</span>
-          </div>
-          ${t.description ? `<div class="task-description">${escapeHtml(t.description)}</div>` : ''}
-          ${feedbackHtml}
-          ${submissionHtml}
-          ${aiStudentBlockHtml(t, myVersions)}
-          ${linksHtml}
-          ${myHistoryHtml}
-          ${actionButton ? `<div style="margin-top: 16px; text-align: right;">${actionButton}</div>` : ''}
-        </div>
-      `;
-    }).join('');
-
-    container.innerHTML = taskCards;
-
-    document.querySelectorAll('[data-task-action="submit"]').forEach(btn => {
+    container.querySelectorAll('[data-task-action="submit"]').forEach(btn => {
       btn.addEventListener('click', () => openSubmitTaskDialog(btn.dataset.taskId));
     });
-    document.querySelectorAll('[data-task-action="ai-mark"]').forEach(btn => {
+    container.querySelectorAll('[data-task-action="ai-mark"]').forEach(btn => {
       btn.addEventListener('click', () => { btn.disabled = true; runAiMarking(btn.dataset.taskId); });
     });
   }
@@ -6227,28 +6486,31 @@ Marketing,alex99,</div>
     const __rej = __task.status === 'rejected'
       ? latestRejection((__task.versions || []).slice().sort((a, b) => a.versionNo - b.versionNo)) : null;
     dialogBox.innerHTML = `
-      <div class="dialog-title">${__rej ? 'Resubmit Task' : 'Submit Task'}</div>
+      <div class="dialog-title" data-dlg-size="mid">${__rej ? 'Resubmit Task' : 'Submit Task'}</div>
       ${__rej && __rej.note ? feedbackCalloutHtml(__rej) : ''}
       <div class="dialog-text">${__rej ? 'Fix what was asked above, then send it back for review. Your earlier attempt stays in History.' : 'Provide your text response and attach any relevant links for review.'}</div>
-      ${__meta ? `<div class="auto-note" style="margin:-12px 0 18px;">Automated task: the AI marks your work out of ${__meta.totalMarks} straight away. Reach ${Math.ceil((__meta.passPercent || 60) * __meta.totalMarks / 100)}/${__meta.totalMarks} and it is accepted with feedback; below that it is sent back with feedback so you can fix it and resubmit. It reads typed text and PDF, Word, PowerPoint, text and code files, not links or images.</div>` : ''}
-      
-      <div class="dialog-input-group">
-        <label>Submission Text</label>
-        <textarea id="submitTextInput" class="dialog-input" rows="4" style="resize: vertical;" placeholder="Write your response..."></textarea>
-      </div>
+      ${__meta ? `<div class="auto-note" style="margin:-8px 0 16px;">Automated task: the AI marks your work out of ${__meta.totalMarks} straight away. Reach ${Math.ceil((__meta.passPercent || 60) * __meta.totalMarks / 100)}/${__meta.totalMarks} and it is accepted with feedback; below that it is sent back with feedback so you can fix it and resubmit. It reads typed text and PDF, Word, PowerPoint, text and code files, not links or images.</div>` : ''}
 
-      <div class="dialog-input-group">
-        <label>Attach Links (Optional)</label>
-        <div id="submitLinksContainer">
-          <div style="display:flex; gap:8px; margin-bottom:8px;">
-            <input type="text" class="dialog-input" placeholder="URL" data-link-url style="flex: 2;">
-            <input type="text" class="dialog-input" placeholder="Label" data-link-label style="flex: 1;">
-          </div>
+      <div class="dlg-grid">
+        <div class="dialog-input-group c7">
+          <label>Submission Text</label>
+          <textarea id="submitTextInput" class="dialog-input" rows="11" style="resize: vertical;" placeholder="Write your response..."></textarea>
         </div>
-        <button class="btn-primary" id="addLinkBtn" style="margin-top:8px;">+ Add Link</button>
-      </div>
 
-      ${filePickerHtml('submitFilesInput')}
+        <div class="dlg-col c5">
+          <div class="dialog-input-group">
+            <label>Attach Links (Optional)</label>
+            <div id="submitLinksContainer">
+              <div style="display:flex; gap:8px; margin-bottom:8px;">
+                <input type="text" class="dialog-input" placeholder="URL" data-link-url style="flex: 2;">
+                <input type="text" class="dialog-input" placeholder="Label" data-link-label style="flex: 1;">
+              </div>
+            </div>
+            <button class="btn-primary" id="addLinkBtn" style="margin-top:4px;">+ Add Link</button>
+          </div>
+          ${filePickerHtml('submitFilesInput')}
+        </div>
+      </div>
 
       <div class="dialog-actions">
         <button class="btn-primary" id="cancelDialog">Cancel</button>
@@ -6325,7 +6587,7 @@ Marketing,alex99,</div>
     document.documentElement.setAttribute('data-tab', target);
     tabItems.forEach(t => t.classList.toggle("active", t.dataset.tab === target));
     dropdownItems.forEach(d => d.classList.toggle("active", d.dataset.tab === target));
-    if (dropdownLabel) dropdownLabel.textContent = target;
+    if (dropdownLabel) dropdownLabel.textContent = ({ MyTasks: 'My Tasks' })[target] || target;
 
     // Hide all tab content
     notesTabContent.style.display = 'none';
@@ -6710,6 +6972,7 @@ Marketing,alex99,</div>
       }
     }
 
+    const __switchingNote = !!currentNoteId && currentNoteId !== id;
     currentNoteId = id;
     hasUnsavedChanges = false;
     document.querySelectorAll('.note-item').forEach(el => el.classList.remove('active'));
@@ -6723,7 +6986,16 @@ Marketing,alex99,</div>
       metaModified.textContent = longDate(note.modified);
       updateCounters();
       setStatus('ready');
+      if (__switchingNote && currentTab === 'Notes') replayNoteEnter();
     }
+  }
+
+  function replayNoteEnter() {
+    const el = document.querySelector('.editor-inner');
+    if (!el) return;
+    el.classList.remove('note-enter');
+    void el.offsetWidth; // restart the animation
+    el.classList.add('note-enter');
   }
 
   async function deleteNotePermanently(id) {
@@ -7607,6 +7879,8 @@ Marketing,alex99,</div>
   }
   function tip() {
     try { if (localStorage.getItem('t12_keys_tip')) return; } catch (x) {}
+    /* the shortcut tip only makes sense with a keyboard */
+    try { if (window.matchMedia('(hover: none) and (pointer: coarse)').matches) return; } catch (x) {}
     var iv = setInterval(function () {
       if (!appVisible()) return;
       clearInterval(iv);
@@ -7621,6 +7895,28 @@ Marketing,alex99,</div>
   window.T12Keys = { fmt: fmt, run: function (id) { for (var i = 0; i < A.length; i++) if (A[i].id === id) return A[i].run(); } };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
   function init() { try { decorate(); sheet(); tip(); } catch (e) { console.error('T12Keys init', e); } }
+})();
+</script>
+
+<script>
+/* Size the dialog from a marker on its first child, and keep page content below the real top bar height. */
+(function () {
+  var box = document.getElementById('dialogBox');
+  if (box && window.MutationObserver) {
+    new MutationObserver(function () {
+      var m = box.querySelector(':scope > [data-dlg-size]');
+      if (m) box.setAttribute('data-size', m.getAttribute('data-dlg-size')); else box.removeAttribute('data-size');
+    }).observe(box, { childList: true });
+  }
+  var bar = document.querySelector('.editor-top-bar');
+  if (bar && window.ResizeObserver) {
+    var set = function () {
+      var h = Math.ceil(bar.getBoundingClientRect().height);
+      if (h > 0) document.documentElement.style.setProperty('--topbar-h', h + 'px');
+    };
+    new ResizeObserver(set).observe(bar);
+    set();
+  }
 })();
 </script>
 
