@@ -1841,6 +1841,13 @@
     color: var(--text); background: rgba(176, 136, 50, 0.12); border: 1px solid rgba(176, 136, 50, 0.4); border-radius: var(--radius);
   }
   .ai-flag svg { width: 14px; height: 14px; flex-shrink: 0; margin-top: 2px; color: var(--warn); }
+  .ai-outcome {
+    margin: 0 0 12px; padding: 9px 11px; font-size: 13px; font-weight: 600; line-height: 1.45;
+    border-radius: var(--radius); border: 1px solid var(--border); color: var(--text);
+  }
+  .ai-outcome.ok { background: rgba(95, 122, 58, 0.12); border-color: rgba(95, 122, 58, 0.4); }
+  .ai-outcome.bad { background: rgba(162, 59, 42, 0.08); border-color: rgba(162, 59, 42, 0.35); }
+  .ai-outcome.wait { background: rgba(176, 136, 50, 0.12); border-color: rgba(176, 136, 50, 0.4); }
 </style>
 </head>
 <body>
@@ -3162,6 +3169,7 @@
   let automatedResults = {};   // taskId -> userId -> latest AI result
   let automatedLoaded = false;
   let _autoRefreshP = null;
+  let _autoRefreshQueued = false;
   let orgLoaded = { groups: false, accounts: false, tasks: false };
   let userTasksLoaded = false;
   const orgLoading = () => !(orgLoaded.groups && orgLoaded.accounts && orgLoaded.tasks);
@@ -3527,7 +3535,9 @@
 
             // Show Verify/Reject buttons only for pending submissions
             let memberActions = '';
-            if (sub?.status === 'pending') {
+            if (sub?.status === 'pending' && automatedMeta[String(t.id)]) {
+              memberActions = '<span class="auto-note" style="margin:0;">Waiting for AI marking</span>';
+            } else if (sub?.status === 'pending') {
               memberActions = `
                 <button class="btn-row" data-task-action="verify" data-task-id="${t.id}" data-user-id="${member.user_id}" style="margin-left: 8px;">Verify</button>
                 <button class="btn-row danger" data-task-action="reject" data-task-id="${t.id}" data-user-id="${member.user_id}" data-username="${escapeHtml(memberUser)}">Reject</button>
@@ -4033,8 +4043,9 @@
   }
 
   function refreshAutomated() {
-    if (_autoRefreshP) return _autoRefreshP;
-    _autoRefreshP = (async () => {
+    // If a refresh is already running, remember to run once more afterwards (the task lists may have changed).
+    if (_autoRefreshP) { _autoRefreshQueued = true; return _autoRefreshP; }
+    const p = (async () => {
       try {
         if (!getStoredSession()) return;
         const ids = new Set();
@@ -4058,11 +4069,14 @@
         }
       } catch (e) {
         console.warn('Automated task refresh failed:', e.message);
-      } finally {
-        _autoRefreshP = null;
       }
     })();
-    return _autoRefreshP;
+    _autoRefreshP = p;
+    p.then(() => {
+      if (_autoRefreshP === p) _autoRefreshP = null;
+      if (_autoRefreshQueued) { _autoRefreshQueued = false; refreshAutomated(); }
+    });
+    return p;
   }
 
   function autoBadgeHtml(taskId) {
@@ -4076,6 +4090,25 @@
     return p >= 0.75 ? 'good' : p >= 0.5 ? 'mid' : 'low';
   }
 
+  function aiOutcomeHtml(r, teacher) {
+    const meta = automatedMeta[String(r.taskId)];
+    const need = meta && meta.passPercent ? Math.ceil(meta.passPercent * r.outOf / 100) : null;
+    if (r.outcome === 'accepted') {
+      return `<div class="ai-outcome ok">${teacher ? 'Accepted automatically and marked complete.' : 'Accepted. This task is now marked complete.'}</div>`;
+    }
+    if (r.outcome === 'rejected') {
+      if (r.flagged) {
+        return `<div class="ai-outcome bad">${teacher
+          ? 'Sent back automatically: possible attempt to influence the AI.'
+          : 'Sent back. This looked like an attempt to influence the AI. Resubmit your own work.'}</div>`;
+      }
+      return `<div class="ai-outcome bad">${teacher
+        ? `Sent back automatically (below the pass mark of ${need != null ? need + '/' + r.outOf : 'this task'}).`
+        : `Sent back. You need ${need != null ? need + '/' + r.outOf : 'a higher score'} to be accepted. Fix the points below and resubmit.`}</div>`;
+    }
+    return `<div class="ai-outcome wait">${teacher ? 'The AI could not finish deciding this yet. The student can retry.' : 'The AI could not finish deciding this yet. Tap "Get AI marking" to try again.'}</div>`;
+  }
+
   function aiResultBodyHtml(r, teacher) {
     const steps = (r.nextSteps || []).map(x => `<li>${escapeHtml(x)}</li>`).join('');
     const crit = (r.breakdown || []).map(b => `
@@ -4084,10 +4117,11 @@
         <span class="ai-crit-pts">${b.awarded}/${b.max}</span>
       </div>`).join('');
     const notes = (r.readNotes || []).map(n => `<div class="auto-note">${escapeHtml(n)}</div>`).join('');
-    const flag = r.flagged
-      ? `<div class="ai-flag">${WARN_ICON}<span>${teacher ? escapeHtml(r.flagNote || 'This work may contain an attempt to influence the AI. Review it before relying on the mark.') : 'This submission was flagged for your teacher to review.'}</span></div>`
+    const flag = (r.flagged && teacher)
+      ? `<div class="ai-flag">${WARN_ICON}<span>${escapeHtml(r.flagNote || 'This work may contain an attempt to influence the AI.')}</span></div>`
       : '';
     return `
+      ${aiOutcomeHtml(r, teacher)}
       <div class="ai-feedback">${escapeHtml(r.feedback)}</div>
       ${steps ? `<div class="ai-sub">What to do next</div><ol class="ai-steps">${steps}</ol>` : ''}
       ${crit ? `<details class="ai-details"><summary>Mark breakdown</summary>${crit}</details>` : ''}
@@ -4116,7 +4150,7 @@
     const crit = (m.criteria || []).map(c => `<div class="ai-crit"><span>${escapeHtml(c.text)}</span><span class="ai-crit-pts">${c.marks}</span></div>`).join('');
     return `
       <details class="ai-details">
-        <summary>WTCF (${m.totalMarks} ${m.totalMarks === 1 ? 'mark' : 'marks'})</summary>
+        <summary>WTCF (${m.totalMarks} ${m.totalMarks === 1 ? 'mark' : 'marks'}, accepted at ${m.passPercent || 60}%+)</summary>
         <div class="ai-wtcf">${escapeHtml(m.wtcf || '')}</div>
         ${crit ? `<div class="ai-sub">How the AI splits the marks</div>${crit}` : ''}
       </details>`;
@@ -4127,7 +4161,7 @@
     if (!r) return '';
     return `
       <details class="ai-details">
-        <summary><span class="ai-chip ${aiScoreClass(r)}">AI ${r.mark}/${r.outOf}</span>${r.flagged ? '<span class="ai-chip warn">Review</span>' : ''}<span class="ai-when">attempt ${r.versionNo}</span></summary>
+        <summary><span class="ai-chip ${aiScoreClass(r)}">AI ${r.mark}/${r.outOf}</span>${r.flagged ? '<span class="ai-chip warn">Flagged</span>' : ''}<span class="ai-when">attempt ${r.versionNo} &middot; ${r.outcome === 'accepted' ? 'accepted' : r.outcome === 'rejected' ? 'sent back' : 'retry pending'}</span></summary>
         ${aiResultBodyHtml(r, true)}
       </details>`;
   }
@@ -4142,14 +4176,14 @@
     const submitted = t.status === 'pending' || t.status === 'completed';
     let html = '';
     if (r) html += aiResultCardHtml(r, latestNo);
-    if (submitted && (!r || r.versionNo < latestNo)) {
+    if (submitted && (!r || r.versionNo < latestNo || r.outcome === 'review')) {
       html += `
         <div class="ai-result ai-center">
           <div class="ai-feedback" style="margin-bottom:12px;">The AI hasn't marked this attempt yet.</div>
           <button class="btn-action primary" data-task-action="ai-mark" data-task-id="${escapeHtml(tid)}">Get AI marking</button>
         </div>`;
     } else if (!submitted && !r) {
-      html += `<div class="auto-note" style="margin-top:12px;">Automated task: the AI marks your work out of ${meta.totalMarks} and tells you how to improve. It reads typed text and PDF, Word, PowerPoint, text and code files.</div>`;
+      html += `<div class="auto-note" style="margin-top:12px;">Automated task: the AI marks your work out of ${meta.totalMarks}. Reach ${Math.ceil((meta.passPercent || 60) * meta.totalMarks / 100)}/${meta.totalMarks} and it is accepted with feedback; below that it is sent back with feedback so you can fix it and resubmit. It reads typed text and PDF, Word, PowerPoint, text and code files.</div>`;
     }
     return html;
   }
@@ -4168,7 +4202,7 @@
       const byUser = automatedResults[String(taskId)] || (automatedResults[String(taskId)] = {});
       byUser[String(r.userId)] = r;
       dialogBox.innerHTML = `
-        <div class="dialog-title">Your AI marking</div>
+        <div class="dialog-title">${r.outcome === 'accepted' ? 'Accepted' : r.outcome === 'rejected' ? 'Not quite yet' : 'Your AI marking'}</div>
         <div class="ai-result" style="margin-top:0;">
           <div class="ai-result-head">
             <div class="ai-result-label">${AI_ICON}Out of ${r.outOf}</div>
@@ -4177,9 +4211,12 @@
           ${aiResultBodyHtml(r, false)}
         </div>
         <div class="dialog-actions" style="margin-top:20px;">
-          <button class="btn-primary main" id="aiDone">Done</button>
+          <button class="btn-primary main" id="aiDone">${r.outcome === 'rejected' ? 'Fix &amp; resubmit' : 'Done'}</button>
         </div>`;
-      document.getElementById('aiDone').onclick = closeDialog;
+      document.getElementById('aiDone').onclick = async () => {
+        closeDialog();
+        if (r.outcome === 'rejected') { await fetchUserTasks(); openSubmitTaskDialog(taskId); }
+      };
     } catch (e) {
       const noAi = e.code === 'NO_AI';
       dialogBox.innerHTML = `
@@ -4208,6 +4245,7 @@
 
     const chevron = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
     const marksOptions = AUTO_MARK_OPTIONS.map(n => `<div class="custom-select-option${n === 10 ? ' selected' : ''}" data-value="${n}">${n} ${n === 1 ? 'mark' : 'marks'}</div>`).join('');
+    const passOptions = [50, 60, 70, 80, 90, 100].map(n => `<div class="custom-select-option${n === 60 ? ' selected' : ''}" data-value="${n}">${n}%</div>`).join('');
 
     dialogBox.innerHTML = `
       <div class="dialog-title">Create New Task</div>
@@ -4274,6 +4312,18 @@
           </div>
           <input type="hidden" id="taskMarksValue" value="10">
         </div>
+        <div class="dialog-input-group">
+          <label>Accept When Score Is At Least</label>
+          <div class="custom-select-wrapper" id="taskPassSelectWrapper">
+            <div class="custom-select-toggle" id="taskPassToggle">
+              <span id="taskPassLabel">60%</span>
+              ${chevron}
+            </div>
+            <div class="custom-select-menu" id="taskPassMenu">${passOptions}</div>
+          </div>
+          <input type="hidden" id="taskPassValue" value="60">
+          <div class="auto-note">At or above this, the work is accepted and marked complete, with feedback. Below it, the work is sent back with feedback and the student fixes it and resubmits.</div>
+        </div>
       </div>
 
       <div class="dialog-input-group">
@@ -4318,13 +4368,14 @@
       const auto = v === 'automated';
       document.getElementById('autoSection').style.display = auto ? '' : 'none';
       document.getElementById('createIntro').textContent = auto
-        ? 'The AI marks each submission against your WTCF and tells students what to do next.'
+        ? 'The AI marks each submission against your WTCF, accepts good work and sends the rest back with feedback.'
         : 'Assign a new task to one of your groups.';
       document.getElementById('confirmCreateTask').textContent = auto ? 'Check WTCF & Create' : 'Create';
     };
     wireSelect('taskTypeSelectWrapper', 'taskTypeToggle', 'taskTypeLabel', 'taskTypeValue', '#taskTypeMenu .custom-select-option', syncType);
     wireSelect('taskGroupSelectWrapper', 'taskGroupToggle', 'taskGroupLabel', 'taskGroupValue', '#taskGroupMenu .custom-select-option', null);
     wireSelect('taskMarksSelectWrapper', 'taskMarksToggle', 'taskMarksLabel', 'taskMarksValue', '#taskMarksMenu .custom-select-option', null);
+    wireSelect('taskPassSelectWrapper', 'taskPassToggle', 'taskPassLabel', 'taskPassValue', '#taskPassMenu .custom-select-option', null);
 
     const wtcfErr = document.getElementById('wtcfError');
     const showWtcfError = (msg) => {
@@ -4374,7 +4425,7 @@
         try {
           setStatus('saving');
           toast('Checking your WTCF…', 'success');
-          const v = await autoApiCall({ action: 'validate_wtcf', wtcf, marks });
+          const v = await autoApiCall({ action: 'validate_wtcf', wtcf, marks, passPercent: Number(document.getElementById('taskPassValue').value) });
           proof = v.proof;
         } catch (e) {
           setStatus('ready');
@@ -6179,7 +6230,7 @@ Marketing,alex99,</div>
       <div class="dialog-title">${__rej ? 'Resubmit Task' : 'Submit Task'}</div>
       ${__rej && __rej.note ? feedbackCalloutHtml(__rej) : ''}
       <div class="dialog-text">${__rej ? 'Fix what was asked above, then send it back for review. Your earlier attempt stays in History.' : 'Provide your text response and attach any relevant links for review.'}</div>
-      ${__meta ? `<div class="auto-note" style="margin:-12px 0 18px;">Automated task: after you submit, the AI marks your work out of ${__meta.totalMarks} and tells you what to improve. It can read typed text and PDF, Word, PowerPoint, text and code files, but not links or images.</div>` : ''}
+      ${__meta ? `<div class="auto-note" style="margin:-12px 0 18px;">Automated task: the AI marks your work out of ${__meta.totalMarks} straight away. Reach ${Math.ceil((__meta.passPercent || 60) * __meta.totalMarks / 100)}/${__meta.totalMarks} and it is accepted with feedback; below that it is sent back with feedback so you can fix it and resubmit. It reads typed text and PDF, Word, PowerPoint, text and code files, not links or images.</div>` : ''}
       
       <div class="dialog-input-group">
         <label>Submission Text</label>
