@@ -2195,6 +2195,10 @@
         <span class="brand-name">Time12</span>
       </div>
       <div class="header-actions">
+        <button class="theme-toggle magnetic" id="newFeaturesLink" type="button" title="New features" aria-label="New features">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/></svg>
+          <i class="nf-dot"></i>
+        </button>
         <button class="theme-toggle device-toggle magnetic" id="deviceToggle" title="Switch device mode" type="button">
           <svg id="deviceIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
         </button>
@@ -2225,7 +2229,6 @@
           <span class="footer-stat-dot" id="syncDot"></span>
           <span id="syncLabel">Synced</span>
         </div>
-        <a class="footer-link" id="newFeaturesLink" role="button" tabindex="0" title="See what's new">New features<i class="nf-dot"></i></a>
         <a class="footer-link" id="shortcutsLink">Shortcuts</a>
       </div>
       <div class="footer-row">
@@ -8781,17 +8784,17 @@ Marketing,alex99,</div>
 </script>
 
 <!-- ============ TIME12 NEW FEATURES (release-notes panel) ============
-  WHAT:  Footer link "New features" / command palette -> full panel with a codename dropdown (releases),
+  WHAT:  Header icon button "New features" / command palette -> full panel with a codename dropdown (releases),
          two tracks per release: "Major features" (life/business-changing only) and "Minor features" (small but cool).
   ADD A RELEASE LATER: put a new object at the TOP of RELEASES in the script below. Nothing else to touch:
-         the dropdown, counts, pips, tabs and the "new" dot on the footer link all read from that array.
+         the dropdown, counts, pips, tabs and the "new" dot on the header button all read from that array.
   KEYS (only while open, plain keys, so the app's Ctrl/Cmd shortcuts are untouched):
          Left/Right = previous/next feature (rolls from Major into Minor)   Up/Down = jump to Major/Minor
          C = open codename dropdown (then Up/Down/Enter/Esc)                Esc = close dropdown, then panel
   DEPENDENCIES (all in this file): app tokens (--bg, --accent...), .custom-select-* dropdown classes, .key chips,
          and the tour's illustration kit (.t12t-ill .m/.a/.af/.lnf/.kt/.sm/.wh and .ill-pop/.ill-draw/.ill-bar/.ill-ring/.ill-up
          + their t12t* keyframes). If the tour is ever removed, copy those rules or the art loses its look.
-  HOOKS elsewhere: #newFeaturesLink (sidebar footer), 'features' entry in COMMANDS (palette), overlay() + INFO + hints ov
+  HOOKS elsewhere: #newFeaturesLink (icon button in the sidebar header, beside the device/theme toggles), 'features' entry in COMMANDS (palette), overlay() + INFO + hints ov
          inside the "Time12 Keys" script (so Ctrl/Cmd shortcuts pause while this is open). -->
 <style id="t12nf-css">
   #t12nf { --nf-ease: cubic-bezier(.2, .8, .2, 1); --nf-spring: cubic-bezier(.34, 1.4, .5, 1);
@@ -8855,9 +8858,9 @@ Marketing,alex99,</div>
   .nf-keys .key { color: var(--text); }
   .nf-keys .nf-gap { margin-left: 10px; }
 
-  /* sidebar footer link + "new" dot (shown until the latest codename has been opened) */
-  .nf-dot { display: none; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-left: 6px; vertical-align: middle; }
-  #newFeaturesLink.has-new .nf-dot { display: inline-block; animation: t12tDotPulse 1.4s ease-out infinite; }
+  /* header icon button (next to the device + theme toggles) + "new" dot, shown until the latest codename has been opened */
+  .nf-dot { display: none; position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--surface-2); }
+  #newFeaturesLink.has-new .nf-dot { display: block; animation: t12tDotPulse 1.4s ease-out infinite; }
 
   @keyframes nfIn { from { opacity: 0; transform: translate(calc(var(--dx, 0) * 40px), calc(var(--dy, 0) * 28px)) scale(.985); } }
   @keyframes nfSheen { to { transform: translateX(130%); } }
@@ -9083,13 +9086,12 @@ Marketing,alex99,</div>
     e.preventDefault();
   }
 
-  /* ---------------- boot: footer link + public API ---------------- */
+  /* ---------------- boot: header button + public API ---------------- */
   var link = D.getElementById('newFeaturesLink');
   if (link) {
     var seen = null; try { seen = localStorage.getItem(SEEN); } catch (e) {}
     link.classList.toggle('has-new', seen !== RELEASES[0].id);
     link.addEventListener('click', function () { open(link); });
-    link.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(link); } });   /* it is an <a> without href, so wire the keyboard ourselves */
   }
   window.T12Features = { open: open, close: close };   /* palette: window.T12Features.open() */
 })();
