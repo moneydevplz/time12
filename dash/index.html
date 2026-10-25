@@ -2195,6 +2195,10 @@
         <span class="brand-name">Time12</span>
       </div>
       <div class="header-actions">
+        <button class="theme-toggle magnetic" id="newFeaturesLink" type="button" title="New features" aria-label="New features">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/></svg>
+          <i class="nf-dot"></i>
+        </button>
         <button class="theme-toggle device-toggle magnetic" id="deviceToggle" title="Switch device mode" type="button">
           <svg id="deviceIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></svg>
         </button>
@@ -7385,11 +7389,13 @@ Marketing,alex99,</div>
     { id: 'sidebar', label: 'Toggle sidebar', icon: 'note', kbd: K('Mod+\\'), run: T('sidebar') },
     { id: 'theme', label: 'Toggle theme', icon: 'sun', kbd: K('Mod+J'), run: () => themeToggle.click() },
     { id: 'device', label: 'Switch device mode (Higher / Lower End)', icon: 'device', kbd: K('Mod+Shift+L'), run: () => toggleDeviceMode() },
+    { id: 'features', label: 'New features', icon: 'spark', run: () => window.T12Features && window.T12Features.open() },
     { id: 'shortcuts', label: 'Show shortcuts', icon: 'kb', kbd: K('Mod+/'), run: () => shortcutsOverlay.classList.add('active') },
     { id: 'logout', label: 'Sign out', icon: 'logout', kbd: K('Mod+Shift+X'), run: () => doLogout() },
   ];
 
   const ICONS = {
+    spark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/></svg>',
     device: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d=\"M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16\"/></svg>',
     plus: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>',
     save: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>',
@@ -7701,6 +7707,7 @@ Marketing,alex99,</div>
     if ($('dialogOverlay') && $('dialogOverlay').classList.contains('active')) return 'dialog';
     if ($('paletteOverlay') && $('paletteOverlay').classList.contains('active')) return 'palette';
     if ($('shortcutsOverlay') && $('shortcutsOverlay').classList.contains('active')) return 'shortcuts';
+    if ($('t12nf') && $('t12nf').classList.contains('active')) return 'features';
     return null;
   }
   var NON_TEXT = { checkbox: 1, radio: 1, button: 1, submit: 1, reset: 1, file: 1, range: 1, color: 1, image: 1 };
@@ -7761,7 +7768,7 @@ Marketing,alex99,</div>
 
   /* ---------- action table: every entry is Cmd/Ctrl + key (+Shift/Alt). ov = overlays where it is allowed. ---------- */
   var A = [
-    { id: 'hints', g: 'Click anything', label: 'Hint mode: label every clickable thing', codes: ['KeyE'], scopes: ['app', 'login', 'picker'], ov: ['dialog'], run: function () { hintOpen(); } },
+    { id: 'hints', g: 'Click anything', label: 'Hint mode: label every clickable thing', codes: ['KeyE'], scopes: ['app', 'login', 'picker'], ov: ['dialog', 'features'], run: function () { hintOpen(); } },
     { id: 'palette', g: 'General', label: 'Command palette', codes: ['KeyK'], scopes: ['app'], ov: ['palette'], run: function () { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, metaKey: IS_MAC, bubbles: true })); } },
     { id: 'help', g: 'General', label: 'Show / hide this sheet', codes: ['Slash'], scopes: ['app', 'login', 'picker'], ov: ['shortcuts'], run: function () { $('shortcutsOverlay').classList.toggle('active'); } },
     { id: 'theme', g: 'General', label: 'Toggle theme', codes: ['KeyJ'], scopes: ['app', 'login'], run: function () { click(themeBtn()); } },
@@ -7802,7 +7809,9 @@ Marketing,alex99,</div>
     { g: 'Formatting', label: 'Bold', keys: ['Mod+B'] },
     { g: 'Formatting', label: 'Italic', keys: ['Mod+I'] },
     { g: 'Formatting', label: 'Link', keys: ['Mod+L'] },
-    { g: 'General', label: 'Close dialog / palette / menu', keys: ['Esc'] }
+    { g: 'General', label: 'Close dialog / palette / menu', keys: ['Esc'] },
+    { g: 'General', label: 'New features: previous / next', keys: ['\u2190', '\u2192'] },
+    { g: 'General', label: 'New features: Major / Minor', keys: ['\u2191', '\u2193'] }
   ];
 
   /* ---------- key formatting ---------- */
@@ -8771,6 +8780,320 @@ Marketing,alex99,</div>
     b.onclick = function () { var o = $('shortcutsOverlay'); if (o) o.classList.remove('active'); setTimeout(function () { start(true); }, 220); };
     close.parentNode.insertBefore(b, close);
   })();
+})();
+</script>
+
+<!-- ============ TIME12 NEW FEATURES (release-notes panel) ============
+  WHAT:  Header icon button "New features" / command palette -> full panel with a codename dropdown (releases),
+         two tracks per release: "Major features" (life/business-changing only) and "Minor features" (small but cool).
+  ADD A RELEASE LATER: put a new object at the TOP of RELEASES in the script below. Nothing else to touch:
+         the dropdown, counts, pips, tabs and the "new" dot on the header button all read from that array.
+  KEYS (only while open, plain keys, so the app's Ctrl/Cmd shortcuts are untouched):
+         Left/Right = previous/next feature (rolls from Major into Minor)   Up/Down = jump to Major/Minor
+         C = open codename dropdown (then Up/Down/Enter/Esc)                Esc = close dropdown, then panel
+  DEPENDENCIES (all in this file): app tokens (--bg, --accent...), .custom-select-* dropdown classes, .key chips,
+         and the tour's illustration kit (.t12t-ill .m/.a/.af/.lnf/.kt/.sm/.wh and .ill-pop/.ill-draw/.ill-bar/.ill-ring/.ill-up
+         + their t12t* keyframes). If the tour is ever removed, copy those rules or the art loses its look.
+  HOOKS elsewhere: #newFeaturesLink (icon button in the sidebar header, beside the device/theme toggles), 'features' entry in COMMANDS (palette), overlay() + INFO + hints ov
+         inside the "Time12 Keys" script (so Ctrl/Cmd shortcuts pause while this is open). -->
+<style id="t12nf-css">
+  #t12nf { --nf-ease: cubic-bezier(.2, .8, .2, 1); --nf-spring: cubic-bezier(.34, 1.4, .5, 1);
+    position: fixed; inset: 0; z-index: 1900; display: none; align-items: center; justify-content: center; padding: 24px;
+    background: rgba(0, 0, 0, .42); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); opacity: 0; transition: opacity .3s ease; }
+  #t12nf.active { display: flex; }          /* .active = in the DOM flow (also during the close animation) */
+  #t12nf.show { opacity: 1; }               /* .show   = visible; added one frame after .active so transitions run */
+
+  .nf-panel { width: 100%; max-width: 960px; max-height: calc(100vh - 48px); max-height: calc(100dvh - 48px); display: flex; flex-direction: column; outline: none;
+    background: var(--liquid-sheen), var(--bg); border: 1px solid var(--app-glass-border); border-radius: 16px;
+    box-shadow: var(--shadow-soft), 0 30px 80px rgba(0, 0, 0, .3);
+    transform: translateY(22px) scale(.95); opacity: 0; transition: transform .55s var(--nf-spring), opacity .3s ease; }
+  #t12nf.show .nf-panel { transform: none; opacity: 1; }   /* NOTE: panel must NOT clip (overflow) or the dropdown menu gets cut */
+
+  /* header: title, codename dropdown, close */
+  .nf-head { display: flex; align-items: center; gap: 12px; padding: 22px 26px 16px; }
+  .nf-head h2 { font: 400 30px/1.1 var(--serif); color: var(--text); }
+  .nf-sp { flex: 1; }
+  .nf-dd { width: 210px; }
+  #t12nf .custom-select-toggle { font-weight: 600; gap: 10px; }
+  #t12nf .custom-select-toggle svg { margin-left: auto; flex-shrink: 0; }
+  #t12nf .custom-select-menu { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; border: 1px solid var(--border);
+    top: calc(100% + 6px); max-height: 260px; box-shadow: 0 14px 36px rgba(0, 0, 0, .2); transform-origin: top center; animation: csIn .16s var(--nf-ease) both; }
+  #t12nf .custom-select-option { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  #t12nf .custom-select-option em { font-style: normal; font-size: 11px; font-weight: 600; color: var(--accent); background: var(--accent-soft); padding: 1px 8px; border-radius: 99px; }
+  #t12nf .custom-select-option.hl { background: var(--surface-2); color: var(--accent); }   /* keyboard highlight */
+  .nf-gem { width: 12px; height: 12px; flex-shrink: 0; transform: rotate(45deg); border-radius: 3px; position: relative; overflow: hidden;
+    background: linear-gradient(135deg, #f4f7ff, #9fb4e8 55%, #dfe8ff); box-shadow: 0 0 9px rgba(159, 180, 232, .85); }
+  .nf-x { width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--surface-2); color: var(--text-soft); font-size: 20px; line-height: 1; cursor: pointer; }
+  .nf-x:hover { color: var(--text); transform: rotate(90deg); }
+
+  /* tracks: segmented control; .nf-pill glides under the active tab (position set in JS: placePill) */
+  .nf-tabs { position: relative; display: flex; gap: 2px; width: max-content; max-width: calc(100% - 52px); margin: 0 26px; padding: 4px; background: var(--surface); border: 1px solid var(--border); border-radius: 99px; }
+  .nf-pill { position: absolute; top: 4px; bottom: 4px; left: 0; width: 0; border-radius: 99px; background: var(--accent); box-shadow: 0 4px 14px rgba(253, 126, 20, .35);
+    transition: transform .5s var(--nf-spring), width .5s var(--nf-spring); }
+  .nf-tab { position: relative; z-index: 1; border: 0; background: none; cursor: pointer; padding: 8px 18px; border-radius: 99px; font: 600 13.5px var(--sans); color: var(--text-soft); transition: color .3s; white-space: nowrap; }
+  .nf-tab.on { color: #fff; }
+  .nf-tab b { font-weight: 600; opacity: .7; margin-left: 6px; }
+
+  /* stage: art on the left, copy on the right. Children re-created per feature so their entrance animations replay. */
+  .nf-stage { flex: 1; min-height: 0; overflow: hidden auto; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 30px; align-items: center; padding: 24px 26px 10px; }
+  .nf-in { animation: nfIn .6s var(--nf-ease) both; animation-delay: calc(var(--i, 0) * 55ms); }   /* --dx/--dy = travel direction, set per render */
+  .nf-stage.bump { animation: nfBump .4s ease; }
+  #t12nf .nf-art { height: auto; min-height: 240px; position: relative; overflow: hidden; border: 1px solid var(--border); border-radius: 14px; }
+  #t12nf .nf-art svg { height: auto; width: 100%; max-width: 440px; }
+  .nf-art::after { content: ''; position: absolute; inset: 0; pointer-events: none; transform: translateX(-130%);   /* moonstone sheen sweep */
+    background: linear-gradient(115deg, transparent 38%, rgba(160, 185, 255, .38) 50%, transparent 62%); animation: nfSheen 1.2s .3s ease both; }
+  .nf-kick { font: 500 13px var(--sans); color: var(--text-muted); margin-bottom: 8px; }
+  .nf-copy h3 { font: 400 32px/1.12 var(--serif); color: var(--text); margin-bottom: 10px; }
+  .nf-copy p { font: 400 15px/1.55 var(--sans); color: var(--text-soft); margin-bottom: 14px; max-width: 46ch; }
+  .nf-copy ul { list-style: none; display: grid; gap: 8px; }
+  .nf-copy li { position: relative; padding-left: 20px; font: 400 14px/1.45 var(--sans); color: var(--text); max-width: 52ch; }
+  .nf-copy li::before { content: ''; position: absolute; left: 0; top: .5em; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+
+  /* footer: progress pips (active one stretches) + key hints */
+  .nf-foot { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; padding: 14px 26px 22px; }
+  .nf-pips { display: flex; gap: 6px; align-items: center; }
+  .nf-pip { width: 8px; height: 8px; padding: 0; border: 0; border-radius: 99px; background: var(--border); cursor: pointer; transition: width .5s var(--nf-spring), background .3s; }
+  .nf-pip.on { width: 28px; background: var(--accent); }
+  .nf-keys { display: flex; align-items: center; gap: 6px; font: 500 12px var(--sans); color: var(--text-muted); flex-wrap: wrap; }
+  .nf-keys .key { color: var(--text); }
+  .nf-keys .nf-gap { margin-left: 10px; }
+
+  /* header icon button (next to the device + theme toggles) + "new" dot, shown until the latest codename has been opened */
+  .nf-dot { display: none; position: absolute; top: 4px; right: 4px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px var(--surface-2); }
+  #newFeaturesLink.has-new .nf-dot { display: block; animation: t12tDotPulse 1.4s ease-out infinite; }
+
+  @keyframes nfIn { from { opacity: 0; transform: translate(calc(var(--dx, 0) * 40px), calc(var(--dy, 0) * 28px)) scale(.985); } }
+  @keyframes nfSheen { to { transform: translateX(130%); } }
+  @keyframes nfBump { 30% { transform: translateX(calc(var(--dx, 1) * -8px)); } 60% { transform: translateX(calc(var(--dx, 1) * 4px)); } }
+
+  @media (max-width: 720px) {
+    #t12nf { padding: 10px; } .nf-head { padding: 16px 16px 12px; } .nf-head h2 { font-size: 24px; } .nf-dd { width: 150px; }
+    .nf-tabs { margin: 0 16px; } .nf-tab { padding: 8px 12px; font-size: 13px; }
+    .nf-stage { grid-template-columns: 1fr; gap: 16px; padding: 16px 16px 6px; align-items: start; } #t12nf .nf-art { min-height: 150px; }
+    .nf-copy h3 { font-size: 25px; } .nf-foot { padding: 12px 16px 16px; }
+  }
+  @media (hover: none) and (pointer: coarse) { .nf-keys { display: none; } }
+  /* perf tiers + reduced motion follow the rest of the app: end states stay, motion goes */
+  html[data-perf="low"] #t12nf *, html[data-perf="low"] #t12nf { animation: none !important; }
+  html[data-perf="low"] #t12nf .nf-panel { transition-duration: .01ms; }
+  @media (prefers-reduced-motion: reduce) { #t12nf, #t12nf * { animation: none !important; transition-duration: .01ms !important; } }
+</style>
+
+<script id="t12nf-js">
+(function () {
+  'use strict';
+  var D = document;
+  var CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+  var SEEN = 't12nf_seen';   /* localStorage: id of the newest release the user has opened */
+
+  /* ---------------- ART ----------------
+     One tiny animated SVG per feature, keyed by the `art` field below. They only use the tour's illustration kit classes,
+     so colours/dark mode come for free. Stagger with d(i). Base state = final state, so reduced motion still reads. */
+  var d = function (i) { return ' style="animation-delay:' + (250 + i * 90) + 'ms"'; };
+  var svg = function (b) { return '<svg viewBox="0 0 300 160" aria-hidden="true">' + b + '</svg>'; };
+  var ln = function (x, y, w) { return '<rect class="lnf" x="' + x + '" y="' + y + '" width="' + w + '" height="6" rx="3"/>'; };
+  var ART = {
+    ai: function () { return svg('<rect class="m" x="26" y="20" width="124" height="120" rx="10"/>' + ln(42, 40, 70) + ln(42, 56, 92) + ln(42, 72, 80) + ln(42, 88, 92) + ln(42, 104, 56) +
+      '<circle class="m" cx="214" cy="62" r="32"/><circle class="a ill-draw" cx="214" cy="62" r="32" pathLength="1" style="transform:rotate(-90deg)"/><text class="kt" x="214" y="68">8/10</text>' +
+      '<g class="ill-pop"><rect class="af" x="168" y="108" width="92" height="28" rx="14"/><text class="wh" x="214" y="126">Accepted</text></g>'); },
+    tasks: function () { var o = ''; ['To do', 'In review', 'Overdue'].forEach(function (t, i) { var y = 18 + i * 46, hi = i === 0;
+        o += '<g class="ill-pop"' + d(i) + '><rect class="m" x="24" y="' + y + '" width="252" height="38" rx="9"' + (hi ? ' style="stroke:var(--accent)"' : '') + '/><circle class="af" cx="44" cy="' + (y + 19) + '" r="5"' + (hi ? '' : ' style="opacity:.4"') + '/>' + ln(58, y + 16, 90) + '<text class="sm" x="262" y="' + (y + 23) + '" style="text-anchor:end">' + t + '</text></g>'; });
+      return svg(o); },
+    tour: function () { return svg('<rect class="m" x="156" y="34" width="116" height="84" rx="12"/>' + ln(172, 56, 60) + ln(172, 72, 84) + ln(172, 88, 44) + '<rect class="ill-ring" x="150" y="28" width="128" height="96" rx="16"/>' +
+      '<path class="a ill-draw" pathLength="1" d="M28 132 C70 138 96 112 140 84"/><path class="a" d="M128 80 L142 83 L136 96"/>'); },
+    bars: function () { var h = [30, 52, 20, 70, 44, 88, 36, 60, 26, 76, 48, 64, 34, 56], o = '';
+      h.forEach(function (v, i) { o += '<rect class="' + (i === 5 ? 'af' : 'm') + ' ill-bar" x="' + (24 + i * 19) + '" y="' + (136 - v) + '" width="12" height="' + v + '" rx="3" style="animation-delay:' + (i * 70) + 'ms"/>'; });
+      return svg(o + '<rect class="lnf" x="24" y="142" width="256" height="3" rx="1.5"/>'); },
+    dialogs: function () { var o = ''; for (var c = 0; c < 3; c++) { var x = 26 + c * 88;
+        o += '<g class="ill-pop"' + d(c) + '>' + ln(x, 22, 40) + '<rect class="m" x="' + x + '" y="36" width="76" height="22" rx="6"/>' + ln(x, 72, 32) + '<rect class="m" x="' + x + '" y="86" width="76" height="' + (c ? 22 : 44) + '" rx="6"/></g>'; }
+      return svg(o + '<g class="ill-pop"' + d(4) + '><rect class="af" x="196" y="122" width="68" height="22" rx="11"/></g>'); },
+    drops: function () { return svg('<rect class="m" x="40" y="20" width="220" height="34" rx="8" style="stroke:var(--accent)"/>' + ln(54, 34, 80) + '<path class="a" d="M236 34l6 6 6-6" style="stroke-width:2.4"/>' +
+      '<g class="ill-pop" style="transform-origin:50% 0;animation-delay:.4s"><rect class="m" x="40" y="62" width="220" height="84" rx="10"/><rect x="48" y="70" width="204" height="22" rx="6" style="fill:var(--accent-soft)"/>' + ln(58, 78, 70) + ln(58, 102, 100) + ln(58, 122, 84) + '</g>'); },
+    smooth: function () { return svg('<rect class="m" x="24" y="24" width="150" height="110" rx="10"/><rect class="m" x="202" y="14" width="64" height="132" rx="12"/>' +
+      [0, 1, 2].map(function (i) { return '<g class="ill-up"' + d(i) + '>' + ln(40, 46 + i * 26, 100 - i * 14) + '</g>'; }).join('') +
+      '<rect class="af ill-pop" x="214" y="30" width="40" height="8" rx="4"/>' + ln(214, 56, 40) + ln(214, 70, 28) + ln(214, 84, 36)); }
+  };
+
+  /* ---------------- DATA ----------------
+     Newest release FIRST. Copy is trusted author text (rendered as HTML): never put user data in here.
+     major = changes how someone works or runs their business. minor = small but cool. Keep bullets to 2-4 short lines. */
+  var RELEASES = [{
+    id: 'moonstone', name: 'Moonstone', tag: 'Latest',
+    major: [
+      { art: 'ai', t: 'AI marking that makes the call',
+        s: 'Set a pass mark and the AI decides: good work is accepted, the rest goes back with exactly what to fix. Nothing sits in your review queue.',
+        b: ['Choose 50% to 100% when you create an automated task', 'Work that clears the mark is completed on the spot', 'Below it, students get feedback and a one-tap Fix &amp; resubmit', 'Attempts to sway the AI are flagged and sent back'] },
+      { art: 'tasks', t: 'Tasks that sort themselves',
+        s: 'The Tasks tab groups everything by what needs you next, and deadlines now mean something.',
+        b: ['To do, In review, Overdue and Completed, each collapsible', 'Sent-back work jumps to the top of To do', 'Once a deadline passes, submissions close', 'A summary line counts every group at a glance'] }
+    ],
+    minor: [
+      { art: 'tour', t: 'A 60-second tour, only if you want it',
+        s: 'New accounts are offered a walkthrough with spotlights, animated arrows and short illustrations.',
+        b: ['Offered once, never forced', 'Replay it any time from Shortcuts'] },
+      { art: 'bars', t: 'Task volume, one bar a day',
+        s: 'The 60-day graph now shows a bar for every day.',
+        b: ['Hover or tap a bar for the date, count and status', 'A summary line totals tasks and active days', 'Screen readers get a plain-language description'] },
+      { art: 'dialogs', t: 'Dialogs that fit on one screen',
+        s: 'Big forms spread out sideways instead of scrolling down.',
+        b: ['Create Task is a wide three-column form', 'Add Members and Add Account use two columns', 'Everything folds back to one column on small screens'] },
+      { art: 'drops', t: 'Menus that never get clipped',
+        s: 'Form dropdowns float above the dialog and fit themselves to their options.',
+        b: ['As wide as the longest option', 'Long lists spread across columns', 'Flip upward when there is no room below'] },
+      { art: 'smooth', t: 'Smoother on every screen',
+        s: 'Small touches that add up.',
+        b: ['Notes ease in like the other tabs', 'A compact tab menu on narrow windows', '16px inputs stop iOS zooming in on tap', 'Summary lines wrap on phones'] }
+    ]
+  }];
+
+  /* ---------------- STATE + DOM ---------------- */
+  var S = { r: 0, tr: 'major', i: 0, open: false, opener: null };   /* r = release index, tr = track, i = feature index in track */
+  var root, panel, stage, pill, pips, dd, ddL, ddM, hl = -1;
+  var $ = function (s) { return root.querySelector(s); };
+
+  function build() {
+    root = D.createElement('div'); root.id = 't12nf';
+    root.innerHTML =
+      '<div class="nf-panel" role="dialog" aria-modal="true" aria-labelledby="nfTitle" tabindex="-1">' +
+        '<div class="nf-head"><h2 id="nfTitle">New features</h2><div class="nf-sp"></div>' +
+          /* the app's custom dropdown: same classes as the form selects, wired locally below (wireSelect lives in the module) */
+          '<div class="custom-select-wrapper nf-dd"><button type="button" class="custom-select-toggle" aria-haspopup="listbox" aria-label="Codename"><i class="nf-gem"></i><span class="nf-dd-l"></span>' + CHEV + '</button>' +
+          '<div class="custom-select-menu" role="listbox"></div></div>' +
+          '<button type="button" class="nf-x" aria-label="Close">&times;</button></div>' +
+        '<div class="nf-tabs" role="tablist"><i class="nf-pill"></i><button type="button" class="nf-tab" role="tab" data-tr="major"></button><button type="button" class="nf-tab" role="tab" data-tr="minor"></button></div>' +
+        '<div class="nf-stage" aria-live="polite"></div>' +
+        '<div class="nf-foot"><div class="nf-pips"></div><div class="nf-keys">' +
+          '<span class="key">&larr;</span><span class="key">&rarr;</span> Browse<span class="key nf-gap">&uarr;</span><span class="key">&darr;</span> Major / Minor<span class="key nf-gap">C</span> Codename<span class="key nf-gap">Esc</span> Close</div></div>' +
+      '</div>';
+    D.body.appendChild(root);
+    panel = $('.nf-panel'); stage = $('.nf-stage'); pill = $('.nf-pill'); pips = $('.nf-pips');
+    dd = $('.nf-dd'); ddL = $('.nf-dd-l'); ddM = $('.custom-select-menu');
+
+    root.addEventListener('click', function (e) {
+      var t = e.target;
+      if (t === root || t.closest('.nf-x')) return close();
+      var tab = t.closest('.nf-tab'); if (tab) return jump(tab.dataset.tr);
+      var pip = t.closest('.nf-pip'); if (pip) return to(S.tr, +pip.dataset.i, +pip.dataset.i > S.i ? 1 : -1, 0);
+      var opt = t.closest('.custom-select-option'); if (opt) return pick(+opt.dataset.i);
+      if (t.closest('.custom-select-toggle')) return ddOpen() ? closeDD() : openDD();
+    });
+    /* swipe for touch screens: same as Left/Right */
+    var sx = null;
+    stage.addEventListener('touchstart', function (e) { sx = e.touches[0].clientX; }, { passive: true });
+    stage.addEventListener('touchend', function (e) { if (sx == null) return; var dx = e.changedTouches[0].clientX - sx; sx = null; if (Math.abs(dx) > 50) go(dx < 0 ? 1 : -1); });
+  }
+
+  /* ---------------- rendering ---------------- */
+  var rel = function () { return RELEASES[S.r]; };
+  var flat = function () { return (S.tr === 'major' ? 0 : rel().major.length) + S.i; };
+  var total = function () { return rel().major.length + rel().minor.length; };
+
+  /* dx/dy = the direction the content travels in from (+1 right/down, -1 left/up, 0 none). Rebuilding the stage replays every animation. */
+  function render(dx, dy) {
+    var r = rel(), list = r[S.tr], f = list[S.i];
+    stage.style.setProperty('--dx', dx); stage.style.setProperty('--dy', dy);
+    stage.innerHTML = '<div class="nf-art t12t-ill nf-in">' + ART[f.art]() + '</div><div class="nf-copy">' +
+      '<div class="nf-kick nf-in" style="--i:1">' + r.name + ' &middot; ' + (S.tr === 'major' ? 'Major' : 'Minor') + ' feature ' + (S.i + 1) + ' of ' + list.length + '</div>' +
+      '<h3 class="nf-in" style="--i:2">' + f.t + '</h3><p class="nf-in" style="--i:3">' + f.s + '</p>' +
+      '<ul>' + f.b.map(function (b, k) { return '<li class="nf-in" style="--i:' + (4 + k) + '">' + b + '</li>'; }).join('') + '</ul></div>';
+    stage.scrollTop = 0;
+    ['major', 'minor'].forEach(function (k) {
+      var t = $('.nf-tab[data-tr="' + k + '"]');
+      t.innerHTML = (k === 'major' ? 'Major features' : 'Minor features') + '<b>' + r[k].length + '</b>';
+      t.classList.toggle('on', k === S.tr); t.setAttribute('aria-selected', k === S.tr);
+    });
+    if (pips.children.length !== list.length || pips.dataset.tr !== S.tr) {   /* rebuild pips only when the track changes, so the stretch transition survives */
+      pips.dataset.tr = S.tr;
+      pips.innerHTML = list.map(function (_, k) { return '<button type="button" class="nf-pip" data-i="' + k + '" aria-label="Feature ' + (k + 1) + '"></button>'; }).join('');
+      void pips.offsetWidth;
+    }
+    [].forEach.call(pips.children, function (p, k) { p.classList.toggle('on', k === S.i); });
+    ddL.textContent = r.name; placePill();
+  }
+  function placePill() {
+    var t = root && $('.nf-tab.on'); if (!t) return;
+    pill.style.width = t.offsetWidth + 'px'; pill.style.transform = 'translateX(' + t.offsetLeft + 'px)';
+  }
+  function renderMenu() {
+    ddM.innerHTML = RELEASES.map(function (r, i) {
+      return '<div class="custom-select-option' + (i === S.r ? ' selected' : '') + '" role="option" data-i="' + i + '">' + r.name + (r.tag ? '<em>' + r.tag + '</em>' : '') + '</div>';
+    }).join('');
+  }
+
+  /* ---------------- navigation ---------------- */
+  function to(tr, i, dx, dy) { S.tr = tr; S.i = i; render(dx, dy); }
+  function bump(dx) { stage.style.setProperty('--dx', dx || 1); stage.classList.remove('bump'); void stage.offsetWidth; stage.classList.add('bump'); }   /* "nothing further that way" shake */
+  function go(step) {                                  /* Left/Right: one flat sequence, Major then Minor */
+    var n = flat() + step, m = rel().major.length;
+    if (n < 0 || n >= total()) return bump(step);
+    n < m ? to('major', n, step, 0) : to('minor', n - m, step, 0);
+  }
+  function jump(tr) {                                  /* Up/Down or tab click: first feature of that track */
+    if (tr === S.tr) return bump(0);
+    to(tr, 0, 0, tr === 'minor' ? 1 : -1);
+  }
+
+  /* ---------------- codename dropdown (keyboard + mouse) ---------------- */
+  var ddOpen = function () { return dd.classList.contains('open'); };   /* the app's global outside-click handler also removes .open */
+  function markHl() { [].forEach.call(ddM.children, function (o, i) { o.classList.toggle('hl', i === hl); }); }
+  function openDD() { dd.classList.add('open'); hl = S.r; markHl(); }
+  function closeDD() { dd.classList.remove('open'); hl = -1; }
+  function pick(i) { closeDD(); S.r = i; S.tr = 'major'; S.i = 0; renderMenu(); render(0, 1); }
+
+  /* ---------------- open / close / keys ---------------- */
+  function markSeen() {
+    try { localStorage.setItem(SEEN, RELEASES[0].id); } catch (e) {}
+    var l = D.getElementById('newFeaturesLink'); if (l) l.classList.remove('has-new');
+  }
+  function open(from) {
+    if (S.open) return;
+    if (!root) build();
+    S.open = true; S.opener = from || D.activeElement;
+    root.classList.add('active'); renderMenu(); render(0, 1);
+    requestAnimationFrame(function () { root.classList.add('show'); panel.focus({ preventScroll: true }); placePill(); });
+    D.addEventListener('keydown', onKey, true); window.addEventListener('resize', placePill);
+    markSeen();
+  }
+  function close() {
+    if (!S.open) return;
+    S.open = false; closeDD(); root.classList.remove('show');
+    D.removeEventListener('keydown', onKey, true); window.removeEventListener('resize', placePill);
+    setTimeout(function () { if (!S.open) root.classList.remove('active'); }, 320);
+    try { S.opener && S.opener.focus && S.opener.focus({ preventScroll: true }); } catch (e) {}
+  }
+  function onKey(e) {   /* capture phase on document, attached only while open */
+    if (!S.open || e.isComposing) return;
+    var k = e.key;
+    if (k === 'Escape') { e.preventDefault(); e.stopPropagation(); return ddOpen() ? closeDD() : close(); }
+    if (e.metaKey || e.ctrlKey || e.altKey) return;   /* leave Ctrl/Cmd combos alone */
+    if (ddOpen()) {                                    /* the dropdown owns the arrows while it is open */
+      var n = RELEASES.length;
+      if (k === 'ArrowDown') hl = (hl + 1) % n; else if (k === 'ArrowUp') hl = (hl - 1 + n) % n;
+      else if (k === 'Home') hl = 0; else if (k === 'End') hl = n - 1;
+      else if (k === 'Enter' || k === ' ') { e.preventDefault(); return pick(hl < 0 ? S.r : hl); }
+      else if (k === 'Tab') return closeDD();
+      else return;
+      e.preventDefault(); return markHl();
+    }
+    if (k === 'ArrowRight') go(1); else if (k === 'ArrowLeft') go(-1);
+    else if (k === 'ArrowDown') jump('minor'); else if (k === 'ArrowUp') jump('major');
+    else if (k === 'c' || k === 'C') openDD();
+    else if (k === 'Tab') {                             /* keep focus inside the panel */
+      var f = [].filter.call(root.querySelectorAll('button'), function (b) { return b.offsetParent; }), a = D.activeElement;
+      if (!f.length) return;
+      if (e.shiftKey && (a === f[0] || a === panel)) f[f.length - 1].focus(); else if (!e.shiftKey && a === f[f.length - 1]) f[0].focus(); else return;
+    } else return;
+    e.preventDefault();
+  }
+
+  /* ---------------- boot: header button + public API ---------------- */
+  var link = D.getElementById('newFeaturesLink');
+  if (link) {
+    var seen = null; try { seen = localStorage.getItem(SEEN); } catch (e) {}
+    link.classList.toggle('has-new', seen !== RELEASES[0].id);
+    link.addEventListener('click', function () { open(link); });
+  }
+  window.T12Features = { open: open, close: close };   /* palette: window.T12Features.open() */
 })();
 </script>
 
