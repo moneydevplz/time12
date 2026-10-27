@@ -2939,7 +2939,8 @@
     l = u.searchParams.get('list');
     if (v && !/^[\w-]{11}$/.test(v)) v = null;
     if (l && (!/^[\w-]{10,64}$/.test(l) || /^RD/.test(l))) l = null;   /* auto-generated "Mix" lists can't be embedded */
-    return v || l ? { v: v, l: l } : null;
+    var ix = parseInt(u.searchParams.get('index'), 10);
+    return v || l ? { v: v, l: l, i: ix > 0 ? ix - 1 : null } : null;
   }
   /*@@/PARSE*/
 
@@ -2977,14 +2978,15 @@
       $('#ytHost').innerHTML = '<div id="t12dkYT"></div>';
       var vars = { autoplay: 1, playsinline: 1, rel: 0, modestbranding: 1, iv_load_policy: 3 };
       if (/^https?:/.test(location.origin)) vars.origin = location.origin;
-      if (q.l) { vars.list = q.l; vars.listType = 'playlist'; }
-      yt.state = -1; yt.list = false; ytBox.classList.add('loaded'); ytBox.classList.remove('playing');
+      yt.state = -1; yt.list = !!q.l; yt.pl = q.l ? { id: q.l, vid: q.v || '', idx: q.i, fix: !!q.v && q.i == null } : null;
+      ytBox.classList.add('loaded'); ytBox.classList.remove('playing');
       ytTitle.textContent = 'Loading…';
       var evs = { onReady: onYTReady, onStateChange: onYTState, onError: onYTError };
-      if (q.l && !q.v) {
-        vars.enablejsapi = 1;
+      if (q.l) {
+        /* Blank-start embed, then onReady calls loadPlaylist(): the documented way to get real playlist behaviour (auto-advance, prev/next). */
+        vars.autoplay = 0; vars.enablejsapi = 1;
         var qs = Object.keys(vars).map(function (k) { return k + '=' + encodeURIComponent(vars[k]); }).join('&');
-        $('#ytHost').innerHTML = '<iframe id="t12dkYT" title="YouTube playlist" src="https://www.youtube.com/embed/videoseries?' + qs + '" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>';
+        $('#ytHost').innerHTML = '<iframe id="t12dkYT" title="YouTube playlist" src="https://www.youtube.com/embed/videoseries?list=' + encodeURIComponent(q.l) + '&' + qs + '" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>';
         yt.p = new window.YT.Player('t12dkYT', { events: evs });
       } else {
         yt.p = new window.YT.Player('t12dkYT', { width: '100%', height: '100%', videoId: q.v, playerVars: vars, events: evs });
@@ -2997,19 +2999,33 @@
   ytIn.addEventListener('keydown', function (e) { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); startYT(); } if (e.key === 'Escape') { setOpen(false); tabBtn.focus(); } });
   ytIn.addEventListener('input', function () { ytIn.classList.remove('bad'); say(''); });
 
-  function onYTReady(e) { ytPlay.disabled = false; try { e.target.playVideo(); } catch (x) {} }
+  function onYTReady(e) {
+    ytPlay.disabled = false;
+    try {
+      if (yt.pl) { e.target.loadPlaylist({ listType: 'playlist', list: yt.pl.id, index: yt.pl.idx || 0, startSeconds: 0 }); e.target.setLoop(false); e.target.setShuffle(false); }
+      else e.target.playVideo();
+    } catch (x) {}
+  }
   function onYTState(e) {
     yt.state = e.data; var p = yt.p, on = e.data === 1;
     ytBox.classList.toggle('playing', on); playIcon(on || e.data === 3);
     try {
       var d = p.getVideoData && p.getVideoData(); if (d && d.title) ytTitle.textContent = d.title; if (d && d.video_id) setTh(d.video_id);
-      var pl = p.getPlaylist && p.getPlaylist(); yt.list = !!(pl && pl.length > 1);
+      var pl = p.getPlaylist && p.getPlaylist();
+      if (pl && pl.length) {
+        yt.list = pl.length > 1;
+        /* watch?v=X&list=... with no index: jump to X's real position in the playlist, once */
+        if (yt.pl && yt.pl.fix && (e.data === 1 || e.data === 3)) { yt.pl.fix = false; var k = pl.indexOf(yt.pl.vid); if (k > 0) p.playVideoAt(k); }
+      }
     } catch (x) {}
     ytPrev.disabled = ytNext.disabled = !yt.list;
     root.classList.toggle('live', anyLive()); schedule();
   }
   function onYTError(e) {
     var c = e.data;
+    if (yt.pl) {   /* in a playlist, skip a video that can't play, like YouTube does */
+      try { var n = yt.p.getPlaylist() || [], i = yt.p.getPlaylistIndex(); if (i >= 0 && i < n.length - 1) { say('Skipped a video that can’t be played.'); setTimeout(function () { try { yt.p.nextVideo(); } catch (x) {} }, 500); return; } } catch (x) {}
+    }
     say(c === 101 || c === 150 ? 'The owner doesn’t allow this video to be embedded.' : c === 100 ? 'That video is private or no longer exists.' : 'That link couldn’t be played.');
     yt.state = -1; ytBox.classList.remove('playing'); playIcon(false); schedule();
   }
