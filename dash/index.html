@@ -2425,7 +2425,7 @@
 <div class="toast-container" id="toastContainer"></div>
 
 <!-- =====================================================================================================================
-  FOCUS DOCK: a small slide-out box on the left edge. Tabs: Stopwatch / Pomodoro / YouTube / Chess (Lichess).
+  FOCUS DOCK (the ToolBox): a small slide-out box that hovers at the bottom-left, just above the sidebar footer, and resizes itself to the active tool (chess biggest, then YouTube, Pomodoro, Stopwatch). Tabs: Stopwatch / Pomodoro / YouTube / Chess (Lichess).
   Self-contained: #t12dk (markup) + #t12dk-css + #t12dk-js. Shows only while the app (#Time12App) is visible.
   - Stopwatch + Pomodoro keep running while the box is closed (end-timestamps, not counters). The tab shows a live dot.
   - YouTube: paste youtube.com / youtu.be / shorts / live / embed links, bare video IDs, or playlists (list=...).
@@ -2437,14 +2437,19 @@
     style-src https://cdn.jsdelivr.net and img-src https://i.ytimg.com (audio thumbnail).
 ===================================================================================================================== -->
 <style id="t12dk-css">
-  #t12dk { --dk-w: 420px; --dk-tab: 28px; --dk-ease: cubic-bezier(.2, .8, .2, 1); --dk-spring: cubic-bezier(.34, 1.3, .5, 1);
+  #t12dk { --dk-w: 300px; --dk-bottom: 104px; --dk-avail: calc(100vh - 120px); --dk-tab: 28px; --dk-ease: cubic-bezier(.2, .8, .2, 1); --dk-spring: cubic-bezier(.34, 1.3, .5, 1);
     --dk-bg: var(--glass-bg); --dk-ok: #2F9E6B;
-    position: fixed; left: 0; top: 50%; z-index: 1200; display: flex; flex-direction: row-reverse; align-items: center; padding-left: 12px;
-    transform: translate(calc(var(--dk-tab) - 100%), -50%); transition: transform .55s var(--dk-spring);
+    position: fixed; left: 0; bottom: var(--dk-bottom); z-index: 1200; display: flex; flex-direction: row-reverse; align-items: flex-end; padding-left: 12px;
+    transform: translateX(calc(var(--dk-tab) - 100%)); transition: transform .55s var(--dk-spring);
     font-family: var(--sans); color: var(--text); -webkit-tap-highlight-color: transparent; }
   html[data-theme="dark"] #t12dk { --dk-bg: rgba(24, 24, 24, .86); --dk-ok: #4CC38A; }
   #t12dk[hidden] { display: none; }
-  #t12dk.open { transform: translate(0, -50%); }
+  #t12dk.open { transform: translateX(0); }
+  /* each tool asks for its own width; height follows the content (see fit() in the script) */
+  #t12dk[data-tab="sw"] { --dk-w: 300px; }
+  #t12dk[data-tab="pm"] { --dk-w: 340px; }
+  #t12dk[data-tab="yt"] { --dk-w: 380px; }
+  #t12dk[data-tab="ch"] { --dk-w: 412px; }
 
   /* ---- the arrow tab ---- */
   #t12dk .dk-tab { position: relative; flex: none; width: var(--dk-tab); height: 66px; padding: 0; cursor: pointer;
@@ -2462,9 +2467,11 @@
   @keyframes dkRing { 0%, 100% { rotate: 0deg; } 20% { rotate: -9deg; } 40% { rotate: 8deg; } 60% { rotate: -5deg; } 80% { rotate: 3deg; } }
 
   /* ---- the box ---- */
-  #t12dk .dk-panel { width: min(var(--dk-w), calc(100vw - 56px)); max-height: calc(100vh - 24px); overflow-x: hidden; overflow-y: auto; padding: 10px; border-radius: 18px;
+  #t12dk .dk-panel { box-sizing: border-box; width: min(var(--dk-w), calc(100vw - 56px)); overflow: hidden; border-radius: 18px;
+    transition: width .5s var(--dk-ease), height .5s var(--dk-ease);
     border: 1px solid var(--glass-border); background: var(--dk-bg); -webkit-backdrop-filter: var(--bf, blur(calc(24px * var(--blur-k, 1))) saturate(165%)); backdrop-filter: var(--bf, blur(calc(24px * var(--blur-k, 1))) saturate(165%));
-    box-shadow: var(--shadow-soft), var(--glass-inset); scrollbar-width: thin; }
+    box-shadow: var(--shadow-soft), var(--glass-inset); }
+  #t12dk .dk-inner { box-sizing: border-box; width: calc(min(var(--dk-w), 100vw - 56px) - 2px); max-height: calc(var(--dk-avail) - 2px); padding: 10px; overflow-x: hidden; overflow-y: auto; scrollbar-width: thin; }
   #t12dk .dk-views { position: relative; }
   #t12dk .dk-view { padding: 14px 4px 4px; }
   #t12dk .dk-view:not(.on) { position: absolute; left: 0; right: 0; top: 0; height: 0; overflow: hidden; visibility: hidden; pointer-events: none; padding: 0; }  /* hidden, not display:none: keeps audio + iframes alive */
@@ -2580,7 +2587,7 @@
   #t12dk .yt-msg:empty { display: none; }
 
   /* ---- chess (native board) ---- */
-  #t12dk .ch-frame { position: relative; width: min(100%, calc(100vh - 330px)); min-width: 240px; aspect-ratio: 1; margin: 12px auto 0; border-radius: 12px; overflow: hidden; background: var(--surface-2); box-shadow: 0 10px 28px rgba(34, 24, 16, .24), 0 0 0 1px var(--border); }
+  #t12dk .ch-frame { position: relative; width: min(100%, calc(var(--dk-avail) - 236px)); min-width: 200px; aspect-ratio: 1; margin: 12px auto 0; border-radius: 12px; overflow: hidden; background: var(--surface-2); box-shadow: 0 10px 28px rgba(34, 24, 16, .24), 0 0 0 1px var(--border); }
   #t12dk #chBoard { position: absolute; inset: 0; width: 100%; height: 100%; }
   #t12dk .ch-load { position: absolute; inset: 0; display: grid; place-content: center; padding: 12px; text-align: center; font: 500 12px/1.4 var(--sans); color: var(--text-muted); background: var(--surface-2); }
   #t12dk .ch-frame.ok .ch-load { display: none; }
@@ -2601,6 +2608,7 @@
   </button>
 
   <div class="dk-panel" id="dkPanel" inert aria-hidden="true">
+   <div class="dk-inner">
     <div class="dk-tabs" role="tablist" aria-label="Focus tools">
       <button class="dk-t" role="tab" data-t="sw" aria-selected="true" type="button" title="Stopwatch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13.5" r="7"/><path d="M12 10v4l2.5 1.5M9.5 3h5M12 3v3.5M18.2 7.3l1.3-1.3"/></svg><span>Stopwatch</span></button>
       <button class="dk-t" role="tab" data-t="pm" aria-selected="false" type="button" title="Pomodoro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 6c-.2-1.4.4-2.6 1.6-3.3M12 6c-1.6-.8-3.1-.6-4.2.6M12 6c1.6-.8 3.1-.6 4.2.6"/></svg><span>Pomodoro</span></button>
@@ -2663,6 +2671,7 @@
         <a class="ch-open" href="https://lichess.org/setup/ai" target="_blank" rel="noopener noreferrer">Want a stronger opponent? Lichess ↗</a>
       </section>
     </div>
+   </div>
   </div>
 </div>
 
@@ -2690,8 +2699,30 @@
   var p2 = function (n) { return (n < 10 ? '0' : '') + n; };
   function clock(sec) { sec = Math.max(0, Math.floor(sec || 0)); var h = Math.floor(sec / 3600), m = Math.floor(sec / 60) % 60, s = sec % 60; return h ? h + ':' + p2(m) + ':' + p2(s) : m + ':' + p2(s); }
 
+  /* ---------------- hover above the sidebar footer + size to the active tool ---------------- */
+  var dkInner = $('.dk-inner'), dkPanel = $('#dkPanel'), sbFoot = D.querySelector('.sidebar-footer'), sbSide = D.getElementById('sidebar'), raf = 0;
+  function place() {                       /* bottom offset = height of the footer box (+10px gap), or 14px when the sidebar is tucked away */
+    var vh = window.innerHeight, b = 14;
+    if (sbFoot) {                          /* eases down with the sidebar as it slides away, back up as it returns */
+      var r = sbFoot.getBoundingClientRect(), vis = Math.max(0, Math.min(1, 1 + r.left / 300));
+      if (r.height > 0 && r.top < vh && r.top > vh * 0.3 && vis > 0) b = Math.round(14 + (vh - r.top + 10 - 14) * vis);
+    }
+    b = Math.max(14, Math.min(b, vh - 160));
+    root.style.setProperty('--dk-bottom', b + 'px'); root.style.setProperty('--dk-avail', Math.max(240, vh - b - 16) + 'px');
+  }
+  function settle(ms) { cancelAnimationFrame(raf); var end = performance.now() + (ms || 500); (function f() { place(); if (performance.now() < end) raf = requestAnimationFrame(f); })(); }
+  function fit(now) {                      /* panel height follows the content; the panel animates between sizes */
+    if (root.hidden || !dkInner.offsetHeight) return;
+    if (now) dkPanel.style.transition = 'none';
+    dkPanel.style.height = (dkInner.offsetHeight + 2) + 'px';
+    if (now) { void dkPanel.offsetHeight; dkPanel.style.transition = ''; }
+  }
+  if (window.ResizeObserver) { new ResizeObserver(function () { fit(); }).observe(dkInner); if (sbFoot) new ResizeObserver(place).observe(sbFoot); }
+  if (sbSide) { new MutationObserver(function () { settle(500); }).observe(sbSide, { attributes: true, attributeFilter: ['class'] }); sbSide.addEventListener('transitionend', place); }
+  window.addEventListener('resize', function () { settle(150); });
+
   /* ---------------- show only while the app is on screen ---------------- */
-  function sync() { root.hidden = !(app.style.display !== 'none' && getComputedStyle(app).display !== 'none'); }
+  function sync() { root.hidden = !(app.style.display !== 'none' && getComputedStyle(app).display !== 'none'); if (!root.hidden) { place(); fit(true); settle(600); } }
   new MutationObserver(sync).observe(app, { attributes: true, attributeFilter: ['style', 'class'] });
   sync();
 
@@ -2726,12 +2757,12 @@
 
   function select(t, focus) {
     if (TABS.indexOf(t) < 0) t = 'sw';
-    S.tab = t;
+    S.tab = t; root.setAttribute('data-tab', t);
     $$('.dk-t').forEach(function (b) { var on = b.getAttribute('data-t') === t; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
     $$('.dk-view').forEach(function (v) { v.classList.toggle('on', v.getAttribute('data-v') === t); });
     if (t === 'ch' && S.open) mountChess();
     if (S.open) { renderSW(); renderPM(); renderYTBar(); }
-    schedule(); save();
+    schedule(); save(); fit();
   }
   $$('.dk-t').forEach(function (b, i, all) {
     b.addEventListener('click', function () { select(b.getAttribute('data-t')); });
@@ -9505,7 +9536,10 @@ Marketing,alex99,</div>
         b: ['Choose 50% to 100% when you create an automated task', 'Work that clears the mark is completed on the spot', 'Below it, students get feedback and a one-tap Fix &amp; resubmit', 'Attempts to sway the AI are flagged and sent back'] },
       { art: 'tasks', t: 'Tasks that sort themselves',
         s: 'The Tasks tab groups everything by what needs you next, and deadlines now mean something.',
-        b: ['To do, In review, Overdue and Completed, each collapsible', 'Sent-back work jumps to the top of To do', 'Once a deadline passes, submissions close', 'A summary line counts every group at a glance'] }
+        b: ['To do, In review, Overdue and Completed, each collapsible', 'Sent-back work jumps to the top of To do', 'Once a deadline passes, submissions close', 'A summary line counts every group at a glance'] },
+      { art: 'dock', t: 'The ToolBox, always within reach',
+        s: 'A toolbox now hovers in the bottom-left corner, just above your sync and sign-out box. Open it for a stopwatch, Pomodoro, YouTube or chess, and it resizes itself to fit whatever you are using.',
+        b: ['Floats above the sidebar footer and drops to the corner when the sidebar is hidden', 'Roomy for chess, medium for YouTube, compact for the stopwatch and Pomodoro', 'Timers and music keep going while it is closed', 'Reopens on the tool you used last'] }
     ],
     minor: [
       { art: 'dock', t: 'A pocket toolbox on the left edge',
