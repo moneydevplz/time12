@@ -2539,7 +2539,9 @@
   #t12dk .pm-c { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
   #t12dk .pm-c b { font: 700 31px/1 var(--sans); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
   #t12dk .pm-c small { margin-top: 6px; font: 600 10.5px var(--sans); letter-spacing: .09em; text-transform: uppercase; color: var(--text-muted); }
-  #t12dk .pm-gap { height: 14px; }
+  #t12dk .pm-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 14px; }
+  #t12dk .pm-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border); transition: background .3s, box-shadow .3s, transform .3s var(--dk-spring); }
+  #t12dk .pm-dots i.on { background: var(--accent); box-shadow: none; transform: scale(1.15); }
   #t12dk .pm-bell { position: absolute; top: 12px; right: 0; width: 28px; height: 28px; }
   #t12dk .pm-bell .x { opacity: 0; transition: opacity .2s; }
   #t12dk .pm-bell[aria-pressed="true"] .x { opacity: 1; }
@@ -2632,7 +2634,7 @@
         <div class="dk-seg" id="pmModes" role="group" aria-label="Round type"><button type="button" data-m="focus" class="on">Focus</button><button type="button" data-m="short">Short break</button><button type="button" data-m="long">Long break</button></div>
         <div class="pm-ring"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="tr" cx="60" cy="60" r="52"/><circle class="pg" id="pmPg" cx="60" cy="60" r="52" pathLength="100"/></svg>
           <div class="pm-c" role="timer" aria-live="off"><b id="pmTime">25:00</b><small id="pmLabel">Focus</small></div></div>
-        <div class="pm-gap" aria-hidden="true"></div>
+        <div class="pm-dots" id="pmDots" aria-label="Focus rounds this cycle"><i></i><i></i><i></i><i></i></div>
         <div class="dk-row">
           <button class="dk-btn" id="pmReset" type="button">Reset</button>
           <button class="dk-btn primary" id="pmGo" type="button">Start</button>
@@ -2648,7 +2650,7 @@
           <div class="yt-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="4"/><path d="M10.2 9.6v4.8l4.3-2.4z" fill="currentColor"/></svg>Paste a youtube.com or youtu.be link.<br>Playlists work too.</div>
           <div class="yt-host" id="ytHost"></div>
         </div></div></div>
-        <div class="yt-aud"><div><div class="yt-card"><div class="yt-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="yt-th" aria-hidden="true"><img id="ytThImg" alt="" decoding="async"></div><div style="min-width:0"><b id="ytTitle">Nothing playing</b><small>Audio only</small></div></div></div></div>
+        <div class="yt-aud"><div><div class="yt-card"><div class="yt-th" aria-hidden="true"><img id="ytThImg" alt="" decoding="async"></div><div style="min-width:0"><b id="ytTitle">Nothing playing</b><small>Audio only</small></div></div></div></div>
         <div class="yt-ctl">
           <button class="dk-ic" id="ytPrev" type="button" aria-label="Previous video" disabled><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5.5h2.2v13H6zM19 6v12l-9-6z"/></svg></button>
           <button class="dk-ic play" id="ytPlay" type="button" aria-label="Play or pause" disabled><svg id="ytPlayIc" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></button>
@@ -2809,6 +2811,8 @@
     pmBox.classList.toggle('brk', S.pm.mode !== 'focus');
     pmGo.textContent = S.pm.run ? 'Pause' : (left < total ? 'Resume' : 'Start');
     $$('#pmModes button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-m') === S.pm.mode); });
+    var f = S.pm.mode === 'long' && S.pm.done > 0 && S.pm.done % 4 === 0 ? 4 : S.pm.done % 4;
+    $$('#pmDots i').forEach(function (d, i) { d.classList.toggle('on', i < f); });
   }
   function setMode(m) { S.pm.mode = m; S.pm.run = false; S.pm.left = PM[m][0] * 60000; renderPM(); schedule(); }
   function finish(chimeToo) {
