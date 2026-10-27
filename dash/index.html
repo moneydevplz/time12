@@ -2578,7 +2578,7 @@
   #t12dk .yt-bar { flex: 1; height: 22px; margin: 0 6px; display: flex; align-items: center; cursor: pointer; }
   #t12dk .yt-bar span { display: block; width: 100%; height: 5px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
   #t12dk .yt-bar i { display: block; height: 100%; width: 0; border-radius: 3px; background: var(--accent); }
-  #t12dk .yt-th { display: none; flex: none; width: 62px; aspect-ratio: 16 / 9; margin-left: 6px; border-radius: 7px; overflow: hidden; background: var(--surface-2); box-shadow: 0 0 0 1px var(--border), 0 3px 10px rgba(0, 0, 0, .18); transition: box-shadow .4s; }
+  #t12dk .yt-th { display: none; flex: none; width: 58px; aspect-ratio: 16 / 9; border-radius: 7px; overflow: hidden; background: var(--surface-2); box-shadow: 0 0 0 1px var(--border), 0 3px 10px rgba(0, 0, 0, .18); transition: box-shadow .4s; }
   #t12dk .yt.audio.has-th .yt-th { display: block; animation: dkIn .45s var(--dk-ease); }
   #t12dk .yt.playing .yt-th { box-shadow: 0 0 0 1.5px var(--accent), 0 4px 14px rgba(253, 126, 20, .35); }
   #t12dk .yt-th img { display: block; width: 100%; height: 100%; object-fit: cover; }
@@ -2650,12 +2650,11 @@
           <div class="yt-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="4"/><path d="M10.2 9.6v4.8l4.3-2.4z" fill="currentColor"/></svg>Paste a youtube.com or youtu.be link.<br>Playlists work too.</div>
           <div class="yt-host" id="ytHost"></div>
         </div></div></div>
-        <div class="yt-aud"><div><div class="yt-card"><div class="yt-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div style="min-width:0"><b id="ytTitle">Nothing playing</b><small>Audio only</small></div></div></div></div>
+        <div class="yt-aud"><div><div class="yt-card"><div class="yt-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div class="yt-th" aria-hidden="true"><img id="ytThImg" alt="" decoding="async"></div><div style="min-width:0"><b id="ytTitle">Nothing playing</b><small>Audio only</small></div></div></div></div>
         <div class="yt-ctl">
           <button class="dk-ic" id="ytPrev" type="button" aria-label="Previous video" disabled><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5.5h2.2v13H6zM19 6v12l-9-6z"/></svg></button>
           <button class="dk-ic play" id="ytPlay" type="button" aria-label="Play or pause" disabled><svg id="ytPlayIc" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></button>
           <button class="dk-ic" id="ytNext" type="button" aria-label="Next video" disabled><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.8 5.5H18v13h-2.2zM5 6v12l9-6z"/></svg></button>
-          <div class="yt-th" aria-hidden="true"><img id="ytThImg" alt="" decoding="async"></div>
           <div class="yt-bar" id="ytBar" role="slider" aria-label="Seek" tabindex="-1"><span><i id="ytFill"></i></span></div>
           <div class="yt-tm" id="ytTm">0:00 / 0:00</div>
         </div>
@@ -2981,8 +2980,15 @@
       if (q.l) { vars.list = q.l; vars.listType = 'playlist'; }
       yt.state = -1; yt.list = false; ytBox.classList.add('loaded'); ytBox.classList.remove('playing');
       ytTitle.textContent = 'Loading…';
-      yt.p = new window.YT.Player('t12dkYT', { width: '100%', height: '100%', videoId: q.v || undefined, playerVars: vars,
-        events: { onReady: onYTReady, onStateChange: onYTState, onError: onYTError } });
+      var evs = { onReady: onYTReady, onStateChange: onYTState, onError: onYTError };
+      if (q.l && !q.v) {
+        vars.enablejsapi = 1;
+        var qs = Object.keys(vars).map(function (k) { return k + '=' + encodeURIComponent(vars[k]); }).join('&');
+        $('#ytHost').innerHTML = '<iframe id="t12dkYT" title="YouTube playlist" src="https://www.youtube.com/embed/videoseries?' + qs + '" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>';
+        yt.p = new window.YT.Player('t12dkYT', { events: evs });
+      } else {
+        yt.p = new window.YT.Player('t12dkYT', { width: '100%', height: '100%', videoId: q.v, playerVars: vars, events: evs });
+      }
     }).catch(function () { say('YouTube couldn’t load. Check your connection or ad-blocker.'); })
       .then(function () { ytLoad.disabled = false; });
   }
@@ -9515,11 +9521,11 @@ Marketing,alex99,</div>
       return svg(o + '<g class="ill-pop"' + d(4) + '><rect class="af" x="196" y="122" width="68" height="22" rx="11"/></g>'); },
     drops: function () { return svg('<rect class="m" x="40" y="20" width="220" height="34" rx="8" style="stroke:var(--accent)"/>' + ln(54, 34, 80) + '<path class="a" d="M236 34l6 6 6-6" style="stroke-width:2.4"/>' +
       '<g class="ill-pop" style="transform-origin:50% 0;animation-delay:.4s"><rect class="m" x="40" y="62" width="220" height="84" rx="10"/><rect x="48" y="70" width="204" height="22" rx="6" style="fill:var(--accent-soft)"/>' + ln(58, 78, 70) + ln(58, 102, 100) + ln(58, 122, 84) + '</g>'); },
-    dock: function () { return svg('<rect class="m" x="20" y="22" width="150" height="116" rx="10"/>' + ln(36, 42, 74) + ln(36, 58, 100) + ln(36, 74, 86) + ln(36, 90, 96) +
-      '<rect class="m" x="164" y="62" width="16" height="44" rx="8" style="stroke:var(--accent)"/><path class="a" d="M175 76 l-6 8 l6 8" style="stroke-width:2.4"/>' +
-      '<g class="ill-pop"' + d(0) + '><rect class="m" x="184" y="18" width="98" height="124" rx="14" style="stroke:var(--accent)"/>' +
-      '<circle class="m" cx="233" cy="64" r="26"/><circle class="a ill-draw" cx="233" cy="64" r="26" pathLength="1" style="transform:rotate(-90deg)"/><text class="kt" x="233" y="69">25:00</text>' +
-      '<rect class="af" x="205" y="104" width="56" height="20" rx="10"/><text class="wh" x="233" y="118">Start</text></g>'); },
+    dock: function () { return svg('<rect class="m" x="130" y="22" width="150" height="116" rx="10"/>' + ln(146, 42, 74) + ln(146, 58, 100) + ln(146, 74, 86) + ln(146, 90, 96) +
+      '<rect class="m" x="120" y="62" width="16" height="44" rx="8" style="stroke:var(--accent)"/><path class="a" d="M125 76 l6 8 l-6 8" style="stroke-width:2.4"/>' +
+      '<g class="ill-pop"' + d(0) + '><rect class="m" x="18" y="18" width="98" height="124" rx="14" style="stroke:var(--accent)"/>' +
+      '<circle class="m" cx="67" cy="64" r="26"/><circle class="a ill-draw" cx="67" cy="64" r="26" pathLength="1" style="transform:rotate(-90deg)"/><text class="kt" x="67" y="69">25:00</text>' +
+      '<rect class="af" x="39" y="104" width="56" height="20" rx="10"/><text class="wh" x="67" y="118">Start</text></g>'); },
     smooth: function () { return svg('<rect class="m" x="24" y="24" width="150" height="110" rx="10"/><rect class="m" x="202" y="14" width="64" height="132" rx="12"/>' +
       [0, 1, 2].map(function (i) { return '<g class="ill-up"' + d(i) + '>' + ln(40, 46 + i * 26, 100 - i * 14) + '</g>'; }).join('') +
       '<rect class="af ill-pop" x="214" y="30" width="40" height="8" rx="4"/>' + ln(214, 56, 40) + ln(214, 70, 28) + ln(214, 84, 36)); }
