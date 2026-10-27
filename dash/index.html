@@ -2425,21 +2425,21 @@
 <div class="toast-container" id="toastContainer"></div>
 
 <!-- =====================================================================================================================
-  FOCUS DOCK: a small slide-out box on the right edge. Tabs: Stopwatch / Pomodoro / YouTube / Chess (Fritz).
+  FOCUS DOCK: a small slide-out box on the left edge. Tabs: Stopwatch / Pomodoro / YouTube / Chess (Lichess).
   Self-contained: #t12dk (markup) + #t12dk-css + #t12dk-js. Shows only while the app (#Time12App) is visible.
   - Stopwatch + Pomodoro keep running while the box is closed (end-timestamps, not counters). The tab shows a live dot.
   - YouTube: paste youtube.com / youtu.be / shorts / live / embed links, bare video IDs, or playlists (list=...).
     Video or Audio-only (the player is hidden, not paused). Uses YouTube's IFrame API, loaded on first Play.
-  - Chess: the official ChessBase embed (https://fritz.chessbase.com), loaded the first time the tab opens.
+  - Chess: official Lichess embeds (daily puzzle + live TV, https://lichess.org), loaded the first time the tab opens.
   - Stores only: last tab, last YouTube link, video/audio choice, bell mute (localStorage key "t12dock").
-  - If your host sends a Content-Security-Policy, allow frame-src https://www.youtube.com https://fritz.chessbase.com
-    and script-src https://www.youtube.com.
+  - If your host sends a Content-Security-Policy, allow frame-src https://www.youtube.com https://lichess.org,
+    img-src https://i.ytimg.com (audio thumbnail) and script-src https://www.youtube.com.
 ===================================================================================================================== -->
 <style id="t12dk-css">
-  #t12dk { --dk-w: 320px; --dk-tab: 28px; --dk-ease: cubic-bezier(.2, .8, .2, 1); --dk-spring: cubic-bezier(.34, 1.3, .5, 1);
+  #t12dk { --dk-w: 420px; --dk-tab: 28px; --dk-ease: cubic-bezier(.2, .8, .2, 1); --dk-spring: cubic-bezier(.34, 1.3, .5, 1);
     --dk-bg: var(--glass-bg); --dk-ok: #2F9E6B;
-    position: fixed; right: 0; top: 50%; z-index: 1200; display: flex; align-items: center; padding-right: 12px;
-    transform: translate(calc(100% - var(--dk-tab)), -50%); transition: transform .55s var(--dk-spring);
+    position: fixed; left: 0; top: 50%; z-index: 1200; display: flex; flex-direction: row-reverse; align-items: center; padding-left: 12px;
+    transform: translate(calc(var(--dk-tab) - 100%), -50%); transition: transform .55s var(--dk-spring);
     font-family: var(--sans); color: var(--text); -webkit-tap-highlight-color: transparent; }
   html[data-theme="dark"] #t12dk { --dk-bg: rgba(24, 24, 24, .86); --dk-ok: #4CC38A; }
   #t12dk[hidden] { display: none; }
@@ -2447,14 +2447,14 @@
 
   /* ---- the arrow tab ---- */
   #t12dk .dk-tab { position: relative; flex: none; width: var(--dk-tab); height: 66px; padding: 0; cursor: pointer;
-    border: 1px solid var(--glass-border); border-right: 0; border-radius: 14px 0 0 14px; color: var(--text-soft);
+    border: 1px solid var(--glass-border); border-left: 0; border-radius: 0 14px 14px 0; color: var(--text-soft);
     background: var(--dk-bg); -webkit-backdrop-filter: var(--bf, blur(calc(18px * var(--blur-k, 1))) saturate(160%)); backdrop-filter: var(--bf, blur(calc(18px * var(--blur-k, 1))) saturate(160%));
-    box-shadow: -6px 6px 18px rgba(34, 24, 16, .08), var(--glass-inset); display: grid; place-items: center;
+    box-shadow: 6px 6px 18px rgba(34, 24, 16, .08), var(--glass-inset); display: grid; place-items: center;
     transition: color .2s, translate .25s var(--dk-ease), background .2s; }
-  #t12dk:not(.open) .dk-tab:hover { color: var(--accent); translate: -3px 0; }
+  #t12dk:not(.open) .dk-tab:hover { color: var(--accent); translate: 3px 0; }
   #t12dk .dk-tab svg { width: 17px; height: 17px; transition: transform .5s var(--dk-ease); }
   #t12dk.open .dk-tab svg { transform: rotate(180deg); }
-  #t12dk .dk-dot { position: absolute; top: 9px; left: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); opacity: 0; transform: scale(.4); transition: opacity .25s, transform .3s var(--dk-spring); }
+  #t12dk .dk-dot { position: absolute; top: 9px; right: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); opacity: 0; transform: scale(.4); transition: opacity .25s, transform .3s var(--dk-spring); }
   #t12dk.live .dk-dot { opacity: 1; transform: scale(1); animation: dkPulse 1.8s ease-out infinite; }
   #t12dk.ring:not(.open) .dk-tab { animation: dkRing .6s ease 5; }
   @keyframes dkPulse { 0% { box-shadow: 0 0 0 0 rgba(253, 126, 20, .55); } 70%, 100% { box-shadow: 0 0 0 8px rgba(253, 126, 20, 0); } }
@@ -2509,7 +2509,7 @@
   #t12dk .dk-ic.play svg { width: 17px; height: 17px; }
 
   /* ---- stopwatch ---- */
-  #t12dk .sw-time { display: flex; justify-content: center; align-items: baseline; padding: 4px 0 16px; font: 700 42px/1 var(--sans); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  #t12dk .sw-time { display: flex; justify-content: center; align-items: baseline; padding: 4px 0 16px; font: 700 52px/1 var(--sans); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
   #t12dk .sw-time small { margin-left: 2px; font-size: 19px; font-weight: 600; letter-spacing: 0; color: var(--text-muted); transition: color .3s; }
   #t12dk .sw.run .sw-time small { color: var(--accent); }
   #t12dk .sw-laps { list-style: none; margin: 12px 0 0; padding: 0; max-height: 96px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; scrollbar-width: thin; }
@@ -2522,7 +2522,7 @@
 
   /* ---- pomodoro ---- */
   #t12dk .pm { position: relative; }
-  #t12dk .pm-ring { position: relative; width: 138px; height: 138px; margin: 14px auto 8px; }
+  #t12dk .pm-ring { position: relative; width: 164px; height: 164px; margin: 14px auto 8px; }
   #t12dk .pm-ring svg { display: block; width: 100%; height: 100%; transform: rotate(-90deg); }
   #t12dk .pm-ring circle { fill: none; stroke-width: 7; stroke-linecap: round; }
   #t12dk .pm-ring .tr { stroke: var(--surface-2); }
@@ -2570,19 +2570,24 @@
   #t12dk .yt-bar { flex: 1; height: 22px; margin: 0 6px; display: flex; align-items: center; cursor: pointer; }
   #t12dk .yt-bar span { display: block; width: 100%; height: 5px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
   #t12dk .yt-bar i { display: block; height: 100%; width: 0; border-radius: 3px; background: var(--accent); }
+  #t12dk .yt-th { display: none; flex: none; width: 62px; aspect-ratio: 16 / 9; margin-left: 6px; border-radius: 7px; overflow: hidden; background: var(--surface-2); box-shadow: 0 0 0 1px var(--border), 0 3px 10px rgba(0, 0, 0, .18); transition: box-shadow .4s; }
+  #t12dk .yt.audio.has-th .yt-th { display: block; animation: dkIn .45s var(--dk-ease); }
+  #t12dk .yt.playing .yt-th { box-shadow: 0 0 0 1.5px var(--accent), 0 4px 14px rgba(253, 126, 20, .35); }
+  #t12dk .yt-th img { display: block; width: 100%; height: 100%; object-fit: cover; }
   #t12dk .yt-tm { min-width: 64px; text-align: right; font: 600 11px var(--sans); font-variant-numeric: tabular-nums; color: var(--text-muted); }
   #t12dk .yt-msg { min-height: 0; margin: 8px 2px 0; font: 500 11.5px/1.4 var(--sans); color: #D64545; }
   #t12dk .yt-msg:empty { display: none; }
 
   /* ---- chess ---- */
-  #t12dk .ch-frame { position: relative; height: 304px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: var(--surface-2); }
+  #t12dk .ch-frame { position: relative; height: clamp(300px, calc(100vh - 210px), 500px); border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: var(--surface-2); }
   #t12dk .ch-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #fff; opacity: 0; transition: opacity .4s; }
   #t12dk .ch-frame.ok iframe { opacity: 1; }
   #t12dk .ch-load { position: absolute; inset: 0; display: grid; place-content: center; font: 500 12px var(--sans); color: var(--text-muted); }
   #t12dk .ch-frame.ok .ch-load { display: none; }
-  #t12dk .ch-open { display: block; width: fit-content; margin: 9px 2px 0 auto; font: 600 11.5px var(--sans); color: var(--text-muted); text-decoration: none; transition: color .2s; }
+  #t12dk .ch-open { display: block; font: 600 11.5px var(--sans); color: var(--text-muted); text-decoration: none; transition: color .2s; }
   #t12dk .ch-open:hover { color: var(--accent); }
 
+  #t12dk .ch-foot { display: flex; justify-content: space-between; gap: 10px; margin: 9px 2px 0; }
   @media (max-width: 520px) { #t12dk .dk-tab { height: 58px; } }
   @media (prefers-reduced-motion: reduce) { #t12dk, #t12dk * { transition-duration: .01s !important; animation: none !important; } }
 </style>
@@ -2590,7 +2595,7 @@
 <div id="t12dk" hidden>
   <button class="dk-tab" id="dkTab" type="button" aria-label="Open the focus box" aria-expanded="false" aria-controls="dkPanel" title="Timers, music and chess">
     <span class="dk-dot"></span>
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 6 9 12 15 18"/></svg>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="9 6 15 12 9 18"/></svg>
   </button>
 
   <div class="dk-panel" id="dkPanel" inert aria-hidden="true">
@@ -2598,7 +2603,7 @@
       <button class="dk-t" role="tab" data-t="sw" aria-selected="true" type="button" title="Stopwatch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13.5" r="7"/><path d="M12 10v4l2.5 1.5M9.5 3h5M12 3v3.5M18.2 7.3l1.3-1.3"/></svg><span>Stopwatch</span></button>
       <button class="dk-t" role="tab" data-t="pm" aria-selected="false" type="button" title="Pomodoro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 6c-.2-1.4.4-2.6 1.6-3.3M12 6c-1.6-.8-3.1-.6-4.2.6M12 6c1.6-.8 3.1-.6 4.2.6"/></svg><span>Pomodoro</span></button>
       <button class="dk-t" role="tab" data-t="yt" aria-selected="false" type="button" title="YouTube"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="4"/><path d="M10.2 9.6v4.8l4.3-2.4z" fill="currentColor"/></svg><span>YouTube</span></button>
-      <button class="dk-t" role="tab" data-t="ch" aria-selected="false" type="button" title="Chess vs Fritz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="7.5" r="2.8"/><path d="M9.6 12.5h4.8M10.4 12.5c0 2.2-1.4 3.6-2.4 5.2h8c-1-1.6-2.4-3-2.4-5.2M7 20.5h10"/></svg><span>Chess</span></button>
+      <button class="dk-t" role="tab" data-t="ch" aria-selected="false" type="button" title="Chess on Lichess"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="7.5" r="2.8"/><path d="M9.6 12.5h4.8M10.4 12.5c0 2.2-1.4 3.6-2.4 5.2h8c-1-1.6-2.4-3-2.4-5.2M7 20.5h10"/></svg><span>Chess</span></button>
     </div>
 
     <div class="dk-views">
@@ -2640,6 +2645,7 @@
           <button class="dk-ic" id="ytPrev" type="button" aria-label="Previous video" disabled><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5.5h2.2v13H6zM19 6v12l-9-6z"/></svg></button>
           <button class="dk-ic play" id="ytPlay" type="button" aria-label="Play or pause" disabled><svg id="ytPlayIc" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></button>
           <button class="dk-ic" id="ytNext" type="button" aria-label="Next video" disabled><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.8 5.5H18v13h-2.2zM5 6v12l9-6z"/></svg></button>
+          <div class="yt-th" aria-hidden="true"><img id="ytThImg" alt="" decoding="async"></div>
           <div class="yt-bar" id="ytBar" role="slider" aria-label="Seek" tabindex="-1"><span><i id="ytFill"></i></span></div>
           <div class="yt-tm" id="ytTm">0:00 / 0:00</div>
         </div>
@@ -2648,8 +2654,9 @@
 
       <!-- Chess -->
       <section class="dk-view ch" data-v="ch" role="tabpanel">
+        <div class="dk-seg" id="chMode" role="group" aria-label="Lichess view" style="margin-bottom:10px"><button type="button" data-m="puz" class="on">Puzzle</button><button type="button" data-m="tv">Live games</button></div>
         <div class="ch-frame" id="chFrame"><div class="ch-load">Setting up the board…</div></div>
-        <a class="ch-open" href="https://fritz.chessbase.com" target="_blank" rel="noopener noreferrer">Open full size ↗</a>
+        <div class="ch-foot"><a class="ch-open" href="https://lichess.org/setup/ai" target="_blank" rel="noopener noreferrer">Play the computer ↗</a><a class="ch-open" id="chOpen" href="https://lichess.org/training" target="_blank" rel="noopener noreferrer">Open full size ↗</a></div>
       </section>
     </div>
   </div>
@@ -2800,15 +2807,20 @@
   pmBell.addEventListener('click', function () { S.mute = !S.mute; pmBell.setAttribute('aria-pressed', S.mute); save(); if (!S.mute) { unlockAudio(); chime(); } });
   pmBell.setAttribute('aria-pressed', S.mute);
 
-  /* ---------------- chess (official ChessBase embed, loaded on first view) ---------------- */
-  function mountChess() {
-    var f = $('#chFrame'); if (f.querySelector('iframe')) return;
-    var i = D.createElement('iframe');
-    i.src = 'https://fritz.chessbase.com'; i.title = 'Play chess against Fritz (ChessBase)';
-    i.setAttribute('allow', 'fullscreen'); i.referrerPolicy = 'strict-origin-when-cross-origin';
+  /* ---------------- chess (Lichess embeds, loaded on first view) ---------------- */
+  var chM = 'puz';
+  function mountChess(force) {
+    var f = $('#chFrame'), old = f.querySelector('iframe'); if (old && !force) return;
+    if (old) { old.remove(); f.classList.remove('ok'); }
+    var dark = D.documentElement.getAttribute('data-theme') === 'dark', i = D.createElement('iframe');
+    i.src = 'https://lichess.org/' + (chM === 'tv' ? 'tv' : 'training') + '/frame?theme=brown&bg=' + (dark ? 'dark' : 'light');
+    i.title = 'Chess on Lichess'; i.setAttribute('allow', 'fullscreen'); i.referrerPolicy = 'strict-origin-when-cross-origin';
     i.addEventListener('load', function () { f.classList.add('ok'); });
-    f.appendChild(i);
+    f.appendChild(i); $('#chOpen').href = 'https://lichess.org/' + (chM === 'tv' ? 'tv' : 'training');
   }
+  $$('#chMode button').forEach(function (b) { b.addEventListener('click', function () {
+    chM = b.getAttribute('data-m'); $$('#chMode button').forEach(function (x) { x.classList.toggle('on', x === b); }); mountChess(true); }); });
+  new MutationObserver(function () { if ($('#chFrame iframe')) mountChess(true); }).observe(D.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 
   /* ---------------- youtube ---------------- */
   /*@@PARSE*/
@@ -2831,6 +2843,10 @@
   }
   /*@@/PARSE*/
 
+  var ytThImg = $('#ytThImg'), thId = '';
+  function setTh(id) { if (!id || id === thId) return; thId = id; ytThImg.src = 'https://i.ytimg.com/vi/' + id + '/mqdefault.jpg'; }
+  ytThImg.addEventListener('load', function () { ytBox.classList.add('has-th'); });
+  ytThImg.addEventListener('error', function () { ytBox.classList.remove('has-th'); });
   var ytIn = $('#ytIn'), ytBox = $('.yt'), ytMsg = $('#ytMsg'), ytPlay = $('#ytPlay'), ytPrev = $('#ytPrev'), ytNext = $('#ytNext'), ytTitle = $('#ytTitle');
   ytIn.value = S.ytUrl;
   function setMode2(m) { S.ytMode = m; ytBox.classList.toggle('audio', m === 'audio'); $$('#ytMode button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-mode') === m); }); save(); }
@@ -2854,7 +2870,7 @@
   function startYT() {
     var url = ytIn.value.trim(), q = parseYT(url);
     if (!q) { say('That doesn’t look like a YouTube link.'); ytIn.classList.remove('bad'); void ytIn.offsetWidth; ytIn.classList.add('bad'); return; }
-    say(''); S.ytUrl = url; save();
+    say(''); S.ytUrl = url; save(); thId = ''; if (q.v) setTh(q.v);
     ytLoad.disabled = true;
     loadAPI().then(function () {
       try { if (yt.p && yt.p.destroy) yt.p.destroy(); } catch (e) {}
@@ -2879,7 +2895,7 @@
     yt.state = e.data; var p = yt.p, on = e.data === 1;
     ytBox.classList.toggle('playing', on); playIcon(on || e.data === 3);
     try {
-      var d = p.getVideoData && p.getVideoData(); if (d && d.title) ytTitle.textContent = d.title;
+      var d = p.getVideoData && p.getVideoData(); if (d && d.title) ytTitle.textContent = d.title; if (d && d.video_id) setTh(d.video_id);
       var pl = p.getPlaylist && p.getPlaylist(); yt.list = !!(pl && pl.length > 1);
     } catch (x) {}
     ytPrev.disabled = ytNext.disabled = !yt.list;
@@ -9422,9 +9438,12 @@ Marketing,alex99,</div>
         b: ['To do, In review, Overdue and Completed, each collapsible', 'Sent-back work jumps to the top of To do', 'Once a deadline passes, submissions close', 'A summary line counts every group at a glance'] }
     ],
     minor: [
-      { art: 'dock', t: 'A pocket toolbox on the right edge',
-        s: 'Tap the little arrow on the right to slide out a small box with a stopwatch, a Pomodoro timer, a YouTube player and chess against Fritz.',
-        b: ['Stopwatch with laps, and a Pomodoro that cycles focus and breaks', 'Paste youtube.com or youtu.be links, even playlists, as video or audio only', 'Play Fritz without leaving Time12', 'Timers keep running while the box is closed'] },
+      { art: 'dock', t: 'A pocket toolbox on the left edge',
+        s: 'Tap the little arrow on the left to slide out a small box with a stopwatch, a Pomodoro timer, a YouTube player and chess on Lichess.',
+        b: ['Stopwatch with laps, and a Pomodoro that cycles focus and breaks', 'Paste youtube.com or youtu.be links, even playlists, as video or audio only', 'Play Lichess puzzles without leaving Time12', 'Timers keep running while the box is closed'] },
+      { art: 'dock', t: 'A roomier box, now with Lichess',
+        s: 'The focus box moved to the roomier left edge, grew wider, and now runs on Lichess.',
+        b: ['Solve the daily puzzle or watch live games, right inside the box', 'Audio-only YouTube shows the video’s thumbnail beside the progress line', 'A bigger board, player and timers'] },
       { art: 'tour', t: 'A 60-second tour, only if you want it',
         s: 'New accounts are offered a walkthrough with spotlights, animated arrows and short illustrations.',
         b: ['Offered once, never forced', 'Replay it any time from Shortcuts'] },
