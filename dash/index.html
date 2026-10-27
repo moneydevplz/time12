@@ -2424,6 +2424,495 @@
 
 <div class="toast-container" id="toastContainer"></div>
 
+<!-- =====================================================================================================================
+  FOCUS DOCK: a small slide-out box on the right edge. Tabs: Stopwatch / Pomodoro / YouTube / Chess (Fritz).
+  Self-contained: #t12dk (markup) + #t12dk-css + #t12dk-js. Shows only while the app (#Time12App) is visible.
+  - Stopwatch + Pomodoro keep running while the box is closed (end-timestamps, not counters). The tab shows a live dot.
+  - YouTube: paste youtube.com / youtu.be / shorts / live / embed links, bare video IDs, or playlists (list=...).
+    Video or Audio-only (the player is hidden, not paused). Uses YouTube's IFrame API, loaded on first Play.
+  - Chess: the official ChessBase embed (https://fritz.chessbase.com), loaded the first time the tab opens.
+  - Stores only: last tab, last YouTube link, video/audio choice, bell mute (localStorage key "t12dock").
+  - If your host sends a Content-Security-Policy, allow frame-src https://www.youtube.com https://fritz.chessbase.com
+    and script-src https://www.youtube.com.
+===================================================================================================================== -->
+<style id="t12dk-css">
+  #t12dk { --dk-w: 320px; --dk-tab: 28px; --dk-ease: cubic-bezier(.2, .8, .2, 1); --dk-spring: cubic-bezier(.34, 1.3, .5, 1);
+    --dk-bg: var(--glass-bg); --dk-ok: #2F9E6B;
+    position: fixed; right: 0; top: 50%; z-index: 1200; display: flex; align-items: center; padding-right: 12px;
+    transform: translate(calc(100% - var(--dk-tab)), -50%); transition: transform .55s var(--dk-spring);
+    font-family: var(--sans); color: var(--text); -webkit-tap-highlight-color: transparent; }
+  html[data-theme="dark"] #t12dk { --dk-bg: rgba(24, 24, 24, .86); --dk-ok: #4CC38A; }
+  #t12dk[hidden] { display: none; }
+  #t12dk.open { transform: translate(0, -50%); }
+
+  /* ---- the arrow tab ---- */
+  #t12dk .dk-tab { position: relative; flex: none; width: var(--dk-tab); height: 66px; padding: 0; cursor: pointer;
+    border: 1px solid var(--glass-border); border-right: 0; border-radius: 14px 0 0 14px; color: var(--text-soft);
+    background: var(--dk-bg); -webkit-backdrop-filter: var(--bf, blur(calc(18px * var(--blur-k, 1))) saturate(160%)); backdrop-filter: var(--bf, blur(calc(18px * var(--blur-k, 1))) saturate(160%));
+    box-shadow: -6px 6px 18px rgba(34, 24, 16, .08), var(--glass-inset); display: grid; place-items: center;
+    transition: color .2s, translate .25s var(--dk-ease), background .2s; }
+  #t12dk:not(.open) .dk-tab:hover { color: var(--accent); translate: -3px 0; }
+  #t12dk .dk-tab svg { width: 17px; height: 17px; transition: transform .5s var(--dk-ease); }
+  #t12dk.open .dk-tab svg { transform: rotate(180deg); }
+  #t12dk .dk-dot { position: absolute; top: 9px; left: 8px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); opacity: 0; transform: scale(.4); transition: opacity .25s, transform .3s var(--dk-spring); }
+  #t12dk.live .dk-dot { opacity: 1; transform: scale(1); animation: dkPulse 1.8s ease-out infinite; }
+  #t12dk.ring:not(.open) .dk-tab { animation: dkRing .6s ease 5; }
+  @keyframes dkPulse { 0% { box-shadow: 0 0 0 0 rgba(253, 126, 20, .55); } 70%, 100% { box-shadow: 0 0 0 8px rgba(253, 126, 20, 0); } }
+  @keyframes dkRing { 0%, 100% { rotate: 0deg; } 20% { rotate: -9deg; } 40% { rotate: 8deg; } 60% { rotate: -5deg; } 80% { rotate: 3deg; } }
+
+  /* ---- the box ---- */
+  #t12dk .dk-panel { width: min(var(--dk-w), calc(100vw - 56px)); max-height: calc(100vh - 24px); overflow-x: hidden; overflow-y: auto; padding: 10px; border-radius: 18px;
+    border: 1px solid var(--glass-border); background: var(--dk-bg); -webkit-backdrop-filter: var(--bf, blur(calc(24px * var(--blur-k, 1))) saturate(165%)); backdrop-filter: var(--bf, blur(calc(24px * var(--blur-k, 1))) saturate(165%));
+    box-shadow: var(--shadow-soft), var(--glass-inset); scrollbar-width: thin; }
+  #t12dk .dk-views { position: relative; }
+  #t12dk .dk-view { padding: 14px 4px 4px; }
+  #t12dk .dk-view:not(.on) { position: absolute; left: 0; right: 0; top: 0; height: 0; overflow: hidden; visibility: hidden; pointer-events: none; padding: 0; }  /* hidden, not display:none: keeps audio + iframes alive */
+  #t12dk .dk-view.on { animation: dkIn .4s var(--dk-ease); }
+  @keyframes dkIn { from { opacity: 0; transform: translateY(6px); } }
+
+  /* ---- mini tabs: the active one grows and shows its name ---- */
+  #t12dk .dk-tabs { display: flex; gap: 3px; padding: 3px; border-radius: 12px; background: var(--surface-2); }
+  #t12dk .dk-t { flex: 1 0 34px; flex-grow: 0; min-width: 0; height: 30px; padding: 0; border: 0; border-radius: 9px; background: transparent; color: var(--text-muted); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 6px; overflow: hidden; white-space: nowrap; font: 600 11.5px var(--sans);
+    transition: flex-grow .4s var(--dk-ease), background .25s, color .25s, box-shadow .25s; }
+  #t12dk .dk-t svg { width: 16px; height: 16px; flex: none; }
+  #t12dk .dk-t span { max-width: 0; opacity: 0; transition: max-width .4s var(--dk-ease), opacity .25s; }
+  #t12dk .dk-t:hover { color: var(--text); }
+  #t12dk .dk-t[aria-selected="true"] { flex-grow: 1; background: var(--bg); color: var(--text); box-shadow: 0 1px 4px rgba(0, 0, 0, .14); }
+  html[data-theme="dark"] #t12dk .dk-t[aria-selected="true"], html[data-theme="dark"] #t12dk .dk-seg button.on { background: #3a3a3a; box-shadow: 0 1px 4px rgba(0, 0, 0, .4); }
+  #t12dk .dk-t[aria-selected="true"] svg { color: var(--accent); }
+  #t12dk .dk-t[aria-selected="true"] span { max-width: 90px; opacity: 1; }
+
+  /* ---- shared bits ---- */
+  #t12dk .dk-row { display: flex; align-items: center; justify-content: center; gap: 8px; }
+  #t12dk .dk-btn { height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--border); background: var(--bg); color: var(--text); cursor: pointer;
+    font: 600 12.5px var(--sans); display: inline-flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap;
+    transition: transform .15s var(--dk-ease), border-color .2s, color .2s, box-shadow .2s, filter .2s; }
+  #t12dk .dk-btn svg { width: 14px; height: 14px; }
+  #t12dk .dk-btn:hover { border-color: var(--accent); color: var(--accent); }
+  #t12dk .dk-btn:active { transform: scale(.95); }
+  #t12dk .dk-btn.primary { min-width: 86px; background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 5px 14px rgba(253, 126, 20, .34); }
+  #t12dk .dk-btn.primary:hover { filter: brightness(1.07); color: #fff; }
+  #t12dk .dk-btn:disabled { opacity: .4; pointer-events: none; }
+  #t12dk button:focus-visible, #t12dk input:focus-visible, #t12dk a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  #t12dk .dk-seg { display: flex; gap: 2px; width: fit-content; margin: 0 auto; padding: 2px; border-radius: 999px; background: var(--surface-2); }
+  #t12dk .dk-seg button { border: 0; border-radius: 999px; padding: 5px 12px; background: transparent; color: var(--text-muted); cursor: pointer; font: 600 11.5px var(--sans); transition: background .25s, color .25s, box-shadow .25s; }
+  #t12dk .dk-seg button.on { background: var(--bg); color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, .15); }
+  #t12dk .dk-seg button:not(.on):hover { color: var(--text); }
+  #t12dk .dk-ic { width: 32px; height: 32px; border: 0; border-radius: 50%; padding: 0; background: transparent; color: var(--text-soft); cursor: pointer; display: grid; place-items: center; transition: background .2s, color .2s, transform .15s; }
+  #t12dk .dk-ic svg { width: 16px; height: 16px; }
+  #t12dk .dk-ic:hover { background: var(--surface-2); color: var(--text); }
+  #t12dk .dk-ic:active { transform: scale(.92); }
+  #t12dk .dk-ic:disabled { opacity: .3; pointer-events: none; }
+  #t12dk .dk-ic.play { width: 38px; height: 38px; background: var(--accent); color: #fff; box-shadow: 0 5px 14px rgba(253, 126, 20, .34); }
+  #t12dk .dk-ic.play:hover { filter: brightness(1.07); }
+  #t12dk .dk-ic.play svg { width: 17px; height: 17px; }
+
+  /* ---- stopwatch ---- */
+  #t12dk .sw-time { display: flex; justify-content: center; align-items: baseline; padding: 4px 0 16px; font: 700 42px/1 var(--sans); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  #t12dk .sw-time small { margin-left: 2px; font-size: 19px; font-weight: 600; letter-spacing: 0; color: var(--text-muted); transition: color .3s; }
+  #t12dk .sw.run .sw-time small { color: var(--accent); }
+  #t12dk .sw-laps { list-style: none; margin: 12px 0 0; padding: 0; max-height: 96px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; scrollbar-width: thin; }
+  #t12dk .sw-laps:empty { display: none; }
+  #t12dk .sw-laps li { display: grid; grid-template-columns: 38px 1fr auto; gap: 6px; padding: 5px 9px; border-radius: 8px; font: 500 12px var(--sans); color: var(--text-soft); font-variant-numeric: tabular-nums; animation: dkIn .3s var(--dk-ease); }
+  #t12dk .sw-laps li:nth-child(odd) { background: var(--surface-2); }
+  #t12dk .sw-laps li b { font-weight: 600; color: var(--text-muted); }
+  #t12dk .sw-laps li i { font-style: normal; text-align: right; color: var(--text-muted); }
+  #t12dk .sw-laps li.best { color: var(--dk-ok); } #t12dk .sw-laps li.worst { color: var(--accent); }
+
+  /* ---- pomodoro ---- */
+  #t12dk .pm { position: relative; }
+  #t12dk .pm-ring { position: relative; width: 138px; height: 138px; margin: 14px auto 8px; }
+  #t12dk .pm-ring svg { display: block; width: 100%; height: 100%; transform: rotate(-90deg); }
+  #t12dk .pm-ring circle { fill: none; stroke-width: 7; stroke-linecap: round; }
+  #t12dk .pm-ring .tr { stroke: var(--surface-2); }
+  #t12dk .pm-ring .pg { stroke: var(--accent); stroke-dasharray: 100 100; transition: stroke-dasharray 1s linear, stroke .5s; filter: drop-shadow(0 0 5px rgba(253, 126, 20, .35)); }
+  #t12dk .pm.brk .pg { stroke: var(--dk-ok); filter: drop-shadow(0 0 5px rgba(47, 158, 107, .35)); }
+  #t12dk .pm-c { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+  #t12dk .pm-c b { font: 700 31px/1 var(--sans); letter-spacing: -.03em; font-variant-numeric: tabular-nums; }
+  #t12dk .pm-c small { margin-top: 6px; font: 600 10.5px var(--sans); letter-spacing: .09em; text-transform: uppercase; color: var(--text-muted); }
+  #t12dk .pm-dots { display: flex; justify-content: center; gap: 6px; margin-bottom: 14px; }
+  #t12dk .pm-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border); transition: background .3s, box-shadow .3s, transform .3s var(--dk-spring); }
+  #t12dk .pm-dots i.on { background: var(--accent); box-shadow: none; transform: scale(1.15); }
+  #t12dk .pm-bell { position: absolute; top: 12px; right: 0; width: 28px; height: 28px; }
+  #t12dk .pm-bell .x { opacity: 0; transition: opacity .2s; }
+  #t12dk .pm-bell[aria-pressed="true"] .x { opacity: 1; }
+  #t12dk .pm-bell[aria-pressed="true"] { color: var(--text-muted); }
+
+  /* ---- youtube ---- */
+  #t12dk .yt-row { display: flex; gap: 6px; margin-bottom: 10px; }
+  #t12dk .yt-row input { flex: 1; min-width: 0; height: 34px; padding: 0 11px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg); color: var(--text); font: 500 13px var(--sans); transition: border-color .2s, box-shadow .2s; }
+  #t12dk .yt-row input::placeholder { color: var(--text-muted); }
+  #t12dk .yt-row input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(253, 126, 20, .16); }
+  #t12dk .yt-row input.bad { animation: dkShake .4s; border-color: #D64545; }
+  @keyframes dkShake { 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
+  #t12dk .yt-row .dk-btn { min-width: 0; padding: 0 14px; }
+  @media (hover: none) { #t12dk .yt-row input { font-size: 16px; } }
+  #t12dk .yt-vid, #t12dk .yt-aud { display: grid; grid-template-rows: 1fr; margin-top: 10px; transition: grid-template-rows .45s var(--dk-ease), margin .45s var(--dk-ease), opacity .35s; }
+  #t12dk .yt-vid > div, #t12dk .yt-aud > div { min-height: 0; overflow: hidden; }
+  #t12dk .yt-aud { grid-template-rows: 0fr; margin-top: 0; opacity: 0; }
+  #t12dk .yt.audio .yt-vid { grid-template-rows: 0fr; margin-top: 0; opacity: 0; }
+  #t12dk .yt.audio .yt-aud { grid-template-rows: 1fr; margin-top: 10px; opacity: 1; }
+  #t12dk .yt-box { position: relative; aspect-ratio: 16 / 9; border-radius: 12px; overflow: hidden; background: var(--surface-2); border: 1px solid var(--border); }
+  #t12dk .yt-host, #t12dk .yt-host iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+  #t12dk .yt-empty { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 8px; padding: 12px; text-align: center; font: 500 12px/1.4 var(--sans); color: var(--text-muted); }
+  #t12dk .yt-empty svg { width: 30px; height: 30px; color: var(--accent); opacity: .85; }
+  #t12dk .yt.loaded .yt-empty { display: none; }
+  #t12dk .yt-card { display: flex; align-items: center; gap: 12px; height: 74px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--border); background: linear-gradient(135deg, var(--accent-soft), var(--surface-2)); }
+  #t12dk .yt-eq { display: flex; align-items: flex-end; gap: 3px; width: 24px; height: 24px; flex: none; }
+  #t12dk .yt-eq i { flex: 1; height: 100%; border-radius: 2px; background: var(--accent); transform-origin: bottom; transform: scaleY(.25); }
+  #t12dk .yt.playing .yt-eq i { animation: dkEq 1s ease-in-out infinite; }
+  #t12dk .yt-eq i:nth-child(2) { animation-delay: -.3s !important; } #t12dk .yt-eq i:nth-child(3) { animation-delay: -.6s !important; } #t12dk .yt-eq i:nth-child(4) { animation-delay: -.15s !important; }
+  @keyframes dkEq { 0%, 100% { transform: scaleY(.25); } 50% { transform: scaleY(1); } }
+  #t12dk .yt-card b { display: block; font: 600 13px/1.3 var(--sans); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+  #t12dk .yt-card small { display: block; margin-top: 2px; font: 600 10.5px var(--sans); letter-spacing: .08em; text-transform: uppercase; color: var(--text-muted); }
+  #t12dk .yt-ctl { display: flex; align-items: center; gap: 4px; margin-top: 10px; }
+  #t12dk .yt-bar { flex: 1; height: 22px; margin: 0 6px; display: flex; align-items: center; cursor: pointer; }
+  #t12dk .yt-bar span { display: block; width: 100%; height: 5px; border-radius: 3px; background: var(--surface-2); overflow: hidden; }
+  #t12dk .yt-bar i { display: block; height: 100%; width: 0; border-radius: 3px; background: var(--accent); }
+  #t12dk .yt-tm { min-width: 64px; text-align: right; font: 600 11px var(--sans); font-variant-numeric: tabular-nums; color: var(--text-muted); }
+  #t12dk .yt-msg { min-height: 0; margin: 8px 2px 0; font: 500 11.5px/1.4 var(--sans); color: #D64545; }
+  #t12dk .yt-msg:empty { display: none; }
+
+  /* ---- chess ---- */
+  #t12dk .ch-frame { position: relative; height: 304px; border-radius: 12px; overflow: hidden; border: 1px solid var(--border); background: var(--surface-2); }
+  #t12dk .ch-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #fff; opacity: 0; transition: opacity .4s; }
+  #t12dk .ch-frame.ok iframe { opacity: 1; }
+  #t12dk .ch-load { position: absolute; inset: 0; display: grid; place-content: center; font: 500 12px var(--sans); color: var(--text-muted); }
+  #t12dk .ch-frame.ok .ch-load { display: none; }
+  #t12dk .ch-open { display: block; width: fit-content; margin: 9px 2px 0 auto; font: 600 11.5px var(--sans); color: var(--text-muted); text-decoration: none; transition: color .2s; }
+  #t12dk .ch-open:hover { color: var(--accent); }
+
+  @media (max-width: 520px) { #t12dk .dk-tab { height: 58px; } }
+  @media (prefers-reduced-motion: reduce) { #t12dk, #t12dk * { transition-duration: .01s !important; animation: none !important; } }
+</style>
+
+<div id="t12dk" hidden>
+  <button class="dk-tab" id="dkTab" type="button" aria-label="Open the focus box" aria-expanded="false" aria-controls="dkPanel" title="Timers, music and chess">
+    <span class="dk-dot"></span>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="15 6 9 12 15 18"/></svg>
+  </button>
+
+  <div class="dk-panel" id="dkPanel" inert aria-hidden="true">
+    <div class="dk-tabs" role="tablist" aria-label="Focus tools">
+      <button class="dk-t" role="tab" data-t="sw" aria-selected="true" type="button" title="Stopwatch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13.5" r="7"/><path d="M12 10v4l2.5 1.5M9.5 3h5M12 3v3.5M18.2 7.3l1.3-1.3"/></svg><span>Stopwatch</span></button>
+      <button class="dk-t" role="tab" data-t="pm" aria-selected="false" type="button" title="Pomodoro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="13.5" r="7.5"/><path d="M12 6c-.2-1.4.4-2.6 1.6-3.3M12 6c-1.6-.8-3.1-.6-4.2.6M12 6c1.6-.8 3.1-.6 4.2.6"/></svg><span>Pomodoro</span></button>
+      <button class="dk-t" role="tab" data-t="yt" aria-selected="false" type="button" title="YouTube"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="4"/><path d="M10.2 9.6v4.8l4.3-2.4z" fill="currentColor"/></svg><span>YouTube</span></button>
+      <button class="dk-t" role="tab" data-t="ch" aria-selected="false" type="button" title="Chess vs Fritz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="7.5" r="2.8"/><path d="M9.6 12.5h4.8M10.4 12.5c0 2.2-1.4 3.6-2.4 5.2h8c-1-1.6-2.4-3-2.4-5.2M7 20.5h10"/></svg><span>Chess</span></button>
+    </div>
+
+    <div class="dk-views">
+      <!-- Stopwatch -->
+      <section class="dk-view sw on" data-v="sw" role="tabpanel">
+        <div class="sw-time"><span id="swMain">00:00</span><small id="swMs">.00</small></div>
+        <div class="dk-row">
+          <button class="dk-btn" id="swLap" type="button" disabled><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 21V4M6 5h11l-2 4 2 4H6"/></svg>Lap</button>
+          <button class="dk-btn primary" id="swGo" type="button">Start</button>
+          <button class="dk-btn" id="swReset" type="button" disabled>Reset</button>
+        </div>
+        <ol class="sw-laps" id="swLaps"></ol>
+      </section>
+
+      <!-- Pomodoro -->
+      <section class="dk-view pm" data-v="pm" role="tabpanel">
+        <button class="dk-ic pm-bell" id="pmBell" type="button" aria-pressed="false" aria-label="Chime when a round ends" title="Chime on/off"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16v-5a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20.5a2 2 0 0 0 4 0"/><path class="x" d="M4 4l16 16"/></svg></button>
+        <div class="dk-seg" id="pmModes" role="group" aria-label="Round type"><button type="button" data-m="focus" class="on">Focus</button><button type="button" data-m="short">Short break</button><button type="button" data-m="long">Long break</button></div>
+        <div class="pm-ring"><svg viewBox="0 0 120 120" aria-hidden="true"><circle class="tr" cx="60" cy="60" r="52"/><circle class="pg" id="pmPg" cx="60" cy="60" r="52" pathLength="100"/></svg>
+          <div class="pm-c" role="timer" aria-live="off"><b id="pmTime">25:00</b><small id="pmLabel">Focus</small></div></div>
+        <div class="pm-dots" id="pmDots" aria-label="Focus rounds this cycle"><i></i><i></i><i></i><i></i></div>
+        <div class="dk-row">
+          <button class="dk-btn" id="pmReset" type="button">Reset</button>
+          <button class="dk-btn primary" id="pmGo" type="button">Start</button>
+          <button class="dk-btn" id="pmSkip" type="button">Skip</button>
+        </div>
+      </section>
+
+      <!-- YouTube -->
+      <section class="dk-view yt" data-v="yt" role="tabpanel">
+        <div class="yt-row"><input id="ytIn" type="text" inputmode="url" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="YouTube link or playlist" aria-label="YouTube link"><button class="dk-btn primary" id="ytLoad" type="button">Play</button></div>
+        <div class="dk-seg" id="ytMode" role="group" aria-label="Playback type"><button type="button" data-mode="video" class="on">Video</button><button type="button" data-mode="audio">Audio only</button></div>
+        <div class="yt-vid"><div><div class="yt-box">
+          <div class="yt-empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="4"/><path d="M10.2 9.6v4.8l4.3-2.4z" fill="currentColor"/></svg>Paste a youtube.com or youtu.be link.<br>Playlists work too.</div>
+          <div class="yt-host" id="ytHost"></div>
+        </div></div></div>
+        <div class="yt-aud"><div><div class="yt-card"><div class="yt-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></div><div style="min-width:0"><b id="ytTitle">Nothing playing</b><small>Audio only</small></div></div></div></div>
+        <div class="yt-ctl">
+          <button class="dk-ic" id="ytPrev" type="button" aria-label="Previous video" disabled><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M6 5.5h2.2v13H6zM19 6v12l-9-6z"/></svg></button>
+          <button class="dk-ic play" id="ytPlay" type="button" aria-label="Play or pause" disabled><svg id="ytPlayIc" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l11-6.5z"/></svg></button>
+          <button class="dk-ic" id="ytNext" type="button" aria-label="Next video" disabled><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M15.8 5.5H18v13h-2.2zM5 6v12l9-6z"/></svg></button>
+          <div class="yt-bar" id="ytBar" role="slider" aria-label="Seek" tabindex="-1"><span><i id="ytFill"></i></span></div>
+          <div class="yt-tm" id="ytTm">0:00 / 0:00</div>
+        </div>
+        <p class="yt-msg" id="ytMsg" role="status"></p>
+      </section>
+
+      <!-- Chess -->
+      <section class="dk-view ch" data-v="ch" role="tabpanel">
+        <div class="ch-frame" id="chFrame"><div class="ch-load">Setting up the board…</div></div>
+        <a class="ch-open" href="https://fritz.chessbase.com" target="_blank" rel="noopener noreferrer">Open full size ↗</a>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script id="t12dk-js">
+(function () {
+  'use strict';
+  var D = document, root = D.getElementById('t12dk'), app = D.getElementById('Time12App');
+  if (!root || !app) return;
+  var $ = function (s) { return root.querySelector(s); };
+  var $$ = function (s) { return Array.prototype.slice.call(root.querySelectorAll(s)); };
+  var LS = 't12dock', TABS = ['sw', 'pm', 'yt', 'ch'];
+  var PM = { focus: [25, 'Focus'], short: [5, 'Short break'], long: [15, 'Long break'] };
+  var S = { open: false, tab: 'sw', mute: false, ytUrl: '', ytMode: 'video',
+            sw: { run: false, base: 0, t0: 0, laps: [] },
+            pm: { mode: 'focus', run: false, end: 0, left: 25 * 60000, done: 0 } };
+  try {
+    var sv = JSON.parse(localStorage.getItem(LS) || '{}') || {};
+    if (TABS.indexOf(sv.tab) > -1) S.tab = sv.tab;
+    if (typeof sv.yt === 'string') S.ytUrl = sv.yt.slice(0, 300);
+    if (sv.mode === 'audio') S.ytMode = 'audio';
+    S.mute = !!sv.mute;
+  } catch (e) {}
+  function save() { try { localStorage.setItem(LS, JSON.stringify({ tab: S.tab, yt: S.ytUrl, mode: S.ytMode, mute: S.mute })); } catch (e) {} }
+
+  var p2 = function (n) { return (n < 10 ? '0' : '') + n; };
+  function clock(sec) { sec = Math.max(0, Math.floor(sec || 0)); var h = Math.floor(sec / 3600), m = Math.floor(sec / 60) % 60, s = sec % 60; return h ? h + ':' + p2(m) + ':' + p2(s) : m + ':' + p2(s); }
+
+  /* ---------------- show only while the app is on screen ---------------- */
+  function sync() { root.hidden = !(app.style.display !== 'none' && getComputedStyle(app).display !== 'none'); }
+  new MutationObserver(sync).observe(app, { attributes: true, attributeFilter: ['style', 'class'] });
+  sync();
+
+  /* ---------------- tick loop (only runs while something is visible or live) ---------------- */
+  var iv = null;
+  var yt = { p: null, api: null, state: -1, list: false };
+  function anyLive() { return S.sw.run || S.pm.run || yt.state === 1; }
+  function schedule() {
+    clearInterval(iv); iv = null;
+    if (S.open || anyLive()) iv = setInterval(tick, S.open && S.tab === 'sw' && S.sw.run ? 50 : 250);
+  }
+  function tick() {
+    if (S.pm.run && Date.now() >= S.pm.end) finish(true);
+    if (S.open) { if (S.tab === 'sw') renderSW(); else if (S.tab === 'pm') renderPM(); else if (S.tab === 'yt') renderYTBar(); }
+    root.classList.toggle('live', anyLive());
+  }
+
+  /* ---------------- open / close / tabs ---------------- */
+  var tabBtn = $('#dkTab'), panel = $('#dkPanel');
+  function setOpen(o) {
+    S.open = !!o;
+    root.classList.toggle('open', S.open);
+    root.classList.remove('ring');
+    tabBtn.setAttribute('aria-expanded', S.open);
+    tabBtn.setAttribute('aria-label', S.open ? 'Close the focus box' : 'Open the focus box');
+    panel.inert = !S.open; panel.setAttribute('aria-hidden', !S.open);
+    if (S.open) { renderSW(); renderPM(); renderYTBar(); if (S.tab === 'ch') mountChess(); }
+    tick(); schedule();
+  }
+  tabBtn.addEventListener('click', function () { setOpen(!S.open); });
+  root.addEventListener('keydown', function (e) { if (e.key === 'Escape' && S.open) { setOpen(false); tabBtn.focus(); } });
+
+  function select(t, focus) {
+    if (TABS.indexOf(t) < 0) t = 'sw';
+    S.tab = t;
+    $$('.dk-t').forEach(function (b) { var on = b.getAttribute('data-t') === t; b.setAttribute('aria-selected', on); b.tabIndex = on ? 0 : -1; if (on && focus) b.focus(); });
+    $$('.dk-view').forEach(function (v) { v.classList.toggle('on', v.getAttribute('data-v') === t); });
+    if (t === 'ch' && S.open) mountChess();
+    if (S.open) { renderSW(); renderPM(); renderYTBar(); }
+    schedule(); save();
+  }
+  $$('.dk-t').forEach(function (b, i, all) {
+    b.addEventListener('click', function () { select(b.getAttribute('data-t')); });
+    b.addEventListener('keydown', function (e) {
+      var d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0;
+      if (d) { e.preventDefault(); select(all[(i + d + all.length) % all.length].getAttribute('data-t'), true); }
+    });
+  });
+
+  /* ---------------- stopwatch ---------------- */
+  var swMain = $('#swMain'), swMs = $('#swMs'), swGo = $('#swGo'), swLap = $('#swLap'), swReset = $('#swReset'), swLaps = $('#swLaps'), swEl = $('.sw'), lastSW = '';
+  function swNow() { return S.sw.base + (S.sw.run ? performance.now() - S.sw.t0 : 0); }
+  function renderSW() {
+    var t = swNow(), cs = Math.floor(t / 10) % 100, s = Math.floor(t / 1000), h = Math.floor(s / 3600), m = Math.floor(s / 60) % 60;
+    var main = h ? h + ':' + p2(m) + ':' + p2(s % 60) : p2(m) + ':' + p2(s % 60), key = main + cs;
+    if (key === lastSW) return; lastSW = key;
+    swMain.textContent = main; swMs.textContent = '.' + p2(cs);
+  }
+  function renderSWUI() {
+    swEl.classList.toggle('run', S.sw.run);
+    swGo.textContent = S.sw.run ? 'Pause' : (S.sw.base > 0 ? 'Resume' : 'Start');
+    swLap.disabled = !S.sw.run; swReset.disabled = S.sw.run ? false : S.sw.base === 0;
+  }
+  function renderLaps() {
+    var L = S.sw.laps, d = L.map(function (t, i) { return t - (L[i - 1] || 0); }), best = Math.min.apply(null, d), worst = Math.max.apply(null, d), html = '';
+    for (var i = L.length - 1; i >= 0; i--) {
+      var cls = L.length >= 3 ? (d[i] === best ? 'best' : d[i] === worst ? 'worst' : '') : '';
+      html += '<li class="' + cls + '"><b>' + (i + 1) + '</b><span>+' + fmtLap(d[i]) + '</span><i>' + fmtLap(L[i]) + '</i></li>';
+    }
+    swLaps.innerHTML = html;
+  }
+  function fmtLap(t) { var cs = Math.floor(t / 10) % 100, s = Math.floor(t / 1000); return clock(s) + '.' + p2(cs); }
+  swGo.addEventListener('click', function () {
+    if (S.sw.run) { S.sw.base = swNow(); S.sw.run = false; } else { S.sw.t0 = performance.now(); S.sw.run = true; }
+    renderSWUI(); renderSW(); schedule(); tick();
+  });
+  swLap.addEventListener('click', function () { if (S.sw.run && S.sw.laps.length < 99) { S.sw.laps.push(swNow()); renderLaps(); } });
+  swReset.addEventListener('click', function () { S.sw = { run: false, base: 0, t0: 0, laps: [] }; lastSW = ''; renderSWUI(); renderSW(); renderLaps(); schedule(); tick(); });
+
+  /* ---------------- pomodoro ---------------- */
+  var pmTime = $('#pmTime'), pmLabel = $('#pmLabel'), pmPg = $('#pmPg'), pmGo = $('#pmGo'), pmBox = $('.pm'), pmBell = $('#pmBell'), actx = null;
+  function pmLeft() { return S.pm.run ? Math.max(0, S.pm.end - Date.now()) : S.pm.left; }
+  function renderPM() {
+    var total = PM[S.pm.mode][0] * 60000, left = pmLeft();
+    pmTime.textContent = clock(Math.ceil(left / 1000)); pmLabel.textContent = PM[S.pm.mode][1];
+    pmPg.style.strokeDasharray = (Math.max(0, Math.min(1, left / total)) * 100).toFixed(2) + ' 100';
+    pmBox.classList.toggle('brk', S.pm.mode !== 'focus');
+    pmGo.textContent = S.pm.run ? 'Pause' : (left < total ? 'Resume' : 'Start');
+    $$('#pmModes button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-m') === S.pm.mode); });
+    var f = S.pm.mode === 'long' && S.pm.done > 0 && S.pm.done % 4 === 0 ? 4 : S.pm.done % 4;
+    $$('#pmDots i').forEach(function (d, i) { d.classList.toggle('on', i < f); });
+  }
+  function setMode(m) { S.pm.mode = m; S.pm.run = false; S.pm.left = PM[m][0] * 60000; renderPM(); schedule(); }
+  function finish(chimeToo) {
+    if (chimeToo) { chime(); if (!S.open) { root.classList.add('ring'); } }
+    var m = S.pm.mode;
+    if (m === 'focus') { if (chimeToo) S.pm.done++; setMode(S.pm.done > 0 && S.pm.done % 4 === 0 && chimeToo ? 'long' : 'short'); }
+    else { if (m === 'long') S.pm.done = 0; setMode('focus'); }
+  }
+  function unlockAudio() { try { var A = window.AudioContext || window.webkitAudioContext; actx = actx || new A(); if (actx.state === 'suspended') actx.resume(); } catch (e) {} }
+  function chime() {
+    if (S.mute || !actx) return;
+    try { [880, 1175, 1480].forEach(function (f, i) {
+      var o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime + i * .17;
+      o.type = 'sine'; o.frequency.value = f; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(.16, t + .02); g.gain.exponentialRampToValueAtTime(.0001, t + .55);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + .6);
+    }); } catch (e) {}
+  }
+  pmGo.addEventListener('click', function () {
+    if (S.pm.run) { S.pm.left = pmLeft(); S.pm.run = false; }
+    else { unlockAudio(); S.pm.end = Date.now() + S.pm.left; S.pm.run = true; }
+    renderPM(); schedule(); tick();
+  });
+  $('#pmReset').addEventListener('click', function () { setMode(S.pm.mode); tick(); });
+  $('#pmSkip').addEventListener('click', function () { finish(false); tick(); });
+  $$('#pmModes button').forEach(function (b) { b.addEventListener('click', function () { setMode(b.getAttribute('data-m')); tick(); }); });
+  pmBell.addEventListener('click', function () { S.mute = !S.mute; pmBell.setAttribute('aria-pressed', S.mute); save(); if (!S.mute) { unlockAudio(); chime(); } });
+  pmBell.setAttribute('aria-pressed', S.mute);
+
+  /* ---------------- chess (official ChessBase embed, loaded on first view) ---------------- */
+  function mountChess() {
+    var f = $('#chFrame'); if (f.querySelector('iframe')) return;
+    var i = D.createElement('iframe');
+    i.src = 'https://fritz.chessbase.com'; i.title = 'Play chess against Fritz (ChessBase)';
+    i.setAttribute('allow', 'fullscreen'); i.referrerPolicy = 'strict-origin-when-cross-origin';
+    i.addEventListener('load', function () { f.classList.add('ok'); });
+    f.appendChild(i);
+  }
+
+  /* ---------------- youtube ---------------- */
+  /*@@PARSE*/
+  function parseYT(raw) {
+    var s = String(raw || '').trim(), u, v = null, l = null, m;
+    if (!s) return null;
+    if (/^[\w-]{11}$/.test(s)) return { v: s, l: null };
+    if (/^(PL|UU|LL|FL|OL)[\w-]{10,60}$/.test(s)) return { v: null, l: s };
+    try { u = new URL(/^https?:\/\//i.test(s) ? s : 'https://' + s); } catch (e) { return null; }
+    var h = u.hostname.toLowerCase().replace(/^(www|m|music)\./, '');
+    if (h === 'youtu.be') v = u.pathname.slice(1).split('/')[0];
+    else if (h === 'youtube.com' || h === 'youtube-nocookie.com') {
+      if (u.pathname === '/watch') v = u.searchParams.get('v');
+      else if ((m = u.pathname.match(/^\/(?:embed|shorts|live|v)\/([\w-]{11})/))) v = m[1];
+    } else return null;
+    l = u.searchParams.get('list');
+    if (v && !/^[\w-]{11}$/.test(v)) v = null;
+    if (l && (!/^[\w-]{10,64}$/.test(l) || /^RD/.test(l))) l = null;   /* auto-generated "Mix" lists can't be embedded */
+    return v || l ? { v: v, l: l } : null;
+  }
+  /*@@/PARSE*/
+
+  var ytIn = $('#ytIn'), ytBox = $('.yt'), ytMsg = $('#ytMsg'), ytPlay = $('#ytPlay'), ytPrev = $('#ytPrev'), ytNext = $('#ytNext'), ytTitle = $('#ytTitle');
+  ytIn.value = S.ytUrl;
+  function setMode2(m) { S.ytMode = m; ytBox.classList.toggle('audio', m === 'audio'); $$('#ytMode button').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-mode') === m); }); save(); }
+  $$('#ytMode button').forEach(function (b) { b.addEventListener('click', function () { setMode2(b.getAttribute('data-mode')); }); });
+  setMode2(S.ytMode);
+
+  function loadAPI() {
+    if (yt.api) return yt.api;
+    yt.api = new Promise(function (res, rej) {
+      if (window.YT && window.YT.Player) return res();
+      var prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = function () { try { if (prev) prev(); } catch (e) {} res(); };
+      var s = D.createElement('script'); s.src = 'https://www.youtube.com/iframe_api'; s.async = true;
+      s.onerror = function () { yt.api = null; rej(new Error('blocked')); };
+      D.head.appendChild(s);
+    });
+    return yt.api;
+  }
+  function say(t) { ytMsg.textContent = t || ''; }
+  function playIcon(on) { $('#ytPlayIc').innerHTML = on ? '<path d="M6.5 5.5h3.8v13H6.5zM13.7 5.5h3.8v13h-3.8z"/>' : '<path d="M8 5.5v13l11-6.5z"/>'; }
+  function startYT() {
+    var url = ytIn.value.trim(), q = parseYT(url);
+    if (!q) { say('That doesn’t look like a YouTube link.'); ytIn.classList.remove('bad'); void ytIn.offsetWidth; ytIn.classList.add('bad'); return; }
+    say(''); S.ytUrl = url; save();
+    ytLoad.disabled = true;
+    loadAPI().then(function () {
+      try { if (yt.p && yt.p.destroy) yt.p.destroy(); } catch (e) {}
+      $('#ytHost').innerHTML = '<div id="t12dkYT"></div>';
+      var vars = { autoplay: 1, playsinline: 1, rel: 0, modestbranding: 1, iv_load_policy: 3 };
+      if (/^https?:/.test(location.origin)) vars.origin = location.origin;
+      if (q.l) { vars.list = q.l; vars.listType = 'playlist'; }
+      yt.state = -1; yt.list = false; ytBox.classList.add('loaded'); ytBox.classList.remove('playing');
+      ytTitle.textContent = 'Loading…';
+      yt.p = new window.YT.Player('t12dkYT', { width: '100%', height: '100%', videoId: q.v || undefined, playerVars: vars,
+        events: { onReady: onYTReady, onStateChange: onYTState, onError: onYTError } });
+    }).catch(function () { say('YouTube couldn’t load. Check your connection or ad-blocker.'); })
+      .then(function () { ytLoad.disabled = false; });
+  }
+  var ytLoad = $('#ytLoad');
+  ytLoad.addEventListener('click', startYT);
+  ytIn.addEventListener('keydown', function (e) { e.stopPropagation(); if (e.key === 'Enter') { e.preventDefault(); startYT(); } if (e.key === 'Escape') { setOpen(false); tabBtn.focus(); } });
+  ytIn.addEventListener('input', function () { ytIn.classList.remove('bad'); say(''); });
+
+  function onYTReady(e) { ytPlay.disabled = false; try { e.target.playVideo(); } catch (x) {} }
+  function onYTState(e) {
+    yt.state = e.data; var p = yt.p, on = e.data === 1;
+    ytBox.classList.toggle('playing', on); playIcon(on || e.data === 3);
+    try {
+      var d = p.getVideoData && p.getVideoData(); if (d && d.title) ytTitle.textContent = d.title;
+      var pl = p.getPlaylist && p.getPlaylist(); yt.list = !!(pl && pl.length > 1);
+    } catch (x) {}
+    ytPrev.disabled = ytNext.disabled = !yt.list;
+    root.classList.toggle('live', anyLive()); schedule();
+  }
+  function onYTError(e) {
+    var c = e.data;
+    say(c === 101 || c === 150 ? 'The owner doesn’t allow this video to be embedded.' : c === 100 ? 'That video is private or no longer exists.' : 'That link couldn’t be played.');
+    yt.state = -1; ytBox.classList.remove('playing'); playIcon(false); schedule();
+  }
+  ytPlay.addEventListener('click', function () { if (!yt.p) return; try { (yt.state === 1 ? yt.p.pauseVideo : yt.p.playVideo).call(yt.p); } catch (e) {} });
+  ytPrev.addEventListener('click', function () { try { yt.p.previousVideo(); } catch (e) {} });
+  ytNext.addEventListener('click', function () { try { yt.p.nextVideo(); } catch (e) {} });
+  $('#ytBar').addEventListener('click', function (e) {
+    if (!yt.p || !yt.p.getDuration) return;
+    var r = this.getBoundingClientRect(), d = yt.p.getDuration() || 0;
+    if (d) { try { yt.p.seekTo(Math.max(0, Math.min(1, (e.clientX - r.left) / r.width)) * d, true); } catch (x) {} }
+  });
+  function renderYTBar() {
+    if (!yt.p || !yt.p.getCurrentTime) return;
+    try {
+      var t = yt.p.getCurrentTime() || 0, d = yt.p.getDuration() || 0;
+      $('#ytFill').style.width = (d ? Math.min(100, t / d * 100) : 0) + '%';
+      $('#ytTm').textContent = clock(t) + ' / ' + clock(d);
+    } catch (e) {}
+  }
+
+  /* ---------------- boot ---------------- */
+  renderSWUI(); renderSW(); renderPM();
+  select(S.tab);
+})();
+</script>
+
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
   /* ============================================================
@@ -8909,6 +9398,11 @@ Marketing,alex99,</div>
       return svg(o + '<g class="ill-pop"' + d(4) + '><rect class="af" x="196" y="122" width="68" height="22" rx="11"/></g>'); },
     drops: function () { return svg('<rect class="m" x="40" y="20" width="220" height="34" rx="8" style="stroke:var(--accent)"/>' + ln(54, 34, 80) + '<path class="a" d="M236 34l6 6 6-6" style="stroke-width:2.4"/>' +
       '<g class="ill-pop" style="transform-origin:50% 0;animation-delay:.4s"><rect class="m" x="40" y="62" width="220" height="84" rx="10"/><rect x="48" y="70" width="204" height="22" rx="6" style="fill:var(--accent-soft)"/>' + ln(58, 78, 70) + ln(58, 102, 100) + ln(58, 122, 84) + '</g>'); },
+    dock: function () { return svg('<rect class="m" x="20" y="22" width="150" height="116" rx="10"/>' + ln(36, 42, 74) + ln(36, 58, 100) + ln(36, 74, 86) + ln(36, 90, 96) +
+      '<rect class="m" x="164" y="62" width="16" height="44" rx="8" style="stroke:var(--accent)"/><path class="a" d="M175 76 l-6 8 l6 8" style="stroke-width:2.4"/>' +
+      '<g class="ill-pop"' + d(0) + '><rect class="m" x="184" y="18" width="98" height="124" rx="14" style="stroke:var(--accent)"/>' +
+      '<circle class="m" cx="233" cy="64" r="26"/><circle class="a ill-draw" cx="233" cy="64" r="26" pathLength="1" style="transform:rotate(-90deg)"/><text class="kt" x="233" y="69">25:00</text>' +
+      '<rect class="af" x="205" y="104" width="56" height="20" rx="10"/><text class="wh" x="233" y="118">Start</text></g>'); },
     smooth: function () { return svg('<rect class="m" x="24" y="24" width="150" height="110" rx="10"/><rect class="m" x="202" y="14" width="64" height="132" rx="12"/>' +
       [0, 1, 2].map(function (i) { return '<g class="ill-up"' + d(i) + '>' + ln(40, 46 + i * 26, 100 - i * 14) + '</g>'; }).join('') +
       '<rect class="af ill-pop" x="214" y="30" width="40" height="8" rx="4"/>' + ln(214, 56, 40) + ln(214, 70, 28) + ln(214, 84, 36)); }
@@ -8928,6 +9422,9 @@ Marketing,alex99,</div>
         b: ['To do, In review, Overdue and Completed, each collapsible', 'Sent-back work jumps to the top of To do', 'Once a deadline passes, submissions close', 'A summary line counts every group at a glance'] }
     ],
     minor: [
+      { art: 'dock', t: 'A pocket toolbox on the right edge',
+        s: 'Tap the little arrow on the right to slide out a small box with a stopwatch, a Pomodoro timer, a YouTube player and chess against Fritz.',
+        b: ['Stopwatch with laps, and a Pomodoro that cycles focus and breaks', 'Paste youtube.com or youtu.be links, even playlists, as video or audio only', 'Play Fritz without leaving Time12', 'Timers keep running while the box is closed'] },
       { art: 'tour', t: 'A 60-second tour, only if you want it',
         s: 'New accounts are offered a walkthrough with spotlights, animated arrows and short illustrations.',
         b: ['Offered once, never forced', 'Replay it any time from Shortcuts'] },
