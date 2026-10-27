@@ -2831,8 +2831,8 @@
     }).catch(function () { msg.textContent = 'The chess board couldn’t load. Check your connection or ad-blocker, then reopen this tab.'; })
       .then(function () { CG.loading = false; });
   }
-  function newGame() { CG.g = new CG.Chess(); CG.busy = false; CG.cg.set({ orientation: CG.side }); sync(); reply(); }
-  function sync() {
+  function newGame() { CG.g = new CG.Chess(); CG.busy = false; CG.cg.set({ orientation: CG.side }); chSync(); reply(); }
+  function chSync() {
     var g = CG.g, mine = g.turn() === CG.side[0], over = g.isGameOver(), h = g.history({ verbose: true }), l = h[h.length - 1], dm = new Map();
     if (mine && !over) g.moves({ verbose: true }).forEach(function (m) { var a = dm.get(m.from); if (a) a.push(m.to); else dm.set(m.from, [m.to]); });
     CG.cg.set({ fen: g.fen(), turnColor: g.turn() === 'w' ? 'white' : 'black', check: g.isCheck(), lastMove: l ? [l.from, l.to] : [], movable: { color: CG.side, dests: dm } });
@@ -2841,13 +2841,13 @@
   }
   function onMove(from, to) {   /* pawns reaching the last rank become queens */
     var g = CG.g, p = g.get(from), pr = p && p.type === 'p' && (to[1] === '8' || to[1] === '1') ? 'q' : undefined;
-    try { g.move({ from: from, to: to, promotion: pr }); } catch (e) { sync(); return; }
-    sync(); reply();
+    try { g.move({ from: from, to: to, promotion: pr }); } catch (e) { chSync(); return; }
+    chSync(); reply();
   }
   function reply() {
     var g = CG.g; if (g.isGameOver() || g.turn() === CG.side[0]) return;
     CG.busy = true;
-    setTimeout(function () { if (CG.g !== g) return; var m = aiMove(); CG.busy = false; g.move({ from: m.from, to: m.to, promotion: m.promotion }); sync(); }, 420);
+    setTimeout(function () { if (CG.g !== g) return; var m = aiMove(); CG.busy = false; g.move({ from: m.from, to: m.to, promotion: m.promotion }); chSync(); }, 420);
   }
   function capFirst(x, y) { return (y.captured ? 1 : 0) - (x.captured ? 1 : 0); }
   function evalG(g) {
@@ -2885,7 +2885,7 @@
   $('#chUndo').addEventListener('click', function () {
     var g = CG.g; if (!g || CG.busy || !g.history().length) return;
     g.undo(); if (g.turn() !== CG.side[0] && g.history().length) g.undo();
-    sync(); reply();
+    chSync(); reply();
   });
   $$('#chLvl button').forEach(function (b) {
     b.classList.toggle('on', +b.getAttribute('data-l') === S.lvl);
