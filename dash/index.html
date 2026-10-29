@@ -612,7 +612,7 @@
     border-bottom: 1px solid var(--app-glass-border); gap: 12px;
   }
 
-  .sidebar-tabs { display: flex; justify-content: center; flex: 1; min-width: 0; overflow: visible; justify-self: center; width: 100%; max-width: 460px; }
+  .sidebar-tabs { display: flex; justify-content: center; flex: 1; min-width: 0; overflow: visible; justify-self: center; width: 100%; max-width: 540px; }
   .tabs-container {  
     display: flex; align-items: center; gap: 6px; padding: 6px;
     background: var(--liquid-sheen), var(--app-glass-bg);
@@ -624,7 +624,7 @@
     transition: background 0.4s ease, border-color 0.4s ease;
   }  
   .tab-item {  
-    padding: 7px 20px; border-radius: 999px; color: var(--text-muted);
+    padding: 7px 17px; border-radius: 999px; color: var(--text-muted);
     cursor: pointer; font-size: 15px; font-weight: 500; transition: 0.2s ease;
     user-select: none; text-align: center; white-space: nowrap;
   }  
@@ -2099,7 +2099,7 @@
      ============================================================ */
   /* The top bar sits beside a 300px sidebar, so the full tab pill crushes Save / Create Task /
      Add long before 860px. Use the compact tab menu up to 1100px. */
-  @media (max-width: 1100px) {
+  @media (max-width: 1180px) {
     .tabs-container { display: none; }
     .tabs-dropdown { display: block; }
   }
@@ -2204,9 +2204,6 @@
         <span class="brand-name">Time12</span>
       </div>
       <div class="header-actions">
-        <button class="theme-toggle magnetic" id="rewardsBtn" type="button" title="Rewards Corner" aria-label="Rewards Corner">
-          <img src="papery.png" alt="" draggable="false" />
-        </button>
         <button class="theme-toggle magnetic" id="newFeaturesLink" type="button" title="New features" aria-label="New features">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/></svg>
           <i class="nf-dot"></i>
@@ -2273,6 +2270,7 @@
           <div class="tab-item" data-tab="MyTasks">Tasks</div>
           <div class="tab-item" data-tab="Org">Org</div>
           <div class="tab-item" data-tab="Analytics">Analytics</div>
+          <div class="tab-item" data-tab="Rewards">Rewards</div>
         </div>
         
         <div class="tabs-dropdown" id="tabsDropdown">
@@ -2287,6 +2285,7 @@
             <div class="dropdown-item" data-tab="MyTasks">Tasks</div>
             <div class="dropdown-item" data-tab="Org">Org</div>
             <div class="dropdown-item" data-tab="Analytics">Analytics</div>
+            <div class="dropdown-item" data-tab="Rewards">Rewards</div>
           </div>
         </div>
       </div>
@@ -2350,6 +2349,10 @@
 
     <div class="org-tab-content" id="analyticsTabContent">
       <div class="org-inner" id="analyticsMainContent"></div>
+    </div>
+
+    <div class="org-tab-content" id="rewardsTabContent">
+      <div class="org-inner" id="rewardsMainContent"></div>
     </div>
 
     <div class="editor-bottom-bar" id="editorBottomBar">
@@ -3861,7 +3864,7 @@
     }, { passive: true });
   })();
 
-  /* ---------- Papery: floats over the whole site, bounces off the page edges, turns red now and then ---------- */
+  /* ---------- Papery: floats around the login screen only, bounces off the page edges, turns red now and then ---------- */
   (function initPapery() {
     const SRC = { calm: 'papery.png', red: 'paperyred.png' };
     const CROSS_S = 4;   /* seconds to cross the screen diagonal: speed = diagonal / CROSS_S, so it scales with screen size (lower = faster) */
@@ -3877,7 +3880,7 @@
     const bolts = fx.querySelector('svg');
     document.body.append(fx, el);
 
-    let W = 0, H = 0, S = 64, x = 0, y = 0, vx = 0.8, vy = 0.6, last = 0, t = 0, raf = 0;
+    let W = 0, H = 0, S = 64, x = 0, y = 0, vx = 0.8, vy = 0.6, last = 0, t = 0, raf = 0, on = true;   /* on = only while the login screen is showing */
     const measure = () => { W = document.documentElement.clientWidth; H = document.documentElement.clientHeight; S = el.offsetWidth || 64;
       const k = Math.hypot(W, H) / CROSS_S / (Math.hypot(vx, vy) || 1); vx *= k; vy *= k; };   /* keep direction, set speed from screen size */
     const clampPos = () => { x = Math.min(Math.max(0, x), Math.max(0, W - S)); y = Math.min(Math.max(0, y), Math.max(0, H - S)); };
@@ -3894,7 +3897,7 @@
     }
     /* floats in every device mode and regardless of OS motion settings; only a hidden tab pauses him */
     function sync() {
-      if (document.hidden) { cancelAnimationFrame(raf); raf = 0; last = 0; draw(); }
+      if (document.hidden || !on) { cancelAnimationFrame(raf); raf = 0; last = 0; draw(); }
       else if (!raf) { last = 0; raf = requestAnimationFrame(step); }
     }
 
@@ -3910,7 +3913,10 @@
     function place() {
       const onLogin = !!(login && card && !login.classList.contains('hidden'));
       if (onLogin && el.parentNode !== login) { login.insertBefore(fx, card); login.insertBefore(el, card); el.classList.add('in-login'); fx.classList.add('in-login'); }
-      else if (!onLogin && el.parentNode !== document.body) { document.body.append(fx, el); el.classList.remove('in-login'); fx.classList.remove('in-login'); }
+      on = onLogin;                                                          /* past login he's gone: hidden and not animating, so he never distracts */
+      el.style.display = fx.style.display = onLogin ? '' : 'none';
+      if (onLogin) { measure(); clampPos(); }
+      sync();
     }
     place();
     if (login) new MutationObserver(place).observe(login, { attributes: true, attributeFilter: ['class'] });
@@ -4238,6 +4244,7 @@
   const myTasksTabContent = document.getElementById('myTasksTabContent');
   const analyticsTabContent = document.getElementById('analyticsTabContent');
   const analyticsMainContent = document.getElementById('analyticsMainContent');
+  const rewardsTabContent = document.getElementById('rewardsTabContent');
   const createTaskBtn = document.getElementById('createTaskBtn');
   const orgAddWrapper = document.getElementById('orgAddWrapper');
   const orgAddBtn = document.getElementById('orgAddBtn');
@@ -7519,6 +7526,7 @@ Marketing,alex99,</div>
     orgTabContent.classList.remove('active');
     myTasksTabContent.classList.remove('active');
     analyticsTabContent.classList.remove('active');
+    rewardsTabContent.classList.remove('active');
     // Hide all action button groups
     editorActions.style.display = 'none';
     taskActions.style.display = 'none';
@@ -7555,6 +7563,9 @@ Marketing,alex99,</div>
       } else if (target === 'Analytics') {
         analyticsTabContent.classList.add('active');
         loadAnalytics(false);
+      } else if (target === 'Rewards') {
+        rewardsTabContent.classList.add('active');
+        if (window.T12Rewards) window.T12Rewards.show();
       }
     }
   }
@@ -8164,6 +8175,7 @@ Marketing,alex99,</div>
     { id: 'tab2', label: 'Go to Tasks', icon: 'note', kbd: K('Mod+2'), run: T('tab2') },
     { id: 'tab3', label: 'Go to Org', icon: 'note', kbd: K('Mod+3'), run: T('tab3') },
     { id: 'tab4', label: 'Go to Analytics', icon: 'note', kbd: K('Mod+4'), run: T('tab4') },
+    { id: 'tab5', label: 'Go to Rewards', icon: 'spark', kbd: K('Mod+5'), run: T('tab5') },
     { id: 'group', label: 'Org: add group', icon: 'plus', kbd: K('Mod+G'), run: T('group') },
     { id: 'account', label: 'Org: add account', icon: 'plus', kbd: K('Mod+Shift+G'), run: T('account') },
     { id: 'search', label: 'Search notes', icon: 'note', kbd: K('Mod+Shift+F'), run: T('search') },
@@ -8171,7 +8183,6 @@ Marketing,alex99,</div>
     { id: 'theme', label: 'Toggle theme', icon: 'sun', kbd: K('Mod+J'), run: () => themeToggle.click() },
     { id: 'device', label: 'Switch device mode (Higher / Lower End)', icon: 'device', kbd: K('Mod+Shift+L'), run: () => toggleDeviceMode() },
     { id: 'features', label: 'New features', icon: 'spark', run: () => window.T12Features && window.T12Features.open() },
-    { id: 'rewards', label: 'Rewards Corner', icon: 'spark', run: () => window.T12Rewards && window.T12Rewards.open() },
     { id: 'shortcuts', label: 'Show shortcuts', icon: 'kb', kbd: K('Mod+/'), run: () => shortcutsOverlay.classList.add('active') },
     { id: 'logout', label: 'Sign out', icon: 'logout', kbd: K('Mod+Shift+X'), run: () => doLogout() },
   ];
@@ -8562,6 +8573,7 @@ Marketing,alex99,</div>
     { id: 'tab2', g: 'Go to', label: 'Tasks tab', codes: ['Digit2'], scopes: ['app'], run: go('MyTasks') },
     { id: 'tab3', g: 'Go to', label: 'Org tab', codes: ['Digit3'], scopes: ['app'], run: go('Org') },
     { id: 'tab4', g: 'Go to', label: 'Analytics tab', codes: ['Digit4'], scopes: ['app'], run: go('Analytics') },
+    { id: 'tab5', g: 'Go to', label: 'Rewards tab', codes: ['Digit5'], scopes: ['app'], run: go('Rewards') },
     { id: 'search', g: 'Go to', label: 'Search notes', codes: ['KeyF'], shift: true, scopes: ['app'], run: focusSearch },
     { id: 'sidebar', g: 'Go to', label: 'Open / close sidebar (small screens)', codes: ['Backslash'], scopes: ['app'], run: toggleSidebar },
     { id: 'prev', g: 'Go to', label: 'Previous note', codes: ['ArrowUp'], alt: true, scopes: ['app'], repeat: true, run: stepNote(-1) },
@@ -8779,8 +8791,8 @@ Marketing,alex99,</div>
     Object.keys(map).forEach(function (id) { var a = byId[map[id]]; setTitle($(id), a.label.split(' (')[0], titleKeys(a)); });
     setTitle($('searchInput'), 'Search notes', titleKeys(byId.search));
     setTitle($('orgAddBtn'), 'Add group / account', titleKeys(byId.group) + ' · ' + titleKeys(byId.account));
-    ['tab1', 'tab2', 'tab3', 'tab4'].forEach(function (id, i) {
-      var t = ['Notes', 'MyTasks', 'Org', 'Analytics'][i];
+    ['tab1', 'tab2', 'tab3', 'tab4', 'tab5'].forEach(function (id, i) {
+      var t = ['Notes', 'MyTasks', 'Org', 'Analytics', 'Rewards'][i];
       document.querySelectorAll('[data-tab="' + t + '"]').forEach(function (el) { setTitle(el, el.textContent.trim(), titleKeys(byId[id])); });
     });
     var fm = { bold: 'Mod+B', italic: 'Mod+I', underline: 'Mod+U', h1: 'Mod+Shift+1', h2: 'Mod+Shift+2', bullet: 'Mod+Shift+U', quote: 'Mod+Shift+E', link: 'Mod+L', code: 'Mod+Shift+K' };
@@ -9282,8 +9294,8 @@ Marketing,alex99,</div>
     var S = [];
     S.push({ id: 'welcome', center: true, ill: 'welcome', title: 'Welcome, ' + (w.name || 'friend'),
       text: w.sub ? 'You\u2019re signed in to the ' + w.org + ' organization. Here\u2019s a quick look around \u2014 skip any time.' : 'Your account is ready. Here\u2019s a quick look around \u2014 skip any time.', next: 'Let\u2019s go' });
-    S.push({ id: 'tabs', tab: 'Notes', find: ['.tabs-container', '#dropdownToggle'], ill: 'tabs', title: 'Four spaces, one tap apart',
-      text: 'Notes, Tasks, Org and Analytics live up here. Tap any of them to jump straight in.' });
+    S.push({ id: 'tabs', tab: 'Notes', find: ['.tabs-container', '#dropdownToggle'], ill: 'tabs', title: 'Five spaces, one tap apart',
+      text: 'Notes, Tasks, Org, Analytics and Rewards live up here. Tap any of them to jump straight in.' });
     S.push({ id: 'notes', tab: 'Notes', find: ['#titleInput', '#notesTabContent .editor-inner'], ill: 'notes', title: 'Write it down',
       text: 'Give it a title, then write freely below. Hit Save and it follows you to every device.' });
     S.push({ id: 'find', tab: 'Notes', find: ['.sidebar-search', '#newNoteBtn'], optional: true, ill: 'find', title: 'Find or add in a flash',
@@ -9711,14 +9723,14 @@ Marketing,alex99,</div>
     major: [
       { art: 'papers', t: 'Papers: a streak you can hold',
         s: 'Finish an assignment and get it checked, and you earn a paper. Let one close unfinished and you lose one.',
-        b: ['One paper for every task that is verified or accepted by the AI', 'One paper lost for every task that closes unfinished', 'Your count lives in the new Rewards Corner', 'Worked out from your real task record, so it can’t be faked'] },
+        b: ['One paper for every task that is verified or accepted by the AI', 'One paper lost for every task that closes unfinished', 'Your count lives in the new Rewards tab', 'Worked out from your real task record, so it can’t be faked'] },
       { art: 'dialogs', t: 'Hand-ins that read your files',
         s: 'Add a text file or a Word document to a submission and Time12 reads the words into your answer box.',
         b: ['.txt, .md, .csv and .docx are read the moment you add them', 'Photos and scans: you are asked first, then the text is transcribed', 'Only on submissions, and the file is still attached', 'Everything stays editable before you send'] }
     ],
     minor: [
-      { art: 'papers', t: 'The Rewards Corner',
-        s: 'A calm place to see your papers, from the paper button in the header.',
+      { art: 'papers', t: 'The Rewards tab',
+        s: 'A calm place to see your papers, right next to Notes, Tasks, Org and Analytics.',
         b: ['Your count, plus what you earned and lost', 'Organizations see every member’s papers side by side', 'Also in the command palette'] },
       { art: 'drops', t: 'Organizations can take papers back',
         s: 'Remove papers from a member, with an optional note they can read.',
@@ -9921,22 +9933,30 @@ Marketing,alex99,</div>
 .hz-ask-bar{display:none;height:4px;border-radius:99px;background:var(--surface-2);overflow:hidden}.hz-ask-bar i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s}
 .hz-ask.busy .hz-ask-bar{display:block}.hz-ask.busy .hz-ask-a{display:none}.hz-ask-a{display:flex;gap:8px;justify-content:flex-end}
 @keyframes hzIn{from{opacity:0;transform:translateY(6px)}}
-#rewardsBtn img{width:20px;height:20px;object-fit:contain}
-#t12rw{position:fixed;inset:0;z-index:1900;display:none;align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.42);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);opacity:0;transition:opacity .3s}
-#t12rw.active{display:flex}#t12rw.show{opacity:1}
-.rw-panel{width:100%;max-width:680px;max-height:calc(100vh - 48px);max-height:calc(100dvh - 48px);overflow:hidden auto;outline:0;background:var(--liquid-sheen),var(--bg);border:1px solid var(--app-glass-border);border-radius:16px;box-shadow:var(--shadow-soft),0 30px 80px rgba(0,0,0,.3);padding:24px 26px 28px;transform:translateY(22px) scale(.95);opacity:0;transition:transform .55s cubic-bezier(.34,1.4,.5,1),opacity .3s}
-#t12rw.show .rw-panel{transform:none;opacity:1}
-.rw-head{display:flex;align-items:center;gap:12px}.rw-head h2{font:400 30px/1.1 var(--serif);color:var(--text);flex:1}
-.rw-x{width:34px;height:34px;border-radius:50%;border:0;background:var(--surface-2);color:var(--text-soft);font-size:20px;line-height:1;cursor:pointer;transition:transform .3s}.rw-x:hover{color:var(--text);transform:rotate(90deg)}
-.rw-hero{display:flex;align-items:center;justify-content:center;gap:30px;padding:26px 0 20px}
-.rw-fan{position:relative;width:120px;height:140px}.rw-fan img{position:absolute;inset:0;margin:auto;width:92px;height:auto;max-height:130px;object-fit:contain;filter:drop-shadow(0 8px 14px rgba(0,0,0,.22));transform-origin:50% 90%}
-.rw-fan img:nth-child(1){transform:rotate(-12deg) translateX(-14px);opacity:.45}.rw-fan img:nth-child(2){transform:rotate(11deg) translateX(14px);opacity:.7}.rw-fan img:nth-child(3){animation:rwFloat 3.4s ease-in-out infinite}
-@keyframes rwFloat{50%{transform:translateY(-6px) rotate(-1.5deg)}}
-.rw-count b{display:block;font:400 76px/1 var(--serif);color:var(--text);font-variant-numeric:tabular-nums}.rw-count span{font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted)}
-.rw-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.rw-stats div{padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);text-align:center}.rw-stats b{display:block;font:600 22px var(--sans)}.rw-stats span{font-size:12px;color:var(--text-muted)}
+
+/* ---------- Rewards tab ---------- */
+.rw-wrap{max-width:860px;margin:0 auto}
+.rw-intro{margin:6px 0 26px;font-size:14.5px;line-height:1.55;color:var(--text-soft)}
+.rw-tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.rw-tile{position:relative;display:flex;flex-direction:column;align-items:center;text-align:center;padding:34px 24px 30px;border:1px solid var(--border);border-radius:22px;background:var(--surface);box-shadow:var(--shadow-soft);transition:transform .35s cubic-bezier(.34,1.4,.5,1),border-color .25s}
+.rw-tile:hover{transform:translateY(-4px);border-color:var(--accent)}
+.rw-ico{display:grid;place-items:center;width:180px;height:180px;margin-bottom:10px}
+.rw-ico img{width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 12px 18px rgba(0,0,0,.22));animation:rwFloat 3.4s ease-in-out infinite}
+@keyframes rwFloat{50%{transform:translateY(-8px) rotate(-1.5deg)}}
+.rw-amt{font:400 78px/1 var(--serif);color:var(--text);font-variant-numeric:tabular-nums}
+.rw-name{margin-top:8px;font-size:12.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--text-muted)}
+.rw-desc{margin-top:12px;font-size:15px;line-height:1.5;color:var(--text-soft);max-width:240px}
+.rw-sub{margin-top:6px;font-size:12px;color:var(--text-muted)}
+.rw-tile.soon{border-style:dashed;background:transparent;box-shadow:none}
+.rw-tile.soon:hover{transform:none;border-color:var(--border)}
+.rw-tile.soon .rw-ico{color:var(--text-muted);opacity:.55}
+.rw-tile.soon .rw-ico svg{width:96px;height:96px}
+.rw-tile.soon .rw-amt{font-size:46px;color:var(--text-muted)}
+.rw-soon-badge{margin-top:14px;padding:5px 14px;border-radius:99px;background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.rw-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:22px}.rw-stats div{padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);text-align:center}.rw-stats b{display:block;font:600 22px var(--sans)}.rw-stats span{font-size:12px;color:var(--text-muted)}
 .rw-up{color:var(--success)}.rw-dn{color:var(--danger,#e5484d)}
 .rw-how{margin:16px 2px 0;font-size:13.5px;line-height:1.55;color:var(--text-soft)}
-.rw-card{margin-top:16px;padding:16px;border:1px solid var(--border);border-radius:14px;background:var(--surface)}.rw-card h4{font:600 14px var(--sans);color:var(--text);margin-bottom:12px}
+.rw-card{margin-top:18px;padding:18px;border:1px solid var(--border);border-radius:14px;background:var(--surface)}.rw-card h4{font:600 14px var(--sans);color:var(--text);margin-bottom:12px}
 .rw-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;margin-bottom:12px}.rw-f label{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px}
 .rw-dd .custom-select-menu{background:var(--bg);-webkit-backdrop-filter:none;backdrop-filter:none;top:calc(100% + 6px);max-height:210px;overflow:auto;box-shadow:0 14px 36px rgba(0,0,0,.2)}
 .rw-dd .custom-select-toggle{gap:10px}.rw-dd .custom-select-toggle svg{margin-left:auto;flex-shrink:0}.rw-dd .custom-select-option{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -9947,19 +9967,20 @@ Marketing,alex99,</div>
 .rw-go{margin-top:12px;width:100%}.rw-msg{min-height:18px;margin-top:10px;font-size:13px;color:var(--text-soft)}.rw-msg.err{color:var(--danger,#e5484d)}
 .rw-list{margin-top:16px;display:flex;flex-direction:column;gap:6px}.rw-row{display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--border);border-radius:12px;font-size:14px;color:var(--text)}.rw-row span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rw-row b{display:flex;align-items:center;gap:6px;font-variant-numeric:tabular-nums}.rw-row img{width:13px;height:auto}
 .rw-log div{display:flex;gap:10px;justify-content:space-between;padding:8px 2px;border-top:1px solid var(--border);font-size:13px;color:var(--text-soft)}
-@media(max-width:560px){.rw-grid{grid-template-columns:1fr}.rw-hero{gap:14px}.rw-count b{font-size:60px}}
-@media(prefers-reduced-motion:reduce){.rw-fan img:nth-child(3){animation:none}}
+@media(max-width:560px){.rw-ico{width:140px;height:140px}.rw-amt{font-size:62px}}
+@media(prefers-reduced-motion:reduce){.rw-ico img{animation:none}.rw-tile{transition:none}}
 </style>
 <script id="t12rw-js">
 (function () {
   'use strict';
   var D = document, B = 'https://bukeabrzlgcwzwtzmwld.supabase.co/functions/v1/', ORG = B + 'manage-organizations', PAP = B + 'papers';
   var CH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
-  var root, panel, box, S = { open: false, opener: null, sel: null, amt: 1, d: null };
+  var SPARK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/></svg>';
+  var box, S = { sel: null, amt: 1, d: null };
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   function who() { try { return JSON.parse(decodeURIComponent(escape(atob(localStorage.getItem('authToken').split('.')[0])))).username || ''; } catch (e) { return ''; } }
   function call(u, b) {
-    var t = localStorage.getItem('authToken'); if (!t) return Promise.reject(new Error('Sign in to see your papers.'));
+    var t = localStorage.getItem('authToken'); if (!t) return Promise.reject(new Error('Sign in to see your rewards.'));
     return fetch(u, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + t }, body: JSON.stringify(b) })
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status); return j; }); });
   }
@@ -9984,18 +10005,34 @@ Marketing,alex99,</div>
     var n = +el.getAttribute('data-n'); if (matchMedia('(prefers-reduced-motion:reduce)').matches) { el.textContent = n; return; }
     var t0 = performance.now(); (function f(t) { var k = Math.min(1, (t - t0) / 700); el.textContent = Math.round(n * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(f); })(t0);
   }
-  var fan = function (n) { return '<div class="rw-hero"><div class="rw-fan"><img src="papery.png" alt=""><img src="papery.png" alt=""><img src="papery.png" alt=""></div><div class="rw-count"><b data-n="' + n + '">0</b><span>' + (n === 1 ? 'paper' : 'papers') + '</span></div></div>'; };
+
+  /* ---- the reward tiles. To add a reward later: push another tile() here, and delete or keep the Coming soon tile below it. ---- */
+  function tile(o) {
+    return '<div class="rw-tile"><div class="rw-ico"><img src="' + o.img + '" alt="" draggable="false"></div>' +
+      '<div class="rw-amt" data-n="' + o.n + '">0</div><div class="rw-name">' + o.name + '</div>' +
+      '<p class="rw-desc">' + o.desc + '</p>' + (o.sub ? '<div class="rw-sub">' + o.sub + '</div>' : '') + '</div>';
+  }
+  function soonTile() {
+    return '<div class="rw-tile soon"><div class="rw-ico">' + SPARK + '</div><div class="rw-amt">?</div><div class="rw-name">Something new</div>' +
+      '<p class="rw-desc">More rewards are on the way. Keep an eye on this space.</p><span class="rw-soon-badge">Coming soon</span></div>';
+  }
+  function tiles(d) {
+    return '<div class="rw-tiles">' +
+      tile({ img: 'papery.png', n: d.net, name: d.net === 1 ? 'Paper' : 'Papers', desc: 'Our Mascot. He’s very... papery.', sub: d.org ? 'Total across your organization' : '' }) +
+      soonTile() + '</div>';
+  }
+
   function render() {
     var d = S.d, h = '';
     if (!d) h = '<div class="rw-msg" style="padding:70px 0;text-align:center">Counting papers…</div>';
     else if (d.err) h = '<div class="rw-msg err" style="padding:50px 0;text-align:center">' + esc(d.err) + '</div>';
     else if (!d.org) {
-      h = fan(d.net) + '<div class="rw-stats"><div><b class="rw-up">+' + d.e + '</b><span>Earned</span></div><div><b class="rw-dn">−' + d.l + '</b><span>Lost</span></div><div><b class="rw-dn">−' + d.x + '</b><span>Removed</span></div></div>' +
+      h = tiles(d) + '<div class="rw-stats"><div><b class="rw-up">+' + d.e + '</b><span>Earned</span></div><div><b class="rw-dn">−' + d.l + '</b><span>Lost</span></div><div><b class="rw-dn">−' + d.x + '</b><span>Removed</span></div></div>' +
         '<p class="rw-how">Finish a task and get it checked to earn a paper. Let one close unfinished and you lose one.</p>' +
         (d.log.length ? '<div class="rw-card rw-log"><h4>Taken back by your organization</h4>' + d.log.slice(0, 6).map(function (r) { return '<div><span>−' + r.amount + (r.reason ? ' · ' + esc(r.reason) : '') + '</span><span>' + new Date(r.created_at).toLocaleDateString() + '</span></div>'; }).join('') + '</div>' : '');
     } else {
       var pick = d.rows.filter(function (u) { return u.net > 0; });
-      h = fan(d.net) + '<div class="rw-card"><h4>Remove papers</h4>' + (d.ok ?
+      h = tiles(d) + '<div class="rw-card"><h4>Remove papers</h4>' + (d.ok ?
         '<div class="rw-grid"><div class="rw-f"><label>Member</label><div class="custom-select-wrapper rw-dd"><button type="button" class="custom-select-toggle"' + (pick.length ? '' : ' disabled') + '><span class="rw-dd-l">' + (S.sel ? esc(S.sel.name) : pick.length ? 'Choose a member' : 'No one has papers yet') + '</span>' + CH + '</button><div class="custom-select-menu" role="listbox">' +
         pick.map(function (u) { return '<div class="custom-select-option' + (S.sel && S.sel.id === u.id ? ' selected' : '') + '" role="option" data-id="' + u.id + '">' + esc(u.name) + '<em>' + u.net + '</em></div>'; }).join('') + '</div></div></div>' +
         '<div class="rw-f"><label>Papers</label><div class="rw-step"><button type="button" data-st="-1" aria-label="Fewer">−</button><input class="rw-n" inputmode="numeric" maxlength="3" value="' + S.amt + '" aria-label="Papers to remove"><button type="button" data-st="1" aria-label="More">+</button></div></div></div>' +
@@ -10003,7 +10040,8 @@ Marketing,alex99,</div>
         : '<div class="rw-msg">Paper removal switches on once the papers function is deployed on Supabase.</div>') + '</div>' +
         '<div class="rw-list">' + d.rows.map(function (u) { return '<div class="rw-row"><span>' + esc(u.name) + '</span><b><img src="papery.png" alt="">' + u.net + '</b></div>'; }).join('') + '</div>';
     }
-    box.innerHTML = h; [].forEach.call(box.querySelectorAll('[data-n]'), countUp);
+    box.innerHTML = '<div class="rw-wrap"><div class="org-header"><div><div class="org-title">Rewards</div></div></div><p class="rw-intro">Things you earn along the way.</p>' + h + '</div>';
+    [].forEach.call(box.querySelectorAll('[data-n]'), countUp);
   }
   function say(m, bad) { var e = box.querySelector('.rw-msg'); if (e) { e.textContent = m; e.className = 'rw-msg' + (bad ? ' err' : ''); } }
   function setAmt(n) { var mx = S.sel ? S.sel.net : 99; S.amt = Math.max(1, Math.min(mx, n || 1)); var i = box.querySelector('.rw-n'); if (i) i.value = S.amt; }
@@ -10015,40 +10053,25 @@ Marketing,alex99,</div>
       .then(function () { S.sel = null; S.amt = 1; return refresh(); }).then(function () { say('Removed from ' + nm + '.'); })
       .catch(function (e) { btn.disabled = false; say(e.message, 1); });
   }
-  function build() {
-    root = D.createElement('div'); root.id = 't12rw';
-    root.innerHTML = '<div class="rw-panel" role="dialog" aria-modal="true" aria-labelledby="rwT" tabindex="-1"><div class="rw-head"><h2 id="rwT">Rewards Corner</h2><button type="button" class="rw-x" aria-label="Close">&times;</button></div><div class="rw-box"></div></div>';
-    D.body.appendChild(root); panel = root.firstChild; box = root.querySelector('.rw-box');
-    root.addEventListener('click', function (e) {
-      var t = e.target, dd = box.querySelector('.rw-dd');
-      if (dd && !t.closest('.rw-dd')) dd.classList.remove('open');
-      if (t === root || t.closest('.rw-x')) return close();
-      if (t.closest('.custom-select-toggle')) return dd.classList.toggle('open');
-      var o = t.closest('.custom-select-option');
-      if (o) { S.sel = S.d.rows.filter(function (u) { return u.id === o.getAttribute('data-id'); })[0]; dd.classList.remove('open'); box.querySelector('.rw-dd-l').textContent = S.sel.name; [].forEach.call(dd.querySelectorAll('.custom-select-option'), function (x) { x.classList.toggle('selected', x === o); }); return setAmt(S.amt); }
-      var st = t.closest('[data-st]'); if (st) return setAmt(S.amt + +st.getAttribute('data-st'));
-      var g = t.closest('.rw-go'); if (g) go(g);
-    });
-    root.addEventListener('input', function (e) { if (e.target.classList.contains('rw-n')) { e.target.value = e.target.value.replace(/\D/g, ''); S.amt = Math.max(1, Math.min(S.sel ? S.sel.net : 99, +e.target.value || 1)); } });
-    root.addEventListener('change', function (e) { if (e.target.classList.contains('rw-n')) setAmt(S.amt); });
+  function onClick(e) {
+    var t = e.target, dd = box.querySelector('.rw-dd');
+    if (dd && !t.closest('.rw-dd')) dd.classList.remove('open');
+    if (t.closest('.custom-select-toggle')) return dd.classList.toggle('open');
+    var o = t.closest('.custom-select-option');
+    if (o) { S.sel = S.d.rows.filter(function (u) { return u.id === o.getAttribute('data-id'); })[0]; dd.classList.remove('open'); box.querySelector('.rw-dd-l').textContent = S.sel.name; [].forEach.call(dd.querySelectorAll('.custom-select-option'), function (x) { x.classList.toggle('selected', x === o); }); return setAmt(S.amt); }
+    var st = t.closest('[data-st]'); if (st) return setAmt(S.amt + +st.getAttribute('data-st'));
+    var g = t.closest('.rw-go'); if (g) go(g);
   }
-  function onKey(e) {
-    if (e.key !== 'Escape') return; e.preventDefault(); e.stopPropagation();
-    var dd = box.querySelector('.rw-dd.open'); if (dd) dd.classList.remove('open'); else close();
+  function show() {            /* called each time the Rewards tab opens */
+    if (!box) {
+      box = D.getElementById('rewardsMainContent'); if (!box) return;
+      box.addEventListener('click', onClick);
+      box.addEventListener('input', function (e) { if (e.target.classList.contains('rw-n')) { e.target.value = e.target.value.replace(/\D/g, ''); S.amt = Math.max(1, Math.min(S.sel ? S.sel.net : 99, +e.target.value || 1)); } });
+      box.addEventListener('change', function (e) { if (e.target.classList.contains('rw-n')) setAmt(S.amt); });
+    }
+    S.sel = null; S.amt = 1; S.d = null; render(); refresh();
   }
-  function open(from) {
-    if (S.open) return; if (!root) build();
-    S.open = true; S.opener = from || D.activeElement; S.sel = null; S.amt = 1; S.d = null; render();
-    root.classList.add('active'); requestAnimationFrame(function () { root.classList.add('show'); panel.focus({ preventScroll: true }); });
-    D.addEventListener('keydown', onKey, true); refresh();
-  }
-  function close() {
-    if (!S.open) return; S.open = false; root.classList.remove('show'); D.removeEventListener('keydown', onKey, true);
-    setTimeout(function () { if (!S.open) root.classList.remove('active'); }, 320);
-    try { S.opener && S.opener.focus && S.opener.focus({ preventScroll: true }); } catch (e) {}
-  }
-  var b = D.getElementById('rewardsBtn'); if (b) b.addEventListener('click', function () { open(b); });
-  window.T12Rewards = { open: open, close: close };
+  window.T12Rewards = { show: show };
 })();
 </script>
 </body>
