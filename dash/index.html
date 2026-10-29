@@ -258,6 +258,17 @@
   @keyframes orbFloatA { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(6%, 8%) scale(1.15); } }
   @keyframes orbFloatB { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-7%, -6%) scale(1.1); } }
 
+  /* Papery: the floating mascot (bounces off the edges of the page) */
+  #papery {
+    --py-size: clamp(48px, 8vmin, 76px);
+    position: fixed; left: 0; top: 0; z-index: 2500;
+    width: var(--py-size); height: var(--py-size); object-fit: contain;
+    pointer-events: none; user-select: none; -webkit-user-drag: none;
+    opacity: 0; transition: opacity 0.4s ease; will-change: transform;
+    filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.18));
+  }
+  html[data-perf="low"] #papery { filter: none; transition: none; }
+
   .login-shell {
     --mx: 50%; --my: 40%; --rx: 0deg; --ry: 0deg;
     width: 100%;
@@ -277,16 +288,6 @@
     animation: loginRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
   .login-shell > * { position: relative; z-index: 1; }
-  .login-shell::before {
-    content: '';
-    position: absolute;
-    width: 200px; height: 200px;
-    top: -50px; left: -50px;
-    background: radial-gradient(circle, var(--glass-sheen) 0%, transparent 70%);
-    animation: glassSheen 20s ease-in-out infinite;
-    pointer-events: none;
-    filter: blur(30px);
-  }
   .login-shell::after {
     content: '';
     position: absolute;
@@ -298,16 +299,6 @@
     pointer-events: none;
   }
   .login-shell:hover::after { opacity: 1; }
-  @keyframes glassSheen {
-    0% { transform: translate(15px, 30px); opacity: 0.5; } 8% { transform: translate(120px, 15px); opacity: 0.6; }
-    16% { transform: translate(260px, 80px); opacity: 0.55; } 24% { transform: translate(180px, 120px); opacity: 0.65; }
-    32% { transform: translate(290px, 180px); opacity: 0.58; } 40% { transform: translate(140px, 240px); opacity: 0.62; }
-    48% { transform: translate(50px, 200px); opacity: 0.6; } 56% { transform: translate(220px, 150px); opacity: 0.57; }
-    64% { transform: translate(80px, 280px); opacity: 0.64; } 72% { transform: translate(240px, 60px); opacity: 0.58; }
-    80% { transform: translate(110px, 90px); opacity: 0.61; } 88% { transform: translate(270px, 220px); opacity: 0.59; }
-    90% { transform: translate(310px, 290px); opacity: 1; } 92% { transform: translate(315px, 295px); opacity: 0.8; }
-    100% { transform: translate(15px, 30px); opacity: 0.5; }
-  }
   @keyframes loginRise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes loginItemRise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -1624,7 +1615,6 @@
   /* mid: cheaper decoration, keep the look */
   html[data-perf="mid"] .login-screen::before,
   html[data-perf="mid"] .login-screen::after { filter: blur(32px); }
-  html[data-perf="mid"] .login-shell::before { filter: blur(14px); animation: none; }
   html[data-perf="mid"] .sidebar-header::before { filter: none; animation: none; }
   html[data-perf="mid"] .app.app-enter { animation-name: appFadeInLite; }
 
@@ -1644,7 +1634,6 @@
   html[data-perf="low"] .login-screen::before,
   html[data-perf="low"] .login-screen::after { filter: none; animation: none; opacity: 0.35; }
   html[data-perf="low"] .login-shell { transform: none !important; animation: none; }
-  html[data-perf="low"] .login-shell::before,
   html[data-perf="low"] .login-shell::after,
   html[data-perf="low"] .sidebar-header::before { display: none; }
   html[data-perf="low"] .app.app-enter { animation: none; }
@@ -2196,7 +2185,7 @@
       </div>
       <div class="header-actions">
         <button class="theme-toggle magnetic" id="rewardsBtn" type="button" title="Rewards Corner" aria-label="Rewards Corner">
-          <img src="paper.png" alt="" draggable="false" />
+          <img src="papery.png" alt="" draggable="false" />
         </button>
         <button class="theme-toggle magnetic" id="newFeaturesLink" type="button" title="New features" aria-label="New features">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/></svg>
@@ -3497,7 +3486,6 @@
     shell.addEventListener('mouseleave', resetTilt);
   })();
 
-  /* ---------- Random RED glow easter egg ---------- */
   /* ---------- 3D geometry backdrop (CSS 3D, replaces the old WebGL aurora) ---------- */
   const Geo = (function () {
     const Perf = window.Time12Perf;
@@ -3853,23 +3841,53 @@
     }, { passive: true });
   })();
 
-  (function initGlassColorFlip() {
-    const shell = document.querySelector('.login-shell');
-    if (!shell) return;
-    
-    function maybeChangeToRed() {
-      const randomChance = Math.random();
-      if (randomChance < 0.01) {
-        shell.style.setProperty('--glass-sheen', 'rgba(220, 38, 38, 0.75)');
-        setTimeout(() => {
-          const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
-          const originalColor = isDarkMode ? 'rgba(255, 255, 255, 0.35)' : 'rgba(253, 126, 20, 0.65)';
-          shell.style.setProperty('--glass-sheen', originalColor);
-        }, 60000);
-      }
-      setTimeout(maybeChangeToRed, 20000);
+  /* ---------- Papery: floats over the whole site, bounces off the page edges, turns red now and then ---------- */
+  (function initPapery() {
+    const SRC = { calm: 'papery.png', red: 'paperyred.png' };
+    const SPEED = 70;                                                        /* px per second */
+    const RED_CHANCE = 0.01, RED_CHECK_MS = 20000, RED_FOR_MS = 60000;       /* same rhythm the red glow had: 1% roll every 20s, red for 60s */
+    new Image().src = SRC.red;                                               /* preload so the swap is instant */
+
+    const el = document.createElement('img');
+    el.id = 'papery'; el.src = SRC.calm; el.alt = ''; el.draggable = false;
+    el.setAttribute('aria-hidden', 'true');
+    document.body.appendChild(el);
+
+    let W = 0, H = 0, S = 64, x = 0, y = 0, vx = SPEED * 0.8, vy = SPEED * 0.6, last = 0, t = 0, raf = 0;
+    const measure = () => { W = document.documentElement.clientWidth; H = document.documentElement.clientHeight; S = el.offsetWidth || 64; };
+    const clampPos = () => { x = Math.min(Math.max(0, x), Math.max(0, W - S)); y = Math.min(Math.max(0, y), Math.max(0, H - S)); };
+    const draw = () => { el.style.transform = 'translate3d(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px,0) rotate(' + (Math.sin(t * 0.0012) * 6).toFixed(2) + 'deg)'; };
+
+    function step(now) {
+      raf = requestAnimationFrame(step);
+      if (!last) last = now;
+      const dt = Math.min(now - last, 50) / 1000; last = now; t = now;
+      x += vx * dt; y += vy * dt;
+      if (x <= 0) { x = 0; vx = Math.abs(vx); } else if (x >= W - S) { x = W - S; vx = -Math.abs(vx); }
+      if (y <= 0) { y = 0; vy = Math.abs(vy); } else if (y >= H - S) { y = H - S; vy = -Math.abs(vy); }
+      draw();                                                                /* hitting a corner flips both axes, so it bounces straight back */
     }
-    maybeChangeToRed();
+    /* floats in every device mode; only reduced-motion parks him, and a hidden tab pauses him */
+    const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+    function sync() {
+      if (still() || document.hidden) { cancelAnimationFrame(raf); raf = 0; last = 0; draw(); }
+      else if (!raf) { last = 0; raf = requestAnimationFrame(step); }
+    }
+
+    measure();
+    const shell = document.querySelector('.login-shell'), r = shell && shell.getBoundingClientRect();
+    if (r && r.width) { x = r.left + r.width * 0.2; y = r.top + r.height * 0.15; } else { x = W * 0.3; y = H * 0.3; }   /* start where the glow dot used to be */
+    clampPos(); draw(); el.style.opacity = 1; sync();
+    window.addEventListener('resize', () => { measure(); clampPos(); draw(); }, { passive: true });
+    document.addEventListener('visibilitychange', sync);
+    window.Time12Perf.on(sync);
+
+    /* red mode */
+    let red = false, redTimer = 0;
+    function calm() { red = false; el.src = SRC.calm; }
+    function goRed(ms) { red = true; el.src = SRC.red; clearTimeout(redTimer); redTimer = setTimeout(calm, ms == null ? RED_FOR_MS : ms); }
+    (function roll() { if (!red && Math.random() < RED_CHANCE) goRed(); setTimeout(roll, RED_CHECK_MS); })();
+    window.Papery = { goRed, calm };                                         /* test it: Papery.goRed() in the console */
   })();
   
   class NotesDB {
@@ -9907,7 +9925,7 @@ Marketing,alex99,</div>
     var n = +el.getAttribute('data-n'); if (matchMedia('(prefers-reduced-motion:reduce)').matches) { el.textContent = n; return; }
     var t0 = performance.now(); (function f(t) { var k = Math.min(1, (t - t0) / 700); el.textContent = Math.round(n * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(f); })(t0);
   }
-  var fan = function (n) { return '<div class="rw-hero"><div class="rw-fan"><img src="paper.png" alt=""><img src="paper.png" alt=""><img src="paper.png" alt=""></div><div class="rw-count"><b data-n="' + n + '">0</b><span>' + (n === 1 ? 'paper' : 'papers') + '</span></div></div>'; };
+  var fan = function (n) { return '<div class="rw-hero"><div class="rw-fan"><img src="papery.png" alt=""><img src="papery.png" alt=""><img src="papery.png" alt=""></div><div class="rw-count"><b data-n="' + n + '">0</b><span>' + (n === 1 ? 'paper' : 'papers') + '</span></div></div>'; };
   function render() {
     var d = S.d, h = '';
     if (!d) h = '<div class="rw-msg" style="padding:70px 0;text-align:center">Counting papers…</div>';
@@ -9924,7 +9942,7 @@ Marketing,alex99,</div>
         '<div class="rw-f"><label>Papers</label><div class="rw-step"><button type="button" data-st="-1" aria-label="Fewer">−</button><input class="rw-n" inputmode="numeric" maxlength="3" value="' + S.amt + '" aria-label="Papers to remove"><button type="button" data-st="1" aria-label="More">+</button></div></div></div>' +
         '<div class="rw-f"><label>Reason (optional, the member can read it)</label><input class="dialog-input rw-r" maxlength="140" placeholder="e.g. Plagiarised an answer"></div><button type="button" class="btn-primary main rw-go">Remove papers</button><div class="rw-msg"></div>'
         : '<div class="rw-msg">Paper removal switches on once the papers function is deployed on Supabase.</div>') + '</div>' +
-        '<div class="rw-list">' + d.rows.map(function (u) { return '<div class="rw-row"><span>' + esc(u.name) + '</span><b><img src="paper.png" alt="">' + u.net + '</b></div>'; }).join('') + '</div>';
+        '<div class="rw-list">' + d.rows.map(function (u) { return '<div class="rw-row"><span>' + esc(u.name) + '</span><b><img src="papery.png" alt="">' + u.net + '</b></div>'; }).join('') + '</div>';
     }
     box.innerHTML = h; [].forEach.call(box.querySelectorAll('[data-n]'), countUp);
   }
