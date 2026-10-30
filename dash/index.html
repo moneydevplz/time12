@@ -9955,6 +9955,8 @@ Marketing,alex99,</div>
 .rw-soon-badge{margin-top:14px;padding:5px 14px;border-radius:99px;background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
 .rw-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:22px}.rw-stats div{padding:14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);text-align:center}.rw-stats b{display:block;font:600 22px var(--sans)}.rw-stats span{font-size:12px;color:var(--text-muted)}
 .rw-up{color:var(--success)}.rw-dn{color:var(--danger,#e5484d)}
+.rw-stats{grid-template-columns:repeat(auto-fit,minmax(76px,1fr))}.rw-stats div{padding:14px 6px}
+.rw-amt.neg,.rw-row b.neg{color:var(--danger,#e5484d)}
 .rw-how{margin:16px 2px 0;font-size:13.5px;line-height:1.55;color:var(--text-soft)}
 .rw-card{margin-top:18px;padding:18px;border:1px solid var(--border);border-radius:14px;background:var(--surface)}.rw-card h4{font:600 14px var(--sans);color:var(--text);margin-bottom:12px}
 .rw-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;margin-bottom:12px}.rw-f label{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px}
@@ -9987,23 +9989,26 @@ Marketing,alex99,</div>
   /* papers = tasks completed - tasks closed unfinished - papers an organization removed. Computed from the live task record, so it can't drift. */
   function load() {
     var org = who().indexOf('@') < 0, now = Date.now();
-    var rem = call(PAP, { action: 'list' }).then(function (j) { j.ok = true; return j; }, function () { return { ok: false, removed: {}, log: [] }; });
+    var rem = call(PAP, { action: 'list' }).then(function (j) { j.ok = true; return j; }, function (e) { throw new Error(/^HTTP \d+$/.test(e.message) ? 'Couldn’t load your papers. Try again in a moment.' : e.message); });
     if (!org) return Promise.all([call(ORG, { action: 'get_user_tasks' }), rem]).then(function (a) {
-      var e = 0, l = 0, x = 0; (a[0].tasks || []).forEach(function (t) { if (t.status === 'completed') e++; else if (t.dueDate && now > new Date(t.dueDate).getTime()) l++; });
+      var e = 0, l = 0, x = 0, ad = 0; (a[0].tasks || []).forEach(function (t) { if (t.status === 'completed') e++; else if (t.dueDate && now > new Date(t.dueDate).getTime()) l++; });
       Object.keys(a[1].removed || {}).forEach(function (k) { x += a[1].removed[k]; });
-      return { org: false, e: e, l: l, x: x, net: Math.max(0, e - l - x), log: a[1].log || [] };
+      Object.keys(a[1].adj || {}).forEach(function (k) { ad += a[1].adj[k]; });
+      return { org: false, e: e, l: l, x: x, a: ad, net: e - l - x + ad, log: a[1].log || [] };
     });
     return Promise.all([call(ORG, { action: 'get_task_report' }), call(ORG, { action: 'list_accounts' }), rem]).then(function (a) {
       var m = {}; (a[1].accounts || []).forEach(function (u) { m[u.id] = { id: u.id, name: u.username, e: 0, l: 0 }; });
       (a[0].reports || []).forEach(function (r) { (r.completed || []).forEach(function (c) { if (m[c.userId]) m[c.userId].e++; }); (r.failed || []).forEach(function (c) { if (m[c.userId]) m[c.userId].l++; }); });
-      var rm = a[2].removed || {};
-      var rows = Object.keys(m).map(function (k) { var u = m[k]; u.x = rm[k] || 0; u.net = Math.max(0, u.e - u.l - u.x); return u; }).sort(function (p, q) { return q.net - p.net || p.name.localeCompare(q.name); });
+      var rm = a[2].removed || {}, ra = a[2].adj || {};
+      var rows = Object.keys(m).map(function (k) { var u = m[k]; u.x = rm[k] || 0; u.a = ra[k] || 0; u.net = u.e - u.l - u.x + u.a; return u; }).sort(function (p, q) { return q.net - p.net || p.name.localeCompare(q.name); });
       return { org: true, rows: rows, ok: a[2].ok, net: rows.reduce(function (s, u) { return s + u.net; }, 0) };
     });
   }
+  function fmt(n) { return n < 0 ? '−' + Math.abs(n) : String(n); }
   function countUp(el) {
-    var n = +el.getAttribute('data-n'); if (matchMedia('(prefers-reduced-motion:reduce)').matches) { el.textContent = n; return; }
-    var t0 = performance.now(); (function f(t) { var k = Math.min(1, (t - t0) / 700); el.textContent = Math.round(n * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(f); })(t0);
+    var n = +el.getAttribute('data-n'); el.classList.toggle('neg', n < 0);
+    if (matchMedia('(prefers-reduced-motion:reduce)').matches) { el.textContent = fmt(n); return; }
+    var t0 = performance.now(); (function f(t) { var k = Math.min(1, (t - t0) / 700); el.textContent = fmt(Math.round(n * (1 - Math.pow(1 - k, 3)))); if (k < 1) requestAnimationFrame(f); })(t0);
   }
 
   /* ---- the reward tiles. To add a reward later: push another tile() here, and delete or keep the Coming soon tile below it. ---- */
@@ -10018,7 +10023,7 @@ Marketing,alex99,</div>
   }
   function tiles(d) {
     return '<div class="rw-tiles">' +
-      tile({ img: 'papery.png', n: d.net, name: d.net === 1 ? 'Paper' : 'Papers', desc: 'Our Mascot. He’s very... papery.', sub: d.org ? 'Total across your organization' : '' }) +
+      tile({ img: 'papery.png', n: d.net, name: Math.abs(d.net) === 1 ? 'Paper' : 'Papers', desc: 'Our Mascot. He’s very... papery.', sub: d.org ? 'Total across your organization' : d.net < 0 ? 'You’re in the red. Finish tasks on time to climb back up.' : '' }) +
       soonTile() + '</div>';
   }
 
@@ -10027,8 +10032,8 @@ Marketing,alex99,</div>
     if (!d) h = '<div class="rw-msg" style="padding:70px 0;text-align:center">Counting papers…</div>';
     else if (d.err) h = '<div class="rw-msg err" style="padding:50px 0;text-align:center">' + esc(d.err) + '</div>';
     else if (!d.org) {
-      h = tiles(d) + '<div class="rw-stats"><div><b class="rw-up">+' + d.e + '</b><span>Earned</span></div><div><b class="rw-dn">−' + d.l + '</b><span>Lost</span></div><div><b class="rw-dn">−' + d.x + '</b><span>Removed</span></div></div>' +
-        '<p class="rw-how">Finish a task and get it checked to earn a paper. Let one close unfinished and you lose one.</p>' +
+      h = tiles(d) + '<div class="rw-stats"><div><b class="rw-up">+' + d.e + '</b><span>Earned</span></div><div><b class="rw-dn">−' + d.l + '</b><span>Lost</span></div><div><b class="rw-dn">−' + d.x + '</b><span>Removed</span></div>' + (d.a ? '<div><b class="' + (d.a > 0 ? 'rw-up' : 'rw-dn') + '">' + (d.a > 0 ? '+' : '−') + Math.abs(d.a) + '</b><span>Adjusted</span></div>' : '') + '</div>' +
+        '<p class="rw-how">Finish a task and get it checked to earn a paper. Let one close unfinished and you lose one. Your total can drop below zero.</p>' +
         (d.log.length ? '<div class="rw-card rw-log"><h4>Taken back by your organization</h4>' + d.log.slice(0, 6).map(function (r) { return '<div><span>−' + r.amount + (r.reason ? ' · ' + esc(r.reason) : '') + '</span><span>' + new Date(r.created_at).toLocaleDateString() + '</span></div>'; }).join('') + '</div>' : '');
     } else {
       var pick = d.rows.filter(function (u) { return u.net > 0; });
@@ -10037,8 +10042,8 @@ Marketing,alex99,</div>
         pick.map(function (u) { return '<div class="custom-select-option' + (S.sel && S.sel.id === u.id ? ' selected' : '') + '" role="option" data-id="' + u.id + '">' + esc(u.name) + '<em>' + u.net + '</em></div>'; }).join('') + '</div></div></div>' +
         '<div class="rw-f"><label>Papers</label><div class="rw-step"><button type="button" data-st="-1" aria-label="Fewer">−</button><input class="rw-n" inputmode="numeric" maxlength="3" value="' + S.amt + '" aria-label="Papers to remove"><button type="button" data-st="1" aria-label="More">+</button></div></div></div>' +
         '<div class="rw-f"><label>Reason (optional, the member can read it)</label><input class="dialog-input rw-r" maxlength="140" placeholder="e.g. Plagiarised an answer"></div><button type="button" class="btn-primary main rw-go">Remove papers</button><div class="rw-msg"></div>'
-        : '<div class="rw-msg">Paper removal switches on once the papers function is deployed on Supabase.</div>') + '</div>' +
-        '<div class="rw-list">' + d.rows.map(function (u) { return '<div class="rw-row"><span>' + esc(u.name) + '</span><b><img src="papery.png" alt="">' + u.net + '</b></div>'; }).join('') + '</div>';
+        : '<div class="rw-msg">Paper removal is unavailable right now. Try again in a moment.</div>') + '</div>' +
+        '<div class="rw-list">' + d.rows.map(function (u) { return '<div class="rw-row"><span>' + esc(u.name) + '</span><b' + (u.net < 0 ? ' class="neg"' : '') + '><img src="papery.png" alt="">' + fmt(u.net) + '</b></div>'; }).join('') + '</div>';
     }
     box.innerHTML = '<div class="rw-wrap"><div class="org-header"><div><div class="org-title">Rewards</div></div></div><p class="rw-intro">Things you earn along the way.</p>' + h + '</div>';
     [].forEach.call(box.querySelectorAll('[data-n]'), countUp);
