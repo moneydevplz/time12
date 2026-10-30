@@ -9960,9 +9960,9 @@ Marketing,alex99,</div>
 .rw-how{margin:16px 2px 0;font-size:13.5px;line-height:1.55;color:var(--text-soft)}
 .rw-card{margin-top:18px;padding:18px;border:1px solid var(--border);border-radius:14px;background:var(--surface)}.rw-card h4{font:600 14px var(--sans);color:var(--text);margin-bottom:12px}
 .rw-grid{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;margin-bottom:12px}.rw-f label{display:block;font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px}
-.rw-dd .custom-select-menu{background:var(--bg);-webkit-backdrop-filter:none;backdrop-filter:none;top:calc(100% + 6px);max-height:210px;overflow:auto;box-shadow:0 14px 36px rgba(0,0,0,.2)}
-.rw-dd .custom-select-toggle{gap:10px}.rw-dd .custom-select-toggle svg{margin-left:auto;flex-shrink:0}.rw-dd .custom-select-option{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.rw-dd .custom-select-option em{font-style:normal;font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-soft);padding:1px 8px;border-radius:99px}
+.rw-selwrap{position:relative;width:100%}.rw-selwrap svg{position:absolute;right:12px;top:50%;width:14px;height:14px;margin-top:-7px;color:var(--text-muted);pointer-events:none}
+.rw-sel{display:block;width:100%;padding:10px 34px 10px 12px;background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:var(--sans);font-size:14px;border-radius:var(--radius);outline:none;cursor:pointer;transition:var(--t);-webkit-appearance:none;appearance:none;text-overflow:ellipsis}.rw-sel:hover,.rw-sel:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+@media(max-width:560px){.rw-sel{font-size:16px}}
 .rw-step{display:flex;align-items:center;border:1px solid var(--border);border-radius:var(--radius-lg,10px);background:var(--bg);overflow:hidden}.rw-step:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
 .rw-step button{width:38px;height:40px;border:0;background:none;color:var(--text-soft);font-size:18px;cursor:pointer}.rw-step button:hover{background:var(--surface-2);color:var(--accent)}
 .rw-n{width:46px;border:0;background:none;text-align:center;font:600 15px var(--sans);color:var(--text);outline:0}
@@ -10038,8 +10038,9 @@ Marketing,alex99,</div>
     } else {
       var pick = d.rows.filter(function (u) { return u.net > 0; });
       h = tiles(d) + '<div class="rw-card"><h4>Remove papers</h4>' + (d.ok ?
-        '<div class="rw-grid"><div class="rw-f"><label>Member</label><div class="custom-select-wrapper rw-dd"><button type="button" class="custom-select-toggle"' + (pick.length ? '' : ' disabled') + '><span class="rw-dd-l">' + (S.sel ? esc(S.sel.name) : pick.length ? 'Choose a member' : 'No one has papers yet') + '</span>' + CH + '</button><div class="custom-select-menu" role="listbox">' +
-        pick.map(function (u) { return '<div class="custom-select-option' + (S.sel && S.sel.id === u.id ? ' selected' : '') + '" role="option" data-id="' + u.id + '">' + esc(u.name) + '<em>' + u.net + '</em></div>'; }).join('') + '</div></div></div>' +
+        '<div class="rw-grid"><div class="rw-f"><label>Member</label><div class="rw-selwrap"><select class="rw-sel" aria-label="Member">' +
+        '<option value="">' + (pick.length ? 'Choose a member' : 'No one has papers yet') + '</option>' +
+        pick.map(function (u) { return '<option value="' + esc(String(u.id)) + '"' + (S.sel && String(S.sel.id) === String(u.id) ? ' selected' : '') + '>' + esc(u.name) + ' (' + u.net + ')</option>'; }).join('') + '</select>' + CH + '</div></div>' +
         '<div class="rw-f"><label>Papers</label><div class="rw-step"><button type="button" data-st="-1" aria-label="Fewer">−</button><input class="rw-n" inputmode="numeric" maxlength="3" value="' + S.amt + '" aria-label="Papers to remove"><button type="button" data-st="1" aria-label="More">+</button></div></div></div>' +
         '<div class="rw-f"><label>Reason (optional, the member can read it)</label><input class="dialog-input rw-r" maxlength="140" placeholder="e.g. Plagiarised an answer"></div><button type="button" class="btn-primary main rw-go">Remove papers</button><div class="rw-msg"></div>'
         : '<div class="rw-msg">Paper removal is unavailable right now. Try again in a moment.</div>') + '</div>' +
@@ -10059,11 +10060,7 @@ Marketing,alex99,</div>
       .catch(function (e) { btn.disabled = false; say(e.message, 1); });
   }
   function onClick(e) {
-    var t = e.target, dd = box.querySelector('.rw-dd');
-    if (dd && !t.closest('.rw-dd')) dd.classList.remove('open');
-    if (t.closest('.custom-select-toggle')) return dd.classList.toggle('open');
-    var o = t.closest('.custom-select-option');
-    if (o) { S.sel = S.d.rows.filter(function (u) { return u.id === o.getAttribute('data-id'); })[0]; dd.classList.remove('open'); box.querySelector('.rw-dd-l').textContent = S.sel.name; [].forEach.call(dd.querySelectorAll('.custom-select-option'), function (x) { x.classList.toggle('selected', x === o); }); return setAmt(S.amt); }
+    var t = e.target; if (t && t.nodeType !== 1) t = t.parentElement; if (!t) return;
     var st = t.closest('[data-st]'); if (st) return setAmt(S.amt + +st.getAttribute('data-st'));
     var g = t.closest('.rw-go'); if (g) go(g);
   }
@@ -10072,7 +10069,10 @@ Marketing,alex99,</div>
       box = D.getElementById('rewardsMainContent'); if (!box) return;
       box.addEventListener('click', onClick);
       box.addEventListener('input', function (e) { if (e.target.classList.contains('rw-n')) { e.target.value = e.target.value.replace(/\D/g, ''); S.amt = Math.max(1, Math.min(S.sel ? S.sel.net : 99, +e.target.value || 1)); } });
-      box.addEventListener('change', function (e) { if (e.target.classList.contains('rw-n')) setAmt(S.amt); });
+      box.addEventListener('change', function (e) {
+        if (e.target.classList.contains('rw-sel')) { S.sel = S.d.rows.filter(function (u) { return String(u.id) === e.target.value; })[0] || null; setAmt(S.amt); }
+        else if (e.target.classList.contains('rw-n')) setAmt(S.amt);
+      });
     }
     S.sel = null; S.amt = 1; S.d = null; render(); refresh();
   }
