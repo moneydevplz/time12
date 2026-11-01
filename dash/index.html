@@ -10777,13 +10777,14 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
 #t12dk .ch-gate[hidden]{display:none}#t12dk .ch-gate b{font-size:14px;color:var(--text)}#t12dk .ch-gate .dk-btn{margin-top:4px}
 #t12dk .ch-k{width:34px;height:34px;object-fit:contain}#t12dk .ch-st .ch-k{width:18px;height:18px;vertical-align:-4px}
 
-/* ---- Tab pill: thicker, bolder, and sized to fit six tabs ---- */
-.editor-top-bar{grid-template-columns:auto minmax(0,1fr) auto}
-.sidebar-tabs{width:auto;max-width:100%;min-width:0;justify-self:center}
-.tabs-container{width:auto;max-width:100%;padding:5px;gap:3px;overflow:hidden}
-.tab-item{padding:11px clamp(11px,1.05vw,18px);font-size:15px;font-weight:600;line-height:1.25;letter-spacing:-.005em;flex:0 0 auto}
-.tab-item.active{box-shadow:0 2px 8px rgba(0,0,0,.12)}
-@media (max-width:1280px){.tabs-container{display:none}.tabs-dropdown{display:block}}
+/* ---- Tab pill: thicker, bolder, sized to fit six tabs. The top bar keeps its original centred 1fr / auto / 1fr grid so the pill stays put on every tab. ---- */
+@media (min-width:1341px){
+  .sidebar-tabs{width:auto;max-width:100%;min-width:0;justify-self:center}
+  .tabs-container{width:auto;max-width:100%;padding:5px;gap:3px;overflow:hidden}
+  .tab-item{padding:11px clamp(9px,.9vw,17px);font-size:15px;font-weight:600;line-height:1.25;letter-spacing:-.005em;flex:0 0 auto}
+  .tab-item.active{box-shadow:0 2px 8px rgba(0,0,0,.12)}
+}
+@media (max-width:1340px){.tabs-container{display:none}.tabs-dropdown{display:block}}
 
 /* ---- Admin section sub-headings ---- */
 .rq-h3{display:flex;align-items:center;gap:10px;margin:32px 0 14px;font:600 15px var(--sans);color:var(--text)}
@@ -10898,6 +10899,22 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
     ST.q = ''; shell(); load();
     if (me().indexOf('@') > 0) api({ action: 'me' }).then(function (j) { ST.mine = { public: j.public !== false }; paintMine(); }, function () { });
   }
+
+  /* Top-bar dropdowns (Export, Add) were clipped by .editor-actions { overflow-x: auto }, so the menu opened but could not be seen.
+     While open, float the menu above the page instead. */
+  [].forEach.call(D.querySelectorAll('.editor-actions .custom-dropdown-wrapper'), function (w) {
+    var menu = w.querySelector('.custom-dropdown-menu'), btn = w.querySelector('button');
+    if (!menu || !btn) return;
+    function sync() {
+      if (w.classList.contains('open')) {
+        var r = btn.getBoundingClientRect();
+        D.body.appendChild(menu);
+        menu.style.cssText = 'position:fixed;display:flex;left:auto;top:' + (r.bottom + 6) + 'px;right:' + Math.max(8, window.innerWidth - r.right) + 'px;z-index:100001';
+      } else if (menu.parentNode !== w) { menu.style.cssText = ''; w.appendChild(menu); }
+    }
+    new MutationObserver(sync).observe(w, { attributes: true, attributeFilter: ['class'] });
+    window.addEventListener('resize', function () { if (w.classList.contains('open')) sync(); });
+  });
   window.T12Board = { show: show };
 })();
 </script>
