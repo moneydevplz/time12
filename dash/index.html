@@ -4572,21 +4572,9 @@
     }
   }
 
-  function renderOrgState() {
-    const hasGroups = orgGroups && orgGroups.length > 0;
-    const hasAccounts = orgAccounts && orgAccounts.length > 0;
-    const hasTasks = orgTasks && orgTasks.length > 0;
-    const hasUserTasks = userAssignedTasks && userAssignedTasks.length > 0;
-
-    if (orgLoading()) { renderOrgSkeleton(); return; }
-
-    if (!hasGroups && !hasAccounts && !hasTasks && !hasUserTasks) {
-      renderEmptyOrgState();
-      return;
-    }
-
+  function orgTasksHtml() {
+    if (!(orgTasks && orgTasks.length)) return '';
     let tasksHtml = '';
-    if (hasTasks) {
       const taskRows = orgTasks.map(t => {
         const dueDateObj = t.due_date ? new Date(t.due_date) : null;
         const dueDate = dueDateObj ? dueDateObj.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A';
@@ -4721,7 +4709,23 @@
           </table>
         </div>
       `;
+    return tasksHtml;
+  }
+
+  function renderOrgState() {
+    const hasGroups = orgGroups && orgGroups.length > 0;
+    const hasAccounts = orgAccounts && orgAccounts.length > 0;
+    const hasTasks = orgTasks && orgTasks.length > 0;
+    const hasUserTasks = userAssignedTasks && userAssignedTasks.length > 0;
+
+    if (orgLoading()) { renderOrgSkeleton(); return; }
+
+    if (!hasGroups && !hasAccounts && !hasTasks && !hasUserTasks) {
+      renderEmptyOrgState();
+      return;
     }
+
+    const tasksHtml = '';
 
     let accountsHtml = '';
     if (hasAccounts && canLead()) {
@@ -4796,18 +4800,6 @@
       });
       document.querySelectorAll('[data-action="delete"]').forEach(btn => {
         btn.addEventListener('click', () => guardButton(btn, 'delete_acc:'+btn.dataset.username, () => deleteSingleAccount(btn.dataset.username)));
-      });
-    }
-
-    if (hasTasks) {
-      document.querySelectorAll('[data-task-action="verify"]').forEach(btn => {
-        btn.addEventListener('click', () => guardButton(btn, 'verify:'+btn.dataset.taskId+':'+btn.dataset.userId, () => handleTaskAction('verify_task', btn.dataset.taskId, btn.dataset.userId)));
-      });
-      document.querySelectorAll('[data-task-action="reject"]').forEach(btn => {
-        btn.addEventListener('click', () => openRejectDialog(btn.dataset.taskId, btn.dataset.userId, btn.dataset.username));
-      });
-      document.querySelectorAll('[data-task-action="delete"]').forEach(btn => {
-        btn.addEventListener('click', () => guardButton(btn, 'delete_task:'+btn.dataset.taskId, () => handleTaskAction('delete_task', btn.dataset.taskId)));
       });
     }
 
@@ -7327,7 +7319,7 @@ Marketing,alex99,</div>
 
   /* ---------- Admin review queue (bottom of the Tasks tab) ---------- */
   function canReview() {
-    if (!isSubAccount) return true;
+    if (!isSubAccount || canLead()) return true;
     const me = String((getStoredSession() || {}).userId || '');
     const walk = ns => (ns || []).some(g => (g.group_admins || []).some(a => String(a.user_id) === me) || walk(g.sub_groups));
     return walk(orgGroups);
@@ -7371,13 +7363,25 @@ Marketing,alex99,</div>
     if (!canReview()) { el.innerHTML = ''; return; }
     if (!orgLoaded.tasks) { el.innerHTML = '<section class="rq-wrap"><div class="sk" style="height:88px"></div></section>'; return; }
     const items = reviewItems();
+    const table = orgTasksHtml();
     el.innerHTML = `<section class="rq-wrap">
-      <div class="rq-head"><div><span class="rq-eyebrow">Admin</span><h2 class="rq-title">Review queue</h2>
-        <p class="rq-sub">Work your members handed in. Accept it, or deny it with a reason. This is separate from your own tasks above.</p></div><span class="tk-count">${items.length}</span></div>
-      ${items.length ? `<div class="rq-list">${items.map(reviewCardHtml).join('')}</div>` : '<div class="tk-empty">Nothing is waiting on you. New submissions show up here.</div>'}</section>`;
+      <div class="rq-head"><div><span class="rq-eyebrow">Organizers only</span><h2 class="rq-title">Admin</h2>
+        <p class="rq-sub">Everything you manage for your members: work to review, and progress on every task you have set. This is separate from your own tasks above.</p></div></div>
+      <h3 class="rq-h3">Review queue <span class="tk-count">${items.length}</span></h3>
+      ${items.length ? `<div class="rq-list">${items.map(reviewCardHtml).join('')}</div>` : '<div class="tk-empty">Nothing is waiting on you. New submissions show up here.</div>'}
+      <h3 class="rq-h3">Task details &amp; member progress <span class="tk-count">${(orgTasks || []).length}</span></h3>
+      ${table || '<div class="tk-empty">You have not set any tasks yet.</div>'}</section>`;
     if (!el.dataset.w) {
       el.dataset.w = '1';
       el.addEventListener('click', e => {
+        const ta = e.target.closest('[data-task-action]');
+        if (ta) {
+          const k = ta.dataset.taskAction, tid = ta.dataset.taskId, uid = ta.dataset.userId;
+          if (k === 'verify') guardButton(ta, 'verify:' + tid + ':' + uid, () => handleTaskAction('verify_task', tid, uid));
+          else if (k === 'reject') openRejectDialog(tid, uid, ta.dataset.username);
+          else if (k === 'delete') guardButton(ta, 'delete_task:' + tid, () => handleTaskAction('delete_task', tid));
+          return;
+        }
         const b = e.target.closest('[data-rq]');
         if (!b) return;
         if (b.dataset.rq === 'accept') guardButton(b, 'verify:' + b.dataset.t + ':' + b.dataset.u, () => handleTaskAction('verify_task', b.dataset.t, b.dataset.u));
@@ -10772,6 +10776,18 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
 #t12dk .ch-gate{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:14px;text-align:center;background:var(--surface);font:500 12.5px/1.4 var(--sans);color:var(--text-soft)}
 #t12dk .ch-gate[hidden]{display:none}#t12dk .ch-gate b{font-size:14px;color:var(--text)}#t12dk .ch-gate .dk-btn{margin-top:4px}
 #t12dk .ch-k{width:34px;height:34px;object-fit:contain}#t12dk .ch-st .ch-k{width:18px;height:18px;vertical-align:-4px}
+
+/* ---- Tab pill: thicker, bolder, and sized to fit six tabs ---- */
+.editor-top-bar{grid-template-columns:auto minmax(0,1fr) auto}
+.sidebar-tabs{width:auto;max-width:100%;min-width:0;justify-self:center}
+.tabs-container{width:auto;max-width:100%;padding:5px;gap:3px;overflow:hidden}
+.tab-item{padding:11px clamp(11px,1.05vw,18px);font-size:15px;font-weight:600;line-height:1.25;letter-spacing:-.005em;flex:0 0 auto}
+.tab-item.active{box-shadow:0 2px 8px rgba(0,0,0,.12)}
+@media (max-width:1280px){.tabs-container{display:none}.tabs-dropdown{display:block}}
+
+/* ---- Admin section sub-headings ---- */
+.rq-h3{display:flex;align-items:center;gap:10px;margin:32px 0 14px;font:600 15px var(--sans);color:var(--text)}
+.rq-wrap .table-wrapper{margin-bottom:0!important}
 </style>
 <script id="t12x-js">
 (function () {
