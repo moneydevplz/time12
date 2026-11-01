@@ -82,12 +82,12 @@
 
   :root {
     --bg: #FFFFFF;
-    --surface: #F7F3EE;
-    --surface-2: #EFE9E1;
+    --surface: #F6F6F6;
+    --surface-2: #EEEEEE;
     --text: #18120E;
     --text-soft: #4A4036;
     --text-muted: #8C8175;
-    --border: #E5DDD3;
+    --border: #E4E4E4;
     --molding: #1A1A1A;
     --accent: #FD7E14;
     --accent-hover: #E56A10;
@@ -103,7 +103,7 @@
     --serif: 'DM Serif Display', Georgia, serif;
     --sans: 'DM Sans', -apple-system, sans-serif;
 
-    --glass-bg: rgba(255, 250, 244, 0.92);
+    --glass-bg: rgba(255, 255, 255, 0.92);
     --glass-border: rgba(24, 18, 14, 0.16);
     --glass-sheen: rgba(230, 90, 10, 0.55);
     --glass-highlight: rgba(255, 255, 255, 0.5);
@@ -111,7 +111,7 @@
 
     /* Lighter "liquid glass" used across the in-app chrome (sidebar, top
        bar, toolbar, cards) so the 3D geometry backdrop reads through it. */
-    --app-glass-bg: rgba(255, 250, 244, 0.6);
+    --app-glass-bg: rgba(255, 255, 255, 0.6);
     --app-glass-border: rgba(24, 18, 14, 0.13);
     --app-glass-shadow: 0 8px 28px rgba(34, 24, 16, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 
@@ -1640,8 +1640,8 @@
 
   /* low: no blur compositing, no ambient motion, opaque-ish glass */
   html[data-perf="low"] {
-    --glass-bg: rgba(255, 250, 244, 0.97);
-    --app-glass-bg: rgba(255, 250, 244, 0.95);
+    --glass-bg: rgba(255, 255, 255, 0.97);
+    --app-glass-bg: rgba(255, 255, 255, 0.95);
     --liquid-sheen: none;
     --app-glass-shadow: 0 1px 0 rgba(255,255,255,.5) inset;
     --shadow-soft: 0 2px 8px rgba(34, 24, 16, 0.08);
@@ -1869,10 +1869,10 @@
      SEE-THROUGH PANELS — the geometry reads through the whole app,
      text stays crisp (lighter glass + a soft reading veil behind copy)
      ============================================================ */
-  html:not([data-perf="low"]) { --app-glass-bg: rgba(255, 250, 244, 0.42); }
+  html:not([data-perf="low"]) { --app-glass-bg: rgba(255, 255, 255, 0.42); }
   html[data-theme="dark"]:not([data-perf="low"]) { --app-glass-bg: rgba(24, 24, 24, 0.44); }
   /* lower end: no blur, so keep the glass a bit denser, but let the static shapes show */
-  html[data-perf="low"] { --app-glass-bg: rgba(255, 250, 244, 0.84); }
+  html[data-perf="low"] { --app-glass-bg: rgba(255, 255, 255, 0.84); }
   html[data-perf="low"][data-theme="dark"] { --app-glass-bg: rgba(24, 24, 24, 0.86); }
 
   /* gentler blur on the big panels, so shapes behind them stay recognisable */
@@ -2271,6 +2271,7 @@
           <div class="tab-item" data-tab="Org">Org</div>
           <div class="tab-item" data-tab="Analytics">Analytics</div>
           <div class="tab-item" data-tab="Rewards">Rewards</div>
+          <div class="tab-item" data-tab="Leaderboard">Leaderboard</div>
         </div>
         
         <div class="tabs-dropdown" id="tabsDropdown">
@@ -2286,6 +2287,7 @@
             <div class="dropdown-item" data-tab="Org">Org</div>
             <div class="dropdown-item" data-tab="Analytics">Analytics</div>
             <div class="dropdown-item" data-tab="Rewards">Rewards</div>
+            <div class="dropdown-item" data-tab="Leaderboard">Leaderboard</div>
           </div>
         </div>
       </div>
@@ -2354,6 +2356,7 @@
       <div class="org-inner" id="orgMainContent">
         <!-- Dynamic Table/Empty State injected here -->
       </div>
+      <div class="org-inner" id="orgChessCard"></div>
     </div>
 
     <div class="org-tab-content" id="analyticsTabContent">
@@ -2362,6 +2365,10 @@
 
     <div class="org-tab-content" id="rewardsTabContent">
       <div class="org-inner" id="rewardsMainContent"></div>
+    </div>
+
+    <div class="org-tab-content" id="boardTabContent">
+      <div class="org-inner" id="boardMainContent"></div>
     </div>
 
     <div class="editor-bottom-bar" id="editorBottomBar">
@@ -2688,7 +2695,7 @@
       <!-- Chess -->
       <section class="dk-view ch" data-v="ch" role="tabpanel">
         <div class="dk-seg" id="chLvl" role="group" aria-label="Difficulty" style="margin-bottom:2px"><button type="button" data-l="1">Easy</button><button type="button" data-l="2">Normal</button><button type="button" data-l="3">Hard</button></div>
-        <div class="ch-frame" id="chFrame"><div id="chBoard"></div><div class="ch-load">Setting up the board…</div></div>
+        <div class="ch-frame" id="chFrame"><div id="chBoard"></div><div class="ch-load">Setting up the board…</div><div class="ch-gate" id="chGate" hidden></div></div>
         <div class="ch-st" id="chSt" role="status"></div>
         <div class="dk-row ch-ctl"><button class="dk-btn" id="chNew" type="button">New game</button><button class="dk-btn" id="chUndo" type="button">Undo</button><button class="dk-btn" id="chSwap" type="button">Swap sides</button></div>
         <a class="ch-open" href="https://lichess.org/setup/ai" target="_blank" rel="noopener noreferrer">Want a stronger opponent? Lichess ↗</a>
@@ -2885,13 +2892,51 @@
     }).catch(function () { msg.textContent = 'The chess board couldn’t load. Check your connection or ad-blocker, then reopen this tab.'; })
       .then(function () { CG.loading = false; });
   }
-  function newGame() { CG.g = new CG.Chess(); CG.busy = false; CG.cg.set({ orientation: CG.side }); chSync(); reply(); }
+  /* ---- Papers + lock: students pay papers per game and must have no outstanding assignments. Everyone else plays free. ---- */
+  var PAPERS = 'https://bukeabrzlgcwzwtzmwld.supabase.co/functions/v1/papers';
+  function chStudent() { try { return JSON.parse(decodeURIComponent(escape(atob(localStorage.getItem('authToken').split('.')[0])))).username.indexOf('@') > 0; } catch (e) { return false; } }
+  function chApi(b) {
+    return fetch(PAPERS, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + localStorage.getItem('authToken') }, body: JSON.stringify(b) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status); return j; }); });
+  }
+  function chEsc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function startGame() { CG.g = new CG.Chess(); CG.busy = false; CG.cg.set({ orientation: CG.side }); chSync(); reply(); }
+  function newGame() { if (chStudent()) chGate(); else startGame(); }
+  function chGate() {
+    var g = $('#chGate'); if (!g) return startGame();
+    CG.paid = false; CG.g = CG.g || new CG.Chess(); g.hidden = false; g.innerHTML = '<span>Checking…</span>';
+    chApi({ action: 'chess_status' }).then(function (s) {
+      var cost = +s.cost || 0, bal = +s.balance || 0, k = '<img class="ch-k" src="king.png" alt="">';
+      if (s.locked) g.innerHTML = k + '<b>Chess is locked</b><span>Finish ' + (s.undone ? s.undone + ' outstanding assignment' + (s.undone === 1 ? '' : 's') : 'your outstanding assignments') + ' first.</span><button class="dk-btn" type="button" data-g="tasks">Go to Tasks</button>';
+      else if (bal < cost) g.innerHTML = k + '<b>Not enough papers</b><span>A game costs ' + cost + ' papers. You have ' + bal + '.</span>';
+      else g.innerHTML = k + '<b>' + (cost ? 'A game costs ' + cost + ' papers' : 'Free to play') + '</b><span>You have ' + bal + '. Win to claim a king.</span><button class="dk-btn" type="button" data-g="pay">' + (cost ? 'Play (−' + cost + ')' : 'Play') + '</button>';
+    }).catch(function (e) {
+      g.innerHTML = '<b>Chess is not available right now</b><span>' + chEsc(/^HTTP \d+$/.test(e.message) ? 'Try again in a moment.' : e.message) + '</span><button class="dk-btn" type="button" data-g="retry">Try again</button>';
+    });
+  }
+  function chClaim() {
+    chApi({ action: 'chess_win' }).then(function () { chSt.innerHTML = 'Checkmate. You win! <img class="ch-k" src="king.png" alt=""> +1 King'; })
+      .catch(function () { chSt.textContent = 'Checkmate, you win! Your king could not be saved. Tell your teacher.'; });
+  }
+  $('#chFrame').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-g]'); if (!b) return;
+    var a = b.getAttribute('data-g'), g = $('#chGate');
+    if (a === 'tasks') { var t = document.querySelector('.tab-item[data-tab="MyTasks"]'); if (t) t.click(); }
+    else if (a === 'retry') chGate();
+    else if (a === 'pay') {
+      b.disabled = true;
+      chApi({ action: 'chess_start' }).then(function () { g.hidden = true; CG.paid = true; startGame(); })
+        .catch(function (er) { g.innerHTML = '<b>Could not start the game</b><span>' + chEsc(er.message) + '</span><button class="dk-btn" type="button" data-g="retry">Check again</button>'; });
+    }
+  });
+
   function chSync() {
     var g = CG.g, mine = g.turn() === CG.side[0], over = g.isGameOver(), h = g.history({ verbose: true }), l = h[h.length - 1], dm = new Map();
     if (mine && !over) g.moves({ verbose: true }).forEach(function (m) { var a = dm.get(m.from); if (a) a.push(m.to); else dm.set(m.from, [m.to]); });
     CG.cg.set({ fen: g.fen(), turnColor: g.turn() === 'w' ? 'white' : 'black', check: g.isCheck(), lastMove: l ? [l.from, l.to] : [], movable: { color: CG.side, dests: dm } });
     chSt.textContent = g.isCheckmate() ? (mine ? 'Checkmate. This one goes to the computer.' : 'Checkmate. You win!') : g.isDraw() ? 'Draw.' : (g.isCheck() ? 'Check! ' : '') + (mine ? 'Your move' : 'Thinking…');
     chSt.classList.toggle('end', over);
+    if (over && CG.paid) { CG.paid = false; if (g.isCheckmate() && !mine) chClaim(); else chApi({ action: 'chess_end' }).catch(function () {}); }
   }
   function onMove(from, to) {   /* pawns reaching the last rank become queens */
     var g = CG.g, p = g.get(from), pr = p && p.type === 'p' && (to[1] === '8' || to[1] === '1') ? 'q' : undefined;
@@ -3358,7 +3403,7 @@
     canvas.width = 64;
     canvas.height = 64;
     const ctx = canvas.getContext('2d');
-    ctx.fillStyle = theme === 'dark' ? '#141414' : '#F7F3EE';
+    ctx.fillStyle = theme === 'dark' ? '#141414' : '#F6F6F6';
     ctx.fillRect(0, 0, 64, 64);
     ctx.fillStyle = theme === 'dark' ? '#FD7E14' : '#FD7E14';
     ctx.font = 'bold 36px "DM Serif Display", Georgia, serif';
@@ -4256,6 +4301,7 @@
   const analyticsTabContent = document.getElementById('analyticsTabContent');
   const analyticsMainContent = document.getElementById('analyticsMainContent');
   const rewardsTabContent = document.getElementById('rewardsTabContent');
+  const boardTabContent = document.getElementById('boardTabContent');
   const createTaskBtn = document.getElementById('createTaskBtn');
   const orgAddWrapper = document.getElementById('orgAddWrapper');
   const orgAddBtn = document.getElementById('orgAddBtn');
@@ -4487,6 +4533,7 @@
     } finally {
       orgLoaded.tasks = true;
       if (currentTab === 'Org') renderOrgState();
+      if (currentTab === 'MyTasks') renderReviewQueue();
     }
   }
 
@@ -7050,6 +7097,134 @@ Marketing,alex99,</div>
     an.shell = true;
   }
 
+  /* ---------- Analytics: history & growth (snapshots live in the backend, see list_snapshots / save_snapshot / delete_snapshot) ---------- */
+  const HIST_URL = 'https://bukeabrzlgcwzwtzmwld.supabase.co/functions/v1/team-history';
+  async function histApi(b) {
+    const r = await fetch(HIST_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + localStorage.getItem('authToken') }, body: JSON.stringify(b) });
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status);
+    return j;
+  }
+  const hist = { loaded: false, loading: false, err: null, items: [], aSnap: null, aScope: 'org', bSnap: 'now', bScope: 'org', name: '' };
+  const hPick = s => ({ total: s.total, completed: s.completed, done: s.done, late: s.late, missed: s.missed, rate: s.rate, onTime: s.onTime });
+  function histNow() {
+    const rows = an.rows.filter(anInPeriod);
+    return { period: an.period, members: an.users.size, org: hPick(anStats(rows)),
+      groups: an.groups.map(g => { const set = anGroupSet(g.id); return { name: g.name, members: g.members.length, ...hPick(anStats(rows.filter(r => set.has(r.groupId)))) }; }) };
+  }
+  const hData = snap => snap === 'now' ? histNow() : (hist.items.find(i => String(i.id) === String(snap)) || {}).d;
+  function hSide(snap, scope) {
+    const d = hData(snap);
+    if (!d) return null;
+    if (scope === 'org') return { ...d.org, members: d.members, label: 'Whole organization' };
+    const g = (d.groups || []).find(x => String(x.name).toLowerCase() === scope);
+    return g ? { ...g, label: g.name } : null;
+  }
+  function hScopes() {
+    const m = new Map();
+    const add = gs => (gs || []).forEach(g => m.set(String(g.name).toLowerCase(), g.name));
+    add(histNow().groups); hist.items.forEach(i => add(i.d.groups));
+    return [{ v: 'org', l: 'Whole organization' }, ...[...m].sort((a, b) => a[1].localeCompare(b[1])).map(([k, n]) => ({ v: k, l: n }))];
+  }
+  async function histLoad(force) {
+    if (hist.loading || (hist.loaded && !force)) return;
+    hist.loading = true;
+    try {
+      const r = await histApi({ action: 'list_snapshots' });
+      hist.items = (r.snapshots || []).map(x => ({ id: String(x.id), name: x.name || 'Snapshot', at: new Date(x.createdAt || x.created_at).getTime(), d: x.data || {} })).sort((p, q) => p.at - q.at);
+      hist.err = null; hist.loaded = true;
+      if (!hist.items.some(i => i.id === hist.aSnap)) hist.aSnap = hist.items.length ? hist.items[hist.items.length - 1].id : null;
+    } catch (e) { hist.err = e.message || 'Could not load history.'; }
+    hist.loading = false; histPaint();
+  }
+  const hFmt = (k, v) => v == null ? '–' : (k === 'rate' || k === 'onTime') ? Math.round(v * 100) + '%' : String(v);
+  function hDelta(k, a, b) {
+    if (a == null || b == null) return '<span class="hist-d">–</span>';
+    const pct = k === 'rate' || k === 'onTime', d = pct ? Math.round((b - a) * 100) : b - a;
+    const good = (k === 'missed' || k === 'late') ? d < 0 : d > 0;
+    return `<span class="hist-d ${d === 0 ? '' : good ? 'up' : 'dn'}">${d > 0 ? '+' : d < 0 ? '−' : ''}${Math.abs(d)}${pct ? ' pts' : ''}</span>`;
+  }
+  function hSel(key, opts, cur) {
+    const c = opts.find(o => String(o.v) === String(cur)) || opts[0];
+    return `<div class="custom-select-wrapper hist-sel" data-hs="${key}"><div class="custom-select-toggle" tabindex="0" role="button" aria-haspopup="listbox"><span>${escapeHtml(c ? c.l : '–')}</span></div><div class="custom-select-menu">${opts.map(o => `<div class="custom-select-option${String(o.v) === String(cur) ? ' selected' : ''}" data-v="${escapeHtml(String(o.v))}">${escapeHtml(o.l)}</div>`).join('')}</div></div>`;
+  }
+  function hChart() {
+    const ser = [...hist.items.map(i => ({ n: i.name, s: hSide(i.id, hist.aScope) })), { n: 'Now', s: hSide('now', hist.aScope) }].filter(p => p.s && p.s.rate != null);
+    if (ser.length < 2) return '<div class="tk-empty">Save a snapshot to start charting growth over time.</div>';
+    const W = 640, H = 176, P = 30;
+    const x = i => P + (W - 2 * P) * i / (ser.length - 1), y = v => H - P - (H - 2 * P) * v;
+    const line = k => ser.map((p, i) => p.s[k] == null ? '' : `${x(i).toFixed(1)},${y(p.s[k]).toFixed(1)}`).filter(Boolean).join(' ');
+    return `<div class="hist-chartwrap"><svg class="hist-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Completion and on-time rate across snapshots">
+      ${[0, .5, 1].map(v => `<line x1="${P}" x2="${W - P}" y1="${y(v)}" y2="${y(v)}" class="hg"/><text x="2" y="${y(v) + 4}" class="ht">${v * 100}%</text>`).join('')}
+      <polyline points="${line('onTime')}" class="hl ot"/><polyline points="${line('rate')}" class="hl rt"/>
+      ${ser.map((p, i) => `<circle cx="${x(i)}" cy="${y(p.s.rate)}" r="4" class="hp"><title>${escapeHtml(p.n)}: ${hFmt('rate', p.s.rate)} completed, ${hFmt('onTime', p.s.onTime)} on time</title></circle><text x="${x(i)}" y="${H - 8}" text-anchor="middle" class="ht">${escapeHtml(p.n.length > 12 ? p.n.slice(0, 11) + '…' : p.n)}</text>`).join('')}
+    </svg></div><div class="hist-key"><i class="rt"></i>Completion rate<i class="ot"></i>On-time rate<span>${escapeHtml((hSide('now', hist.aScope) || {}).label || '')}</span></div>`;
+  }
+  function hMovers() {
+    const A = hData(hist.aSnap), B = hData(hist.bSnap);
+    if (!A || !B) return '';
+    const rows = [];
+    (B.groups || []).forEach(g => {
+      const o = (A.groups || []).find(x => String(x.name).toLowerCase() === String(g.name).toLowerCase());
+      if (o && o.rate != null && g.rate != null) rows.push({ n: g.name, a: o.rate, b: g.rate, d: g.rate - o.rate });
+    });
+    if (!rows.length) return '';
+    rows.sort((p, q) => q.d - p.d);
+    return `<div class="hist-movers"><h3>Group movers</h3>${rows.slice(0, 8).map(r => `<div class="hist-mv"><span>${escapeHtml(r.n)}</span><span>${hFmt('rate', r.a)} → ${hFmt('rate', r.b)}</span>${hDelta('rate', r.a, r.b)}</div>`).join('')}</div>`;
+  }
+  function histPaint() {
+    const el = document.getElementById('anHist');
+    if (!el) return;
+    let h = `<div class="hist-head"><div><h2 class="hist-title">History &amp; growth</h2><p class="hist-sub">Save a snapshot at the end of a term or project, then compare past groups with current ones any time.</p></div></div>`;
+    if (hist.err) { el.innerHTML = h + `<div class="tk-empty">History is not available yet. ${escapeHtml(hist.err)} <button type="button" class="btn-row" data-hist="retry">Try again</button></div>`; return; }
+    if (!hist.loaded) { el.innerHTML = h + '<div class="sk" style="height:120px"></div>'; return; }
+    h += `<div class="hist-save"><input class="dialog-input" id="histName" maxlength="60" placeholder="Name this snapshot, e.g. Term 1 2026" value="${escapeHtml(hist.name)}"><button type="button" class="btn-action primary" data-hist="save">Save snapshot</button>${hist.items.length ? '<button type="button" class="btn-action" data-hist="export">Export</button>' : ''}</div>`;
+    if (hist.items.length) {
+      const sc = hScopes(), snaps = hist.items.slice().reverse().map(i => ({ v: i.id, l: `${i.name} · ${anDay(i.at)}` }));
+      const A = hSide(hist.aSnap, hist.aScope), B = hSide(hist.bSnap, hist.bScope);
+      const rowsDef = [['total', 'Assignments'], ['completed', 'Completed'], ['rate', 'Completion rate'], ['onTime', 'On-time rate'], ['missed', 'Missed'], ['members', 'Members']];
+      h += `<div class="hist-card"><h3>Growth</h3><div class="hist-pick"><span>Group</span>${hSel('aScope', sc, hist.aScope)}</div>${hChart()}</div>
+        <div class="hist-card"><h3>Compare</h3>
+          <div class="hist-cmp"><div><span class="hist-lbl">Then</span>${hSel('aSnap', snaps, hist.aSnap)}${hSel('aScope', sc, hist.aScope)}</div>
+          <div><span class="hist-lbl">Against</span>${hSel('bSnap', [{ v: 'now', l: 'Now (live)' }, ...snaps], hist.bSnap)}${hSel('bScope', sc, hist.bScope)}</div></div>
+          ${A && B ? `<table class="hist-tbl"><thead><tr><th></th><th>${escapeHtml(A.label)}</th><th>${escapeHtml(B.label)}</th><th>Change</th></tr></thead><tbody>${rowsDef.map(([k, l]) => `<tr><td>${l}</td><td>${hFmt(k, A[k])}</td><td>${hFmt(k, B[k])}</td><td>${hDelta(k, A[k], B[k])}</td></tr>`).join('')}</tbody></table>` : '<div class="tk-empty">That group did not exist in one of the two snapshots. Pick another group.</div>'}
+          ${hMovers()}</div>
+        <div class="hist-card"><h3>Saved snapshots</h3>${hist.items.slice().reverse().map(i => `<div class="hist-snap"><span><b>${escapeHtml(i.name)}</b><small>${escapeHtml(anDay(i.at))} · ${escapeHtml(i.d.period || '')} · ${hFmt('rate', (i.d.org || {}).rate)} completed</small></span><button type="button" class="btn-row danger" data-hist="del" data-id="${escapeHtml(i.id)}">Delete</button></div>`).join('')}</div>`;
+    } else h += '<div class="tk-empty">No snapshots yet. Save your first one to start tracking growth.</div>';
+    el.innerHTML = h;
+  }
+  async function histClick(e) {
+    const tg = e.target.closest('#anHist .custom-select-toggle');
+    if (tg) { const w = tg.parentElement, was = w.classList.contains('open'); document.querySelectorAll('#anHist .custom-select-wrapper.open').forEach(x => x.classList.remove('open')); w.classList.toggle('open', !was); return; }
+    const op = e.target.closest('#anHist [data-v]');
+    if (op) { hist[op.closest('[data-hs]').dataset.hs] = op.dataset.v; histPaint(); return; }
+    const b = e.target.closest('[data-hist]');
+    if (!b) return;
+    const a = b.dataset.hist;
+    try {
+      if (a === 'retry') { hist.loaded = false; hist.err = null; histPaint(); histLoad(true); }
+      else if (a === 'save') {
+        const name = (document.getElementById('histName').value || '').trim() || 'Snapshot · ' + anDay(Date.now());
+        b.disabled = true;
+        await histApi({ action: 'save_snapshot', name, data: histNow() });
+        hist.name = ''; toast('Snapshot saved.'); await histLoad(true);
+      } else if (a === 'del') {
+        await histApi({ action: 'delete_snapshot', snapshotId: b.dataset.id });
+        if (String(hist.aSnap) === b.dataset.id) hist.aSnap = null;
+        if (String(hist.bSnap) === b.dataset.id) hist.bSnap = 'now';
+        toast('Snapshot deleted.'); await histLoad(true);
+      } else if (a === 'export') {
+        if (typeof XLSX === 'undefined') { toast('Excel support failed to load; please try again.', 'error'); return; }
+        const aoa = [['Snapshot', 'Date', 'Group', 'Members', 'Assignments', 'Completed', 'Completion %', 'On-time %', 'Missed']];
+        hist.items.forEach(i => [{ name: 'Whole organization', members: i.d.members, ...(i.d.org || {}) }, ...(i.d.groups || [])].forEach(g =>
+          aoa.push([i.name, new Date(i.at).toLocaleDateString(), g.name, g.members, g.total, g.completed, g.rate == null ? '' : Math.round(g.rate * 100), g.onTime == null ? '' : Math.round(g.onTime * 100), g.missed])));
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(aoa), 'History'); XLSX.writeFile(wb, 'time12-history.xlsx');
+      }
+    } catch (err) { toast(err.message || 'Something went wrong.', 'error'); histPaint(); }
+  }
+  analyticsMainContent.addEventListener('click', histClick);
+  analyticsMainContent.addEventListener('input', e => { if (e.target.id === 'histName') hist.name = e.target.value; });
+
   function anRender() {
     if (!analyticsMainContent) return;
     if (!an.shell || !document.getElementById('anBody')) anBuildShell();
@@ -7091,6 +7266,7 @@ Marketing,alex99,</div>
     const periods = document.getElementById('anPeriods');
     if (periods) periods.parentElement.style.display = (view && view.type === 'task' && !searching) ? 'none' : '';
     body.innerHTML = html;
+    if (!self && !searching && !view) { body.insertAdjacentHTML('beforeend', '<section class="hist" id="anHist"></section>'); histPaint(); histLoad(false); }
   }
 
   function anGo(type, id) {
@@ -7149,6 +7325,67 @@ Marketing,alex99,</div>
     if (e.target.id === 'anSearch') { an.q = e.target.value; anRender(); }
   });
 
+  /* ---------- Admin review queue (bottom of the Tasks tab) ---------- */
+  function canReview() {
+    if (!isSubAccount) return true;
+    const me = String((getStoredSession() || {}).userId || '');
+    const walk = ns => (ns || []).some(g => (g.group_admins || []).some(a => String(a.user_id) === me) || walk(g.sub_groups));
+    return walk(orgGroups);
+  }
+  function reviewItems() {
+    const out = [];
+    (orgTasks || []).forEach(t => {
+      const names = {};
+      (t.groupMembers || []).forEach(m => { names[m.user_id] = (m.users && m.users.username) || 'Unknown'; });
+      (t.submissions || []).forEach(sub => {
+        if (sub.status !== 'pending') return;
+        out.push({ t, sub, name: names[sub.user_id] || 'Unknown', ai: !!automatedMeta[String(t.id)],
+          vs: (t.versions || []).filter(v => v.userId === sub.user_id).sort((a, b) => a.versionNo - b.versionNo) });
+      });
+    });
+    const at = x => new Date(x.sub.submitted_at || x.sub.updated_at || 0).getTime() || 0;
+    return out.sort((a, b) => at(a) - at(b));
+  }
+  function reviewCardHtml(it) {
+    const { t, sub, name, vs, ai } = it;
+    const links = (t.links || []).filter(l => l.is_submission_link && String(l.user_id) === String(sub.user_id));
+    const when = sub.submitted_at || sub.updated_at;
+    const resub = vs.length > 1 ? `<span class="rq-tag">Resubmitted · v${vs[vs.length - 1].versionNo}</span>` : '';
+    const last = latestRejection(vs);
+    const reason = (last && last.note) ? `<div class="row-reason"><strong>Earlier fix request (v${last.versionNo}):</strong> ${escapeHtml(last.note)}</div>` : '';
+    const work = (sub.submission_text ? `<div class="rq-text">${escapeHtml(sub.submission_text)}</div>` : '')
+      + (links.length ? `<div class="rq-links">${links.map(l => `<a href="${escapeHtml(histSafeUrl(l.url))}" target="_blank" rel="noopener noreferrer">${escapeHtml(l.label || l.url)}</a>`).join('')}</div>` : '')
+      + (!sub.submission_text && !links.length ? '<div class="rq-text rq-none">No text or links were handed in.</div>' : '');
+    const actions = ai ? '<span class="auto-note" style="margin:0">Waiting for AI marking</span>'
+      : `<button type="button" class="rq-btn accept" data-rq="accept" data-t="${escapeHtml(String(t.id))}" data-u="${escapeHtml(String(sub.user_id))}">Accept</button>
+         <button type="button" class="rq-btn deny" data-rq="deny" data-t="${escapeHtml(String(t.id))}" data-u="${escapeHtml(String(sub.user_id))}" data-n="${escapeHtml(name)}" title="You will be asked for a reason the member can read">Deny</button>`;
+    return `<article class="rq-card">
+      <div class="rq-top"><span class="rq-av">${escapeHtml(name.charAt(0).toUpperCase())}</span>
+        <div class="rq-who"><b>${anUserLabel(name)}</b><span>${escapeHtml(t.title)} · ${escapeHtml(t.groups ? t.groups.name : 'Unassigned')}${when ? ' · handed in ' + escapeHtml(new Date(when).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })) : ''}</span></div>${resub}</div>
+      ${work}${reason}${historyHtml(vs)}${aiResultTeacherHtml(t.id, sub.user_id)}
+      <div class="rq-actions">${actions}</div></article>`;
+  }
+  function renderReviewQueue() {
+    const el = document.getElementById('reviewQueue');
+    if (!el) return;
+    if (!canReview()) { el.innerHTML = ''; return; }
+    if (!orgLoaded.tasks) { el.innerHTML = '<section class="rq-wrap"><div class="sk" style="height:88px"></div></section>'; return; }
+    const items = reviewItems();
+    el.innerHTML = `<section class="rq-wrap">
+      <div class="rq-head"><div><span class="rq-eyebrow">Admin</span><h2 class="rq-title">Review queue</h2>
+        <p class="rq-sub">Work your members handed in. Accept it, or deny it with a reason. This is separate from your own tasks above.</p></div><span class="tk-count">${items.length}</span></div>
+      ${items.length ? `<div class="rq-list">${items.map(reviewCardHtml).join('')}</div>` : '<div class="tk-empty">Nothing is waiting on you. New submissions show up here.</div>'}</section>`;
+    if (!el.dataset.w) {
+      el.dataset.w = '1';
+      el.addEventListener('click', e => {
+        const b = e.target.closest('[data-rq]');
+        if (!b) return;
+        if (b.dataset.rq === 'accept') guardButton(b, 'verify:' + b.dataset.t + ':' + b.dataset.u, () => handleTaskAction('verify_task', b.dataset.t, b.dataset.u));
+        else openRejectDialog(b.dataset.t, b.dataset.u, b.dataset.n);
+      });
+    }
+  }
+
   function renderUserTasksState() {
     if (!userAssignedTasks || userAssignedTasks.length === 0) {
       myTasksMainContentEl.innerHTML = `
@@ -7163,8 +7400,10 @@ Marketing,alex99,</div>
           <div class="empty-state-title">All caught up!</div>
           <div class="empty-state-text">You have no tasks assigned right now.</div>
         </div>
+        <div id="reviewQueue"></div>
       `;
       Geo.hydrate(myTasksMainContentEl);
+      renderReviewQueue();
       return;
     }
 
@@ -7180,10 +7419,12 @@ Marketing,alex99,</div>
         <div class="graph-card" style="margin-bottom:0;"><div class="sk" style="width:170px;height:24px;"></div><div class="sk" style="height:140px;margin-top:34px;"></div></div>
       </div>
       <div id="userTaskList"></div>
+      <div id="reviewQueue"></div>
     `;
 
     fetchUserGraphData();
     renderUserTaskCards();
+    renderReviewQueue();
   }
 
   async function fetchUserGraphData() {
@@ -7772,6 +8013,7 @@ Marketing,alex99,</div>
     myTasksTabContent.classList.remove('active');
     analyticsTabContent.classList.remove('active');
     rewardsTabContent.classList.remove('active');
+    boardTabContent.classList.remove('active');
     // Hide all action button groups
     editorActions.style.display = 'none';
     taskActions.style.display = 'none';
@@ -7799,18 +8041,23 @@ Marketing,alex99,</div>
         newNoteBtn.style.display = 'grid'; // Show + for creating task
         taskActions.style.display = 'flex';
         fetchUserTasks();
+        if (canReview()) fetchOrgTasks();
       } else if (target === 'Org') {
         orgTabContent.classList.add('active');
         if (!isSubAccount) {
           orgActions.style.display = 'flex';
         }
         renderOrgState();
+        if (!isSubAccount && window.T12Rewards) window.T12Rewards.orgCard();
       } else if (target === 'Analytics') {
         analyticsTabContent.classList.add('active');
         loadAnalytics(false);
       } else if (target === 'Rewards') {
         rewardsTabContent.classList.add('active');
         if (window.T12Rewards) window.T12Rewards.show();
+      } else if (target === 'Leaderboard') {
+        boardTabContent.classList.add('active');
+        if (window.T12Board) window.T12Board.show();
       }
     }
   }
@@ -10248,14 +10495,14 @@ Marketing,alex99,</div>
       var e = 0, l = 0, x = 0, ad = 0; (a[0].tasks || []).forEach(function (t) { if (t.status === 'completed') e++; else if (t.dueDate && now > new Date(t.dueDate).getTime()) l++; });
       Object.keys(a[1].removed || {}).forEach(function (k) { x += a[1].removed[k]; });
       Object.keys(a[1].adj || {}).forEach(function (k) { ad += a[1].adj[k]; });
-      return { org: false, e: e, l: l, x: x, a: ad, net: e - l - x + ad, log: a[1].log || [] };
+      var sp = +a[1].spent || 0; return { org: false, e: e, l: l, x: x, a: ad, sp: sp, kings: +a[1].kings || 0, cost: a[1].chessCost, net: e - l - x + ad - sp, log: a[1].log || [] };
     });
     return Promise.all([call(ORG, { action: 'get_task_report' }), call(ORG, { action: 'list_accounts' }), rem]).then(function (a) {
       var m = {}; (a[1].accounts || []).forEach(function (u) { m[u.id] = { id: u.id, name: u.username, e: 0, l: 0 }; });
       (a[0].reports || []).forEach(function (r) { (r.completed || []).forEach(function (c) { if (m[c.userId]) m[c.userId].e++; }); (r.failed || []).forEach(function (c) { if (m[c.userId]) m[c.userId].l++; }); });
-      var rm = a[2].removed || {}, ra = a[2].adj || {};
-      var rows = Object.keys(m).map(function (k) { var u = m[k]; u.x = rm[k] || 0; u.a = ra[k] || 0; u.net = u.e - u.l - u.x + u.a; return u; }).sort(function (p, q) { return q.net - p.net || p.name.localeCompare(q.name); });
-      return { org: true, rows: rows, ok: a[2].ok, net: rows.reduce(function (s, u) { return s + u.net; }, 0) };
+      var rm = a[2].removed || {}, ra = a[2].adj || {}, rs = a[2].spent || {};
+      var rows = Object.keys(m).map(function (k) { var u = m[k]; u.x = rm[k] || 0; u.a = ra[k] || 0; u.net = u.e - u.l - u.x + u.a - (rs[k] || 0); return u; }).sort(function (p, q) { return q.net - p.net || p.name.localeCompare(q.name); });
+      return { org: true, rows: rows, ok: a[2].ok, cost: a[2].chessCost, net: rows.reduce(function (s, u) { return s + u.net; }, 0) };
     });
   }
   function fmt(n) { return n < 0 ? '−' + Math.abs(n) : String(n); }
@@ -10278,6 +10525,7 @@ Marketing,alex99,</div>
   function tiles(d) {
     return '<div class="rw-tiles">' +
       tile({ img: 'papery.png', n: d.net, name: Math.abs(d.net) === 1 ? 'Paper' : 'Papers', desc: 'Our Mascot. He’s very... papery.', sub: d.org ? 'Total across your organization' : d.net < 0 ? 'You’re in the red. Finish tasks on time to climb back up.' : '' }) +
+      (d.org ? '' : tile({ img: 'king.png', n: d.kings, name: d.kings === 1 ? 'King' : 'Kings', desc: 'Win a game of chess against the computer to claim one.', sub: d.cost ? 'A game costs ' + d.cost + ' papers' : '' })) +
       soonTile() + '</div>';
   }
 
@@ -10286,7 +10534,7 @@ Marketing,alex99,</div>
     if (!d) h = '<div class="rw-msg" style="padding:70px 0;text-align:center">Counting papers…</div>';
     else if (d.err) h = '<div class="rw-msg err" style="padding:50px 0;text-align:center">' + esc(d.err) + '</div>';
     else if (!d.org) {
-      h = tiles(d) + '<div class="rw-stats"><div><b class="rw-up">+' + d.e + '</b><span>Earned</span></div><div><b class="rw-dn">−' + d.l + '</b><span>Lost</span></div><div><b class="rw-dn">−' + d.x + '</b><span>Removed</span></div>' + (d.a ? '<div><b class="' + (d.a > 0 ? 'rw-up' : 'rw-dn') + '">' + (d.a > 0 ? '+' : '−') + Math.abs(d.a) + '</b><span>Adjusted</span></div>' : '') + '</div>' +
+      h = tiles(d) + '<div class="rw-stats"><div><b class="rw-up">+' + d.e + '</b><span>Earned</span></div><div><b class="rw-dn">−' + d.l + '</b><span>Lost</span></div><div><b class="rw-dn">−' + d.x + '</b><span>Removed</span></div>' + (d.sp ? '<div><b class="rw-dn">−' + d.sp + '</b><span>Chess</span></div>' : '') + (d.a ? '<div><b class="' + (d.a > 0 ? 'rw-up' : 'rw-dn') + '">' + (d.a > 0 ? '+' : '−') + Math.abs(d.a) + '</b><span>Adjusted</span></div>' : '') + '</div>' +
         '<p class="rw-how">Finish a task and get it checked to earn a paper. Let one close unfinished and you lose one. Your total can drop below zero.</p>' +
         (d.log.length ? '<div class="rw-card rw-log"><h4>Taken back by your organization</h4>' + d.log.slice(0, 6).map(function (r) { return '<div><span>−' + r.amount + (r.reason ? ' · ' + esc(r.reason) : '') + '</span><span>' + new Date(r.created_at).toLocaleDateString() + '</span></div>'; }).join('') + '</div>' : '');
     } else {
@@ -10299,8 +10547,9 @@ Marketing,alex99,</div>
         : '<div class="rw-msg">Paper removal is unavailable right now. Try again in a moment.</div>') + '</div>' +
         '<div class="rw-list">' + d.rows.map(function (u) { return '<div class="rw-row"><span>' + esc(u.name) + '</span><b' + (u.net < 0 ? ' class="neg"' : '') + '><img src="papery.png" alt="">' + fmt(u.net) + '</b></div>'; }).join('') + '</div>';
     }
-    box.innerHTML = '<div class="rw-wrap"><div class="org-header"><div><div class="org-title">Rewards</div></div></div><p class="rw-intro">Things you earn along the way.</p>' + h + '</div>';
+    box.innerHTML = '<div class="rw-wrap"><div class="org-header"><div><div class="org-title">Rewards</div></div></div><p class="rw-intro">Things you earn along the way.</p>' + h + (S.d && !S.d.err && !S.d.org ? '<div id="rwBoard" class="rw-card"></div>' : '') + '</div>';
     [].forEach.call(box.querySelectorAll('[data-n]'), countUp);
+    lbPaint(); if (S.d && !S.d.err && !S.d.org) lbEnsure();
   }
   function say(m, bad) { var e = box.querySelector('.rw-msg'); if (e) { e.textContent = m; e.className = 'rw-msg' + (bad ? ' err' : ''); } }
   function setAmt(n) { var mx = S.sel ? S.sel.net : 99; S.amt = Math.max(1, Math.min(mx, n || 1)); var i = box.querySelector('.rw-n'); if (i) i.value = S.amt; }
@@ -10330,15 +10579,78 @@ Marketing,alex99,</div>
     if (!box) {
       box = D.getElementById('rewardsMainContent'); if (!box) return;
       box.addEventListener('click', onClick);
+      box.addEventListener('click', onLb);
       box.addEventListener('input', function (e) { if (e.target.classList.contains('rw-n')) { e.target.value = e.target.value.replace(/\D/g, ''); S.amt = Math.max(1, Math.min(S.sel ? S.sel.net : 99, +e.target.value || 1)); } });
       box.addEventListener('change', function (e) {
         if (e.target.classList.contains('rw-sel')) { S.sel = S.d.rows.filter(function (u) { return String(u.id) === e.target.value; })[0] || null; setAmt(S.amt); }
         else if (e.target.classList.contains('rw-n')) setAmt(S.amt);
       });
     }
-    S.sel = null; S.amt = 1; S.d = null; render(); refresh();
+    S.sel = null; S.amt = 1; S.d = null; LB.rows = null; LB.err = null; render(); refresh();
   }
-  window.T12Rewards = { show: show };
+    /* ---- Leaderboard (students): defaults to their own subgroup, dropdown lists every group above it up to the organization ---- */
+  var LB = { metric: 'papers', scope: null, scopes: null, rows: null, err: null, busy: false };
+  function nick(n) { return String(n || '').split('@')[0]; }
+  function lbErr(e) { return /^HTTP \d+$/.test(e.message) ? 'The leaderboard is not available yet.' : e.message; }
+  function lbInner() {
+    var sc = LB.scopes || [], cur = sc.filter(function (s) { return String(s.id) === String(LB.scope); })[0] || sc[0];
+    var head = '<div class="rw-lb-head"><h4>Leaderboard</h4><div class="rw-lb-ctl"><div class="rw-seg">' +
+      '<button type="button" data-lbm="papers" class="' + (LB.metric === 'papers' ? 'on' : '') + '"><img src="papery.png" alt="">Papers</button>' +
+      '<button type="button" data-lbm="kings" class="' + (LB.metric === 'kings' ? 'on' : '') + '"><img src="king.png" alt="">Kings</button></div>' +
+      (sc.length ? '<div class="custom-select-wrapper rw-lbs"><div class="custom-select-toggle" tabindex="0" role="button" aria-haspopup="listbox"><span>' + esc(cur.name) + '</span></div><div class="custom-select-menu">' +
+        sc.map(function (s, i) { return '<div class="custom-select-option' + (s === cur ? ' selected' : '') + '" data-sc="' + esc(String(s.id)) + '">' + esc(s.name) + (i === 0 ? ' · yours' : '') + '</div>'; }).join('') + '</div></div>' : '') + '</div></div>';
+    var body = LB.err ? '<div class="rw-msg err">' + esc(LB.err) + '</div>' : !LB.rows ? '<div class="rw-msg">Loading…</div>' : !LB.rows.length ? '<div class="rw-msg">Nobody is on this board yet.</div>' :
+      LB.rows.map(function (r, i) {
+        return '<div class="rw-lb-row' + (r.me ? ' me' : '') + '"><span class="rw-lb-rk">' + (r.rank || i + 1) + '</span><span class="rw-lb-n">' + esc(nick(r.name)) + (r.me ? ' (you)' : '') +
+          '</span><span class="rw-lb-v"><img src="' + (LB.metric === 'kings' ? 'king.png' : 'papery.png') + '" alt="">' + fmt(r.value) + '</span></div>';
+      }).join('');
+    return head + '<div class="rw-lb-list">' + body + '</div>';
+  }
+  function lbPaint() { var el = box && box.querySelector('#rwBoard'); if (el) el.innerHTML = lbInner(); }
+  function lbRows() {
+    LB.rows = null; LB.err = null; LB.busy = true; lbPaint();
+    call(PAP, { action: 'leaderboard', scope: LB.scope, metric: LB.metric }).then(function (j) { LB.rows = j.rows || []; LB.busy = false; lbPaint(); },
+      function (e) { LB.err = lbErr(e); LB.busy = false; lbPaint(); });
+  }
+  function lbEnsure() {
+    if (LB.busy) return;
+    if (!LB.scopes) {
+      LB.busy = true;
+      call(PAP, { action: 'scopes' }).then(function (j) { LB.scopes = j.scopes || []; LB.scope = LB.scope || (LB.scopes[0] && LB.scopes[0].id); LB.busy = false; lbRows(); },
+        function (e) { LB.err = lbErr(e); LB.busy = false; lbPaint(); });
+    } else if (!LB.rows && !LB.err) lbRows();
+  }
+  function onLb(e) {
+    var t = e.target; if (t && t.nodeType !== 1) t = t.parentElement; if (!t) return;
+    var m = t.closest('[data-lbm]'); if (m) { LB.metric = m.getAttribute('data-lbm'); lbRows(); return; }
+    var tg = t.closest('.rw-lbs .custom-select-toggle'); if (tg) { tg.parentElement.classList.toggle('open'); return; }
+    var op = t.closest('.rw-lbs [data-sc]'); if (op) { LB.scope = op.getAttribute('data-sc'); lbRows(); }
+  }
+
+  /* ---- Org tab card: only the root organization account sets what a chess game costs ---- */
+  function orgCard() {
+    var el = D.getElementById('orgChessCard'); if (!el) return;
+    if (who().indexOf('@') > -1) { el.innerHTML = ''; return; }
+    function draw(c, off) {
+      el.innerHTML = '<div class="rw-wrap"><div class="rw-card"><h4>Chess</h4><p class="rw-how" style="margin:0 0 14px">Students pay papers to start a game against the computer and win a king for each victory. Chess stays locked while a student has assignments they have not done. Set 0 to make it free.</p>' +
+        '<div class="rw-grid"><div class="rw-f"><label>Papers per game</label><div class="rw-step"><button type="button" data-oc="-1" aria-label="Fewer">−</button><input class="rw-n" id="ocN" inputmode="numeric" maxlength="3" value="' + c + '" aria-label="Papers per chess game"><button type="button" data-oc="1" aria-label="More">+</button></div></div>' +
+        '<button type="button" class="btn-primary main" id="ocSave" style="align-self:end"' + (off ? ' disabled' : '') + '>Save</button></div><div class="rw-msg" id="ocMsg">' + (off ? 'Chess pricing is not available yet.' : '') + '</div></div></div>';
+    }
+    draw(10, false);
+    call(PAP, { action: 'list' }).then(function (j) { draw(j.chessCost == null ? 10 : +j.chessCost, false); }, function () { draw(10, true); });
+    el.onclick = function (e) {
+      var t = e.target; if (t && t.nodeType !== 1) t = t.parentElement; if (!t) return;
+      var n = el.querySelector('#ocN'), st = t.closest('[data-oc]');
+      if (st) { n.value = Math.max(0, Math.min(99, (+n.value || 0) + +st.getAttribute('data-oc'))); return; }
+      if (t.closest('#ocSave')) {
+        var b = el.querySelector('#ocSave'), m = el.querySelector('#ocMsg'), v = Math.max(0, Math.min(99, +n.value || 0)); n.value = v; b.disabled = true;
+        call(PAP, { action: 'set_chess_cost', cost: v }).then(function () { m.className = 'rw-msg'; m.textContent = v ? 'Saved. A game now costs ' + v + ' papers.' : 'Saved. Chess is now free.'; b.disabled = false; },
+          function (er) { m.className = 'rw-msg err'; m.textContent = er.message; b.disabled = false; });
+      }
+    };
+    el.oninput = function (e) { if (e.target.id === 'ocN') e.target.value = e.target.value.replace(/\D/g, ''); };
+  }
+  window.T12Rewards = { show: show, orgCard: orgCard };
 })();
 </script>
 <style id="t12sp-css">
@@ -10374,5 +10686,204 @@ Marketing,alex99,</div>
 .adm-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; color: var(--text); }
 .rw-f .custom-select-wrapper { width: 100%; }
 </style>
+<style id="t12x-css">
+/* ---- Flat look: no liquid glass, true white ---- */
+:root{--bf:none;--surface:#F6F6F6;--surface-2:#EEEEEE;--border:#E4E4E4;--glass-bg:#FFFFFF;--app-glass-bg:#FFFFFF;--glass-border:rgba(0,0,0,.12);--app-glass-border:rgba(0,0,0,.1);--glass-highlight:transparent;--glass-inset:none;--app-glass-shadow:0 1px 3px rgba(0,0,0,.05),0 6px 18px rgba(0,0,0,.05);--liquid-sheen:none;--liquid-pill-bg:#FFFFFF;--liquid-chip-bg:#F6F6F6}
+html:not([data-theme="dark"]){--bf:none;--surface:#F6F6F6;--surface-2:#EEEEEE;--border:#E4E4E4;--glass-bg:#FFFFFF;--app-glass-bg:#FFFFFF;--glass-highlight:transparent;--glass-inset:none;--app-glass-shadow:0 1px 3px rgba(0,0,0,.05),0 6px 18px rgba(0,0,0,.05);--liquid-sheen:none;--liquid-pill-bg:#FFFFFF;--liquid-chip-bg:#F6F6F6}
+html[data-theme="dark"]{--bf:none;--glass-bg:#1B1B1B;--app-glass-bg:#1A1A1A;--glass-highlight:transparent;--glass-inset:none;--app-glass-shadow:0 1px 3px rgba(0,0,0,.4),0 8px 22px rgba(0,0,0,.3);--liquid-sheen:none;--liquid-pill-bg:#262626;--liquid-chip-bg:#222}
+
+/* ---- Admin review queue ---- */
+.rq-wrap{margin-top:48px;padding-top:28px;border-top:2px solid var(--border)}
+.rq-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px}
+.rq-eyebrow{display:inline-block;padding:3px 10px;border-radius:99px;background:var(--accent-soft);color:var(--accent);font:700 11px var(--sans);letter-spacing:.08em;text-transform:uppercase}
+.rq-title{margin:8px 0 4px;font:400 26px var(--serif);color:var(--text)}
+.rq-sub{max-width:520px;font-size:13.5px;line-height:1.5;color:var(--text-soft)}
+.rq-list{display:flex;flex-direction:column;gap:12px}
+.rq-card{padding:16px 18px;border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;background:var(--bg)}
+.rq-top{display:flex;align-items:center;gap:12px}
+.rq-av{display:grid;place-items:center;flex:none;width:36px;height:36px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font:700 15px var(--sans)}
+.rq-who{flex:1;min-width:0}.rq-who b{display:block;font-size:14.5px;color:var(--text)}.rq-who span{display:block;font-size:12.5px;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rq-tag{padding:3px 9px;border-radius:99px;background:var(--surface-2);font:600 11px var(--sans);color:var(--text-soft);white-space:nowrap}
+.rq-text{margin-top:12px;padding:10px 12px;border-radius:8px;background:var(--surface);font-size:13.5px;line-height:1.5;color:var(--text-soft);white-space:pre-wrap;overflow-wrap:anywhere;max-height:180px;overflow:auto}
+.rq-none{font-style:italic;color:var(--text-muted)}
+.rq-links{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:8px}.rq-links a{font-size:12.5px;color:var(--accent);text-decoration:none}.rq-links a:hover{text-decoration:underline}
+.rq-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px;padding-top:14px;border-top:1px dashed var(--border)}
+.rq-btn{flex:1 1 130px;max-width:200px;height:38px;border-radius:10px;font:600 13.5px var(--sans);cursor:pointer;transition:var(--t)}
+.rq-btn.accept{border:1px solid var(--success);background:var(--success);color:#fff}.rq-btn.accept:hover{filter:brightness(1.08)}
+.rq-btn.deny{border:1px solid var(--danger);background:transparent;color:var(--danger)}.rq-btn.deny:hover{background:var(--danger);color:#fff}
+.rq-btn:disabled{opacity:.55;cursor:default}
+
+/* ---- Analytics history ---- */
+.hist{margin-top:56px;padding-top:28px;border-top:2px solid var(--border)}
+.hist-title{font:400 26px var(--serif);color:var(--text)}.hist-sub{margin:4px 0 16px;max-width:560px;font-size:13.5px;line-height:1.5;color:var(--text-soft)}
+.hist-save{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}.hist-save .dialog-input{flex:1 1 220px;min-width:0}
+.hist-card{margin-bottom:16px;padding:18px;border:1px solid var(--border);border-radius:14px;background:var(--bg)}.hist-card h3{margin:0 0 12px;font:600 14px var(--sans);color:var(--text)}
+.hist-pick{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:12px;color:var(--text-muted)}
+.hist-cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;margin-bottom:14px}.hist-cmp>div{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.hist-lbl{width:100%;font:600 11px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)}
+.hist-sel{flex:1 1 120px;min-width:0}
+.hist-tbl{width:100%;border-collapse:collapse;font-size:13.5px}.hist-tbl th{padding:8px 10px;text-align:left;font:600 11.5px var(--sans);color:var(--text-muted);border-bottom:1px solid var(--border)}.hist-tbl td{padding:9px 10px;border-bottom:1px solid var(--border);color:var(--text-soft);font-variant-numeric:tabular-nums}.hist-tbl td:first-child{color:var(--text);font-weight:600}
+.hist-d{font-weight:700;color:var(--text-muted)}.hist-d.up{color:var(--success)}.hist-d.dn{color:var(--danger)}
+.hist-chartwrap{overflow-x:auto}.hist-chart{width:100%;min-width:420px;height:auto}.hist-chart .hg{stroke:var(--border);stroke-width:1}.hist-chart .ht{fill:var(--text-muted);font:10.5px var(--sans)}
+.hist-chart .hl{fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}.hist-chart .hl.rt{stroke:var(--accent)}.hist-chart .hl.ot{stroke:var(--success);stroke-dasharray:5 4}.hist-chart .hp{fill:var(--accent);stroke:var(--bg);stroke-width:2}
+.hist-key{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;margin-top:8px;font-size:12px;color:var(--text-muted)}.hist-key i{display:inline-block;width:14px;height:3px;border-radius:2px;margin-right:-6px}.hist-key i.rt{background:var(--accent)}.hist-key i.ot{background:var(--success)}.hist-key span{margin-left:auto}
+.hist-movers{margin-top:16px}.hist-movers h3{margin:0 0 6px}.hist-mv{display:grid;grid-template-columns:1fr auto 70px;gap:10px;padding:7px 0;border-top:1px solid var(--border);font-size:13px;color:var(--text-soft)}.hist-mv span:nth-child(2){color:var(--text-muted)}.hist-mv .hist-d{text-align:right}
+.hist-snap{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:9px 0;border-top:1px solid var(--border)}.hist-snap:first-of-type{border-top:0}.hist-snap b{display:block;font-size:14px;color:var(--text)}.hist-snap small{font-size:12px;color:var(--text-muted)}
+
+/* ---- Rewards: kings, leaderboard, segmented control ---- */
+.rw-seg{display:inline-flex;padding:3px;border:1px solid var(--border);border-radius:999px;background:var(--surface)}
+.rw-seg button{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border:0;border-radius:999px;background:none;font:600 12.5px var(--sans);color:var(--text-soft);cursor:pointer}
+.rw-seg button img{width:16px;height:16px;object-fit:contain}.rw-seg button.on{background:var(--text);color:var(--bg)}
+.rw-lb-head{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:12px}.rw-lb-head h4{margin:0!important}
+.rw-lb-ctl{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.rw-lbs{min-width:180px}
+.rw-lb-row{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:12px;font-size:14px;color:var(--text)}.rw-lb-row.me{background:var(--accent-soft)}
+button.rw-lb-row{width:100%;border:0;background:none;text-align:left;font-family:inherit;cursor:pointer}button.rw-lb-row:hover{background:var(--surface)}button.rw-lb-row.me{background:var(--accent-soft)}
+.rw-lb-rk{width:26px;text-align:center;font-weight:700;color:var(--text-muted);font-variant-numeric:tabular-nums}.rw-lb-row:nth-child(-n+3) .rw-lb-rk{color:var(--accent)}
+.rw-lb-n{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rw-lb-n small{margin-left:2px;color:var(--text-muted)}
+.rw-lb-v{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-variant-numeric:tabular-nums}.rw-lb-v img{width:18px;height:18px;object-fit:contain}
+
+/* ---- Leaderboard tab + public profile ---- */
+.lb-bar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin:18px 0 10px}.lb-q{flex:1 1 220px;min-width:0}
+.lb-link{display:flex;flex-wrap:wrap;gap:8px}.lb-link .dialog-input{flex:1 1 240px;min-width:0}
+.lb-toggle{display:inline-flex;align-items:center;gap:10px;margin-top:14px;padding:0;border:0;background:none;font:600 13px var(--sans);color:var(--text-soft);cursor:pointer}
+.lb-toggle i{position:relative;width:38px;height:22px;border-radius:99px;background:var(--surface-2);border:1px solid var(--border);transition:var(--t)}.lb-toggle i::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--text-muted);transition:var(--t)}
+.lb-toggle.on i{background:var(--accent);border-color:var(--accent)}.lb-toggle.on i::after{left:18px;background:#fff}
+html.pf-lock,html.pf-lock body{overflow:hidden}
+#t12pub{position:fixed;inset:0;z-index:99999;overflow:auto;background:var(--bg);color:var(--text);font-family:var(--sans)}
+#t12pub.modal{background:rgba(0,0,0,.45);padding:24px 14px}#t12pub.modal .pf-card{box-shadow:var(--shadow-soft)}
+.pf-wrap{max-width:720px;margin:0 auto;padding:28px 0 48px}#t12pub.page .pf-wrap{padding:64px 18px 48px}
+.pf-home{position:absolute;top:18px;left:20px;font:400 22px var(--serif);color:var(--text);text-decoration:none}
+.pf-x{position:fixed;top:14px;right:18px;width:38px;height:38px;border:0;border-radius:50%;background:var(--bg);color:var(--text);font-size:24px;cursor:pointer;box-shadow:var(--shadow-soft)}
+.pf-card{padding:28px;border:1px solid var(--border);border-radius:20px;background:var(--bg)}
+.pf-top{display:flex;align-items:center;gap:16px;flex-wrap:wrap}.pf-av{display:grid;place-items:center;width:64px;height:64px;border-radius:50%;background:var(--accent);color:#fff;font:400 30px var(--serif)}
+.pf-id{flex:1;min-width:160px}.pf-id h1{font:400 30px/1.1 var(--serif)}.pf-id span{display:block;margin-top:2px;font-size:13px;color:var(--text-muted)}.pf-ver{display:inline-block;margin-top:6px;font:600 12px var(--sans);font-style:normal;color:var(--success)}
+.pf-copy{padding:8px 14px;border:1px solid var(--border);border-radius:99px;background:var(--bg);font:600 12.5px var(--sans);color:var(--text);cursor:pointer}.pf-copy:hover{border-color:var(--accent);color:var(--accent)}
+.pf-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin:22px 0 8px}.pf-stats div{padding:14px 10px;border-radius:12px;background:var(--surface);text-align:center}
+.pf-stats b{display:flex;align-items:center;justify-content:center;gap:6px;font:600 24px var(--sans)}.pf-stats b img{width:24px;height:24px;object-fit:contain}.pf-stats span{font-size:12px;color:var(--text-muted)}
+.pf-card h2{margin:26px 0 12px;font:600 12px var(--sans);letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted)}
+.pf-badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}.pf-badge{display:flex;flex-direction:column;align-items:center;gap:4px;padding:14px 8px;border:1px solid var(--border);border-radius:12px;text-align:center}
+.pf-bi{display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font:700 20px var(--sans)}.pf-badge b{font-size:13px}.pf-badge small{font-size:11px;color:var(--text-muted)}
+.pf-hist{list-style:none;padding:0;margin:0}.pf-h{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--border)}.pf-h:first-child{border-top:0}
+.pf-ck{display:grid;place-items:center;flex:none;width:24px;height:24px;border-radius:50%;background:var(--success);color:#fff;font-size:13px}.pf-h div{flex:1;min-width:0}.pf-h b{display:block;font-size:14.5px}.pf-h small{font-size:12.5px;color:var(--text-muted)}
+.pf-t{padding:3px 10px;border-radius:99px;background:var(--surface);font:600 11.5px var(--sans);color:var(--success)}.pf-t.late{color:var(--warn)}
+.pf-empty,.pf-msg{padding:24px 0;text-align:center;font-size:14px;color:var(--text-muted)}.pf-msg b{display:block;margin-bottom:6px;font-size:17px;color:var(--text)}.pf-foot{margin-top:26px;text-align:center;font-size:12px;color:var(--text-muted)}
+
+/* ---- Chess gate inside the focus box ---- */
+#t12dk .ch-gate{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:14px;text-align:center;background:var(--surface);font:500 12.5px/1.4 var(--sans);color:var(--text-soft)}
+#t12dk .ch-gate[hidden]{display:none}#t12dk .ch-gate b{font-size:14px;color:var(--text)}#t12dk .ch-gate .dk-btn{margin-top:4px}
+#t12dk .ch-k{width:34px;height:34px;object-fit:contain}#t12dk .ch-st .ch-k{width:18px;height:18px;vertical-align:-4px}
+</style>
+<script id="t12x-js">
+(function () {
+  'use strict';
+  var D = document, PROF = 'https://bukeabrzlgcwzwtzmwld.supabase.co/functions/v1/profiles', SITE = 'https://time12.xin/';
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
+  function me() { try { return JSON.parse(decodeURIComponent(escape(atob(localStorage.getItem('authToken').split('.')[0])))).username || ''; } catch (e) { return ''; } }
+  function api(b, auth) {
+    var h = { 'Content-Type': 'application/json' }, t = localStorage.getItem('authToken'); if (auth !== false && t) h.Authorization = 'Bearer ' + t;
+    return fetch(PROF, { method: 'POST', mode: 'cors', headers: h, body: JSON.stringify(b) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status); return j; }); });
+  }
+  var link = function (u) { return SITE + '?u=' + encodeURIComponent(u); };
+  var nm = function (u) { var i = String(u).indexOf('@'); return i > 0 ? u.slice(0, i) : u; };
+  var og = function (u) { var i = String(u).indexOf('@'); return i > 0 ? u.slice(i) : ''; };
+  var pct = function (v) { return v == null ? '–' : Math.round(v * 100) + '%'; };
+  var day = function (t) { return t ? new Date(t).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' }) : ''; };
+  var copy = function (txt, btn) {
+    var ok = function () { var o = btn.textContent; btn.textContent = 'Copied'; setTimeout(function () { btn.textContent = o; }, 1400); };
+    if (navigator.clipboard) navigator.clipboard.writeText(txt).then(ok, function () { window.prompt('Copy this link', txt); }); else window.prompt('Copy this link', txt);
+  };
+
+  /* ---------- read-only profile (shared by the public page and the in-app viewer) ---------- */
+  function profileHtml(p) {
+    var s = p.stats || {}, u = p.username || '';
+    var badges = (p.badges || []).map(function (b) {
+      return '<div class="pf-badge" title="' + esc(b.desc || '') + '"><span class="pf-bi">' + esc(b.icon || String(b.name || '?').charAt(0)) + '</span><b>' + esc(b.name) + '</b>' + (b.earnedAt ? '<small>' + day(b.earnedAt) + '</small>' : '') + '</div>';
+    }).join('');
+    var hist = (p.history || []).map(function (h) {
+      return '<li class="pf-h"><span class="pf-ck">✓</span><div><b>' + esc(h.title) + '</b><small>' + esc(h.groupName || '') + (h.groupName && h.verifiedAt ? ' · ' : '') + (h.verifiedAt ? 'Verified ' + day(h.verifiedAt) : '') + '</small></div><span class="pf-t' + (h.onTime === false ? ' late' : '') + '">' + (h.onTime === false ? 'Late' : 'On time') + '</span></li>';
+    }).join('');
+    return '<div class="pf-card"><div class="pf-top"><span class="pf-av">' + esc(nm(u).charAt(0).toUpperCase()) + '</span><div class="pf-id"><h1>' + esc(p.displayName || nm(u)) + '</h1><span>' + esc(og(u)) + (p.joined ? ' · Joined ' + day(p.joined) : '') + '</span><em class="pf-ver">✓ Verified on Time12</em></div>' +
+      '<button type="button" class="pf-copy" data-pf="copy" data-u="' + esc(u) + '">Copy link</button></div>' +
+      '<div class="pf-stats"><div><b>' + (s.verified || 0) + '</b><span>Verified tasks</span></div><div><b>' + pct(s.onTime) + '</b><span>On time</span></div><div><b><img src="papery.png" alt="">' + (s.papers || 0) + '</b><span>Papers</span></div><div><b><img src="king.png" alt="">' + (s.kings || 0) + '</b><span>Kings</span></div></div>' +
+      '<h2>Badges</h2>' + (badges ? '<div class="pf-badges">' + badges + '</div>' : '<p class="pf-empty">No badges yet.</p>') +
+      '<h2>Verified completion history</h2>' + (hist ? '<ul class="pf-hist">' + hist + '</ul>' : '<p class="pf-empty">Nothing verified yet.</p>') +
+      '<p class="pf-foot">Read-only profile · time12.xin</p></div>';
+  }
+  function overlay(inner, modal) {
+    var o = D.getElementById('t12pub');
+    if (!o) { o = D.createElement('div'); o.id = 't12pub'; D.body.appendChild(o); }
+    o.className = modal ? 'modal' : 'page';
+    o.innerHTML = (modal ? '<button type="button" class="pf-x" data-pf="close" aria-label="Close">×</button>' : '<a class="pf-home" href="' + SITE + '">Time12</a>') + '<div class="pf-wrap">' + inner + '</div>';
+    D.documentElement.classList.add('pf-lock');
+  }
+  function openProfile(u, modal) {
+    overlay('<div class="pf-msg">Loading profile…</div>', modal);
+    api({ action: 'get', username: u }, false).then(function (j) { overlay(profileHtml(j.profile || j), modal); },
+      function () { overlay('<div class="pf-msg"><b>This profile is not available.</b><p>It may be private, or the link may be wrong.</p></div>', modal); });
+  }
+  D.addEventListener('click', function (e) {
+    var b = e.target.closest && e.target.closest('#t12pub [data-pf]'); if (!b) return;
+    if (b.getAttribute('data-pf') === 'close') { var o = D.getElementById('t12pub'); if (o) o.remove(); D.documentElement.classList.remove('pf-lock'); }
+    else if (b.getAttribute('data-pf') === 'copy') copy(link(b.getAttribute('data-u')), b);
+  });
+  D.addEventListener('keydown', function (e) { var o = D.getElementById('t12pub'); if (e.key === 'Escape' && o && o.className === 'modal') { o.remove(); D.documentElement.classList.remove('pf-lock'); } });
+  var pu = new URLSearchParams(location.search).get('u') || ((location.pathname.match(/^\/u\/([^\/]+)/) || [])[1]);
+  if (pu) openProfile(decodeURIComponent(pu), false);
+
+  /* ---------- Leaderboard tab ---------- */
+  var box, ST = { metric: 'papers', q: '', rows: null, err: null, mine: null, n: 0, t: 0 };
+  function shell() {
+    var u = me(), mine = u.indexOf('@') > 0 ? '<div class="rw-card lb-mine" id="lbMine"></div>' : '';
+    box.innerHTML = '<div class="rw-wrap"><div class="org-header"><div><div class="org-title">Leaderboard</div></div></div>' +
+      '<p class="rw-intro">Public Time12 profiles. Search for someone, or tap a row to see their verified work and badges.</p>' + mine +
+      '<div class="lb-bar"><input class="dialog-input lb-q" id="lbQ" maxlength="40" placeholder="Search users" autocomplete="off" spellcheck="false"><div class="rw-seg" id="lbSeg">' +
+      [['papers', 'Papers'], ['kings', 'Kings'], ['verified', 'Verified']].map(function (m) { return '<button type="button" data-lbm="' + m[0] + '" class="' + (ST.metric === m[0] ? 'on' : '') + '">' + m[1] + '</button>'; }).join('') +
+      '</div></div><div class="lb-list" id="lbList"></div></div>';
+    paintMine();
+  }
+  function paintMine() {
+    var el = D.getElementById('lbMine'); if (!el) return; var u = me(), m = ST.mine;
+    el.innerHTML = '<h4>Your public profile</h4><p class="rw-how" style="margin:0 0 12px">' + (m && m.public === false ? 'Your profile is hidden. Nobody can open the link or find you here.' : 'Anyone with the link can see your verified completion history and badges. They cannot edit anything.') + '</p>' +
+      '<div class="lb-link"><input class="dialog-input" readonly value="' + esc(link(u)) + '" aria-label="Your profile link"><button type="button" class="btn-action" data-lb="copy">Copy</button><button type="button" class="btn-action" data-lb="view">Open</button></div>' +
+      (m ? '<button type="button" class="lb-toggle' + (m.public === false ? '' : ' on') + '" data-lb="toggle" role="switch" aria-checked="' + (m.public !== false) + '"><i></i><span>' + (m.public === false ? 'Profile hidden' : 'Profile public') + '</span></button>' : '');
+  }
+  function paint() {
+    var el = D.getElementById('lbList'); if (!el) return;
+    if (ST.err) { el.innerHTML = '<div class="rw-msg err">' + esc(ST.err) + '</div>'; return; }
+    if (!ST.rows) { el.innerHTML = '<div class="rw-msg">Loading…</div>'; return; }
+    if (!ST.rows.length) { el.innerHTML = '<div class="rw-msg">' + (ST.q ? 'No one found for “' + esc(ST.q) + '”.' : 'No public profiles yet.') + '</div>'; return; }
+    var ico = { papers: '<img src="papery.png" alt="">', kings: '<img src="king.png" alt="">', verified: '✓' };
+    el.innerHTML = ST.rows.map(function (r, i) {
+      var v = r[ST.metric] != null ? r[ST.metric] : r.value || 0;
+      return '<button type="button" class="rw-lb-row' + (r.username === me() ? ' me' : '') + '" data-u="' + esc(r.username) + '"><span class="rw-lb-rk">' + (ST.q ? '' : i + 1) + '</span><span class="rw-lb-n">' + esc(nm(r.username)) + '<small>' + esc(og(r.username)) + '</small></span><span class="rw-lb-v">' + ico[ST.metric] + v + '</span></button>';
+    }).join('');
+  }
+  function load() {
+    var n = ++ST.n; ST.rows = null; ST.err = null; paint();
+    api(ST.q ? { action: 'search', q: ST.q, metric: ST.metric } : { action: 'top', metric: ST.metric, limit: 50 }).then(function (j) { if (n === ST.n) { ST.rows = j.rows || []; paint(); } },
+      function (e) { if (n === ST.n) { ST.err = /^HTTP \d+$/.test(e.message) ? 'The leaderboard is not available yet.' : e.message; paint(); } });
+  }
+  function show() {
+    box = D.getElementById('boardMainContent'); if (!box) return;
+    if (!box.dataset.w) {
+      box.dataset.w = '1';
+      box.addEventListener('click', function (e) {
+        var t = e.target; if (t.nodeType !== 1) t = t.parentElement; if (!t) return;
+        var m = t.closest('[data-lbm]'); if (m) { ST.metric = m.getAttribute('data-lbm'); [].forEach.call(box.querySelectorAll('#lbSeg button'), function (b) { b.classList.toggle('on', b === m); }); load(); return; }
+        var r = t.closest('.rw-lb-row[data-u]'); if (r) { openProfile(r.getAttribute('data-u'), true); return; }
+        var a = t.closest('[data-lb]'); if (!a) return; var k = a.getAttribute('data-lb');
+        if (k === 'copy') copy(link(me()), a);
+        else if (k === 'view') openProfile(me(), true);
+        else if (k === 'toggle' && ST.mine) { var want = ST.mine.public === false; api({ action: 'set_public', value: want }).then(function () { ST.mine.public = want; paintMine(); load(); }, function () { }); }
+      });
+      box.addEventListener('input', function (e) { if (e.target.id === 'lbQ') { clearTimeout(ST.t); ST.q = e.target.value.trim(); ST.t = setTimeout(load, 250); } });
+    }
+    ST.q = ''; shell(); load();
+    if (me().indexOf('@') > 0) api({ action: 'me' }).then(function (j) { ST.mine = { public: j.public !== false }; paintMine(); }, function () { });
+  }
+  window.T12Board = { show: show };
+})();
+</script>
 </body>
 </html>
