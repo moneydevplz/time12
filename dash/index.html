@@ -7596,10 +7596,10 @@ Marketing,alex99,</div>
   function openGroupAdminsDialog(groupId) {
     const g = flattenGroups(orgGroups).find(x => String(x.id) === String(groupId));
     if (!g) return;
-    const admins = new Set((g.group_admins || []).map(a => a.user_id));
+    const admins = new Set((g.group_admins || []).map(a => String(a.user_id)));  // ids are numbers; compare as strings
     const rowHtml = (a) => {
-      const on = admins.has(a.id);
-      return `<div class="adm-row"><span class="adm-name">${escapeHtml(a.username)}</span><button type="button" class="btn-row${on ? ' danger' : ''}" data-adm="${a.id}" data-on="${on ? 1 : 0}">${on ? 'Remove admin' : 'Make admin'}</button></div>`;
+      const on = admins.has(String(a.id));
+      return `<div class="adm-row"><span class="adm-name">${escapeHtml(a.username)}</span><button type="button" class="btn-row${on ? ' danger' : ''}" data-adm="${String(a.id)}" data-on="${on ? 1 : 0}">${on ? 'Remove admin' : 'Make admin'}</button></div>`;
     };
     dialogBox.innerHTML = `
       <div class="dialog-title">Admins</div>
