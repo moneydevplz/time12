@@ -2619,7 +2619,7 @@
       <!-- Chess -->
       <section class="dk-view ch" data-v="ch" role="tabpanel">
         <div class="dk-seg" id="chLvl" role="group" aria-label="Difficulty" style="margin-bottom:2px"><button type="button" data-l="1">Easy</button><button type="button" data-l="2">Normal</button><button type="button" data-l="3">Hard</button></div>
-        <div class="ch-frame" id="chFrame"><div id="chBoard"></div><div class="ch-load">Setting up the board…</div><div class="ch-gate" id="chGate" hidden></div></div>
+        <div class="ch-frame sk" id="chFrame"><div id="chBoard"></div><div class="ch-load">Setting up the board…</div><div class="ch-sk">Checking if you can play…</div><div class="ch-gate" id="chGate" hidden></div></div>
         <div class="ch-st" id="chSt" role="status"></div>
         <div class="ch-rw" id="chRw" aria-live="polite"></div>
         <div class="dk-row ch-ctl"><button class="dk-btn" id="chNew" type="button">New game</button><button class="dk-btn" id="chUndo" type="button" title="Taking back a move means this game can no longer earn rewards">Undo</button><button class="dk-btn" id="chSwap" type="button">Swap sides</button></div>
@@ -2812,19 +2812,25 @@
     if (!CG.css) { CG.css = true; ['base', 'brown', 'cburnett'].forEach(function (n) { var l = D.createElement('link'); l.rel = 'stylesheet'; l.href = CDN + 'chessground@9/assets/chessground.' + n + '.css'; D.head.appendChild(l); }); }
     return (CG.lib = Promise.all([import(CDN + 'chessground@9/+esm'), import(CDN + 'chess.js@1/+esm')]).catch(function (e) { CG.lib = null; throw e; }));
   }
-  function mountChess() {
-    if (CG.cg) { if (!CG.busy) chRefresh(); return; }
-    if (CG.loading) return;
-    var f = $('#chFrame'), msg = $('.ch-load'); CG.loading = true; msg.textContent = 'Setting up the board…'; chPre();
-    chLib().then(function (L) {
+  function chBoot() {   /* draw the board in its start position right away, no sign-in or server needed */
+    if (CG.cg) return Promise.resolve();
+    if (CG.boot) return CG.boot;
+    var f = $('#chFrame'), msg = $('.ch-load'); chPre();
+    return (CG.boot = chLib().then(function (L) {
       CG.Chess = L[1].Chess;
-      CG.cg = L[0].Chessground($('#chBoard'), { coordinates: true, animation: { duration: 220 }, premovable: { enabled: false },
+      CG.cg = L[0].Chessground($('#chBoard'), { fen: START, coordinates: true, animation: { duration: 220 }, premovable: { enabled: false },
         draggable: { showGhost: true }, movable: { free: false, showDests: true, events: { after: onMove } } });
       if (window.ResizeObserver) new ResizeObserver(function () { if (CG.cg) CG.cg.redrawAll(); }).observe(f);
-      f.classList.add('ok'); chPaint(); return chRefresh();
-    }).catch(function () { msg.textContent = 'The chess board couldn’t load. Check your connection or ad-blocker, then reopen this tab.'; })
-      .then(function () { CG.loading = false; });
+      f.classList.add('ok');
+    }).catch(function () { CG.boot = null; f.classList.remove('sk'); msg.textContent = 'The chess board couldn’t load. Check your connection or ad-blocker, then reopen this tab.'; }));
   }
+  function mountChess() {
+    if (CG.loading) return;
+    var f = $('#chFrame'), done = function () { f.classList.remove('sk'); CG.loading = false; };
+    CG.loading = true; if (!CG.st) f.classList.add('sk');
+    chBoot().then(function () { if (!CG.cg) return; if (!CG.game) chPaint(); if (!CG.busy) return chRefresh(); }).then(done, done);
+  }
+  chBoot();
   function chCk() { try { return 'time12_chess_lock_' + JSON.parse(decodeURIComponent(escape(atob(localStorage.getItem('authToken').split('.')[0].replace(/-/g, '+').replace(/_/g, '/'))))).username; } catch (e) { return ''; } }
   function chKeep(j) { var k = chCk(); if (!k) return; try { if (j && j.locked) localStorage.setItem(k, JSON.stringify({ free: false, locked: true, undone: j.undone, cost: j.cost, balance: j.balance })); else localStorage.removeItem(k); } catch (e) {} }
   function chPre() {   /* last time you were locked? say so at once, before anything loads */
@@ -10374,9 +10380,7 @@ Marketing,alex99,</div>
 </script>
 
 <style id="t12hz-css">
-.nf-haze{width:14px;height:14px;flex-shrink:0;border-radius:50%;position:relative;background:radial-gradient(circle at 34% 30%,#ffd9d4 0,#ff6a5f 26%,#e5202e 62%,#a30f20 100%);box-shadow:inset 0 -1px 2px rgba(110,6,18,.45),0 0 0 1px rgba(229,32,46,.28),0 0 9px 1px rgba(229,32,46,.6),0 0 18px 4px rgba(229,32,46,.2);animation:hzGlow 3.4s ease-in-out infinite}
-@keyframes hzGlow{0%,100%{box-shadow:inset 0 -1px 2px rgba(110,6,18,.45),0 0 0 1px rgba(229,32,46,.28),0 0 9px 1px rgba(229,32,46,.6),0 0 18px 4px rgba(229,32,46,.2)}50%{box-shadow:inset 0 -1px 2px rgba(110,6,18,.45),0 0 0 1px rgba(229,32,46,.4),0 0 12px 2px rgba(255,64,64,.8),0 0 22px 6px rgba(229,32,46,.3)}}
-@media (prefers-reduced-motion:reduce){.nf-haze{animation:none}}
+.nf-haze{width:12px;height:12px;flex-shrink:0;transform:rotate(45deg);border-radius:3px;position:relative;overflow:hidden;background:linear-gradient(135deg,#fff1f0,#ee6a6a 55%,#ffe0de);box-shadow:0 0 9px rgba(229,32,46,.85)}
 .nf-oi{display:flex;align-items:center;gap:10px}
 .hz-ask{margin-top:8px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);animation:hzIn .35s cubic-bezier(.2,.8,.2,1) both}
 .hz-ask-t{font-weight:600;color:var(--text);font-size:13.5px}.hz-ask-s{font-size:12.5px;color:var(--text-muted);margin:4px 0 10px;line-height:1.45}
@@ -10724,6 +10728,7 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
 
 /* ---- Chess gate inside the focus box ---- */
 #t12dk .ch-gate{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:16px;text-align:center;background:rgba(0,0,0,.62);color:#fff;font:500 12.5px/1.45 var(--sans);border-radius:inherit}
+#t12dk .ch-sk{display:none;position:absolute;inset:0;z-index:4;align-items:flex-end;justify-content:center;padding-bottom:10px;font:600 11.5px var(--sans);color:#fff;background:linear-gradient(100deg,rgba(0,0,0,.3) 30%,rgba(255,255,255,.16) 50%,rgba(0,0,0,.3) 70%) 0 0/300% 100%;animation:chSk 1.2s linear infinite}#t12dk .ch-frame.sk .ch-sk{display:flex}@keyframes chSk{to{background-position:-300% 0}}
 #t12dk .ch-gate[hidden]{display:none}#t12dk .ch-gate[data-click="1"]{cursor:pointer}
 #t12dk .ch-gate b{font:400 19px/1.2 var(--serif);color:#fff}
 #t12dk .ch-gate span{max-width:27ch;color:rgba(255,255,255,.82)}
