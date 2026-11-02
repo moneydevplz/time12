@@ -2267,15 +2267,6 @@
           placeholder="The room is quiet. Begin."
           spellcheck="true"
         ></textarea>
-        <section class="ix" id="ixBox" aria-label="Index">
-          <div class="ix-head">
-            <span class="ix-title">Index</span>
-            <span class="ix-streak" id="ixStreak" title="Index tasks done in a row. Failing one sets this back to 0. It never affects papers."><b id="ixStreakN">0</b> streak<i id="ixBest"></i></span>
-          </div>
-          <input type="text" class="ix-input" id="ixInput" placeholder="Add to your index and press Enter. Due by the end of tomorrow" maxlength="140" autocomplete="off" spellcheck="false" aria-label="Add an index task">
-          <div class="ix-msg" id="ixMsg" role="status" aria-live="polite"></div>
-          <div class="ix-list" id="ixList"></div>
-        </section>
       </div>
     </div>
 
@@ -4381,8 +4372,10 @@
         <div class="empty-state-title">Couldn't load your tasks</div>
         <div class="empty-state-text">Check your connection and try again.</div>
         <button class="btn-action primary magnetic" id="retryTasksBtn" style="margin: 0 auto;">Try again</button>
-      </div>`;
+      </div>
+      <div id="indexEntry"></div>`;
     Geo.hydrate(myTasksMainContentEl);
+    if (window.T12Index) window.T12Index.mount();
     document.getElementById('retryTasksBtn')?.addEventListener('click', () => fetchUserTasks());
   }
 
@@ -7296,9 +7289,11 @@ Marketing,alex99,</div>
           <div class="empty-state-title">All caught up!</div>
           <div class="empty-state-text">You have no tasks assigned right now.</div>
         </div>
+        <div id="indexEntry"></div>
         <div id="reviewQueue"></div>
       `;
       Geo.hydrate(myTasksMainContentEl);
+      if (window.T12Index) window.T12Index.mount();
       renderReviewQueue();
       return;
     }
@@ -7315,11 +7310,13 @@ Marketing,alex99,</div>
         <div class="graph-card" style="margin-bottom:0;"><div class="sk" style="width:170px;height:24px;"></div><div class="sk" style="height:140px;margin-top:34px;"></div></div>
       </div>
       <div id="userTaskList"></div>
+      <div id="indexEntry"></div>
       <div id="reviewQueue"></div>
     `;
 
     fetchUserGraphData();
     renderUserTaskCards();
+    if (window.T12Index) window.T12Index.mount();
     renderReviewQueue();
   }
 
@@ -10711,31 +10708,48 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
 #t12dk .ch-rwi{width:22px;height:22px;object-fit:contain}
 #t12dk .dk-btn:disabled{opacity:.45;cursor:not-allowed}
 
-/* ---- Index: type, press Enter, finish by the end of tomorrow ---- */
-.ix{margin-top:36px;padding-top:22px;border-top:1px solid var(--border)}
-.ix-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-.ix-title{font:400 20px var(--serif);color:var(--text)}
-.ix-streak{display:inline-flex;align-items:baseline;gap:6px;padding:4px 12px;border-radius:99px;background:var(--accent-soft);color:var(--accent);font:600 12.5px var(--sans);white-space:nowrap}
-.ix-streak b{font-size:15px;font-variant-numeric:tabular-nums}.ix-streak i{font-style:normal;font-weight:500;opacity:.7}
+
+/* ---- Index: personal quick tasks (a button in Tasks, a window on click) ---- */
+.ix-entry{display:flex;align-items:center;gap:14px;width:100%;margin-top:28px;padding:16px 18px;border:1px solid var(--border);border-radius:14px;background:var(--bg);color:var(--text);text-align:left;cursor:pointer;font:inherit;transition:border-color .15s,background .15s}
+.ix-entry:hover{border-color:var(--accent);background:var(--surface)}
+.ix-entry-ico{display:grid;place-items:center;flex:none;width:38px;height:38px;border-radius:10px;background:var(--accent-soft);color:var(--accent)}.ix-entry-ico svg{width:20px;height:20px}
+.ix-entry-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.ix-entry-text b{font:400 18px var(--serif);color:var(--text)}.ix-entry-text span{font-size:12.5px;color:var(--text-muted)}
+.ix-entry-meta{display:flex;align-items:center;gap:6px;flex:none}
+.ix-pill{display:inline-flex;align-items:baseline;gap:4px;padding:3px 10px;border-radius:99px;background:var(--surface-2);font:600 12px var(--sans);font-style:normal;color:var(--text-soft);white-space:nowrap}.ix-pill.hot{background:var(--accent-soft);color:var(--accent)}
+.ix-dot{width:8px;height:8px;border-radius:50%;background:var(--warn)}
+.ix-chev{width:16px;height:16px;flex:none;color:var(--text-muted)}
+@media (max-width:520px){.ix-entry-meta .ix-pill:not(.hot){display:none}}
+.ix-box{max-width:520px;padding:26px 26px 22px}
+.ix-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.ix-h{font:400 24px var(--serif);color:var(--text)}.ix-sub{margin-top:4px;font-size:13px;line-height:1.5;color:var(--text-muted)}
+.ix-x{display:grid;place-items:center;flex:none;width:34px;height:34px;border:1px solid var(--border);border-radius:10px;background:none;color:var(--text-soft);font-size:18px;line-height:1;cursor:pointer}.ix-x:hover{border-color:var(--accent);color:var(--accent)}
+.ix-statrow{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;margin:14px 0 10px}
+.ix-streak{display:inline-flex;align-items:baseline;gap:6px;padding:4px 12px;border-radius:99px;background:var(--accent-soft);color:var(--accent);font:600 12.5px var(--sans);white-space:nowrap}.ix-streak b{font-size:15px;font-variant-numeric:tabular-nums}.ix-streak i{font-style:normal;font-weight:500;opacity:.7}
+.ix-sync{font-size:12px;color:var(--text-muted)}.ix-sync.warn{color:var(--warn)}
 .ix-input{width:100%;height:44px;padding:0 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font:400 15px var(--sans);outline:none;transition:border-color .15s,box-shadow .15s}
 .ix-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}.ix-input::placeholder{color:var(--text-muted)}
 .ix-msg{min-height:18px;margin:6px 2px 0;font-size:12.5px;color:var(--text-muted)}.ix-msg.bad{color:var(--danger)}
 .ix-list{display:flex;flex-direction:column;gap:8px;margin-top:6px}
-.ix-sub{margin:10px 2px 0;font:600 11px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)}
+.ix-lbl{margin:10px 2px 0;font:600 11px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)}
 .ix-item{border:1px solid var(--border);border-radius:12px;background:var(--bg);overflow:hidden}
-.ix-row{display:flex;align-items:center;gap:12px;width:100%;min-height:46px;padding:10px 14px;border:0;background:none;color:var(--text);font:400 14.5px var(--sans);text-align:left;cursor:pointer}
-.ix-row:hover{background:var(--surface)}
-.ix-tick{display:grid;place-items:center;flex:none;width:20px;height:20px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;line-height:1;color:#fff}
+.ix-row{display:flex;align-items:center;gap:12px;width:100%;min-height:46px;padding:10px 14px;border:0;background:none;color:var(--text);font:400 14.5px var(--sans);text-align:left;cursor:pointer}.ix-row:hover{background:var(--surface)}
+.ix-tick{display:grid;place-items:center;flex:none;width:20px;height:20px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;line-height:1;color:#fff;transition:background .2s,border-color .2s}
 .ix-t{flex:1;min-width:0;overflow-wrap:anywhere}
+.ix-tw{position:relative;display:inline-block;max-width:100%}
+.ix-scratch{position:absolute;left:-6px;top:-3px;width:calc(100% + 12px);height:calc(100% + 6px);overflow:visible;pointer-events:none}
+.ix-scratch path{fill:none;stroke:var(--text);stroke-width:2.2;stroke-linejoin:round;vector-effect:non-scaling-stroke;stroke-dasharray:1;stroke-dashoffset:1;opacity:0}
+.ix-item.scratching .ix-scratch path{opacity:.9;stroke-dashoffset:0;transition:stroke-dashoffset .65s cubic-bezier(.5,.05,.3,1)}
+.ix-item.scratching .ix-t{color:var(--text-muted);transition:color .5s}.ix-item.scratching .ix-tick{background:var(--success);border-color:var(--success)}
+.ix-item.scratching .ix-confirm{display:none}
 .ix-due{flex:none;font-size:12px;color:var(--text-muted)}
-.ix-confirm{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:10px 14px 12px;border-top:1px dashed var(--border);font-size:13px;color:var(--text-soft)}
-.ix-confirm span{flex:1 1 140px}
-.ix-btn{height:36px;padding:0 16px;border-radius:10px;font:600 13px var(--sans);cursor:pointer}
-.ix-btn.yes{border:1px solid var(--success);background:var(--success);color:#fff}.ix-btn.no{border:1px solid var(--border);background:none;color:var(--text-soft)}
-.ix-item.done .ix-t{text-decoration:line-through;color:var(--text-muted)}.ix-item.done .ix-tick{background:var(--success);border-color:var(--success)}
+.ix-confirm{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:10px 14px 12px;border-top:1px dashed var(--border);font-size:13px;color:var(--text-soft)}.ix-confirm span{flex:1 1 140px}
+.ix-btn{height:36px;padding:0 16px;border-radius:10px;font:600 13px var(--sans);cursor:pointer}.ix-btn.yes{border:1px solid var(--success);background:var(--success);color:#fff}.ix-btn.no{border:1px solid var(--border);background:none;color:var(--text-soft)}
+.ix-item.done .ix-t{text-decoration:line-through;color:var(--text-muted)}.ix-item.done .ix-tick{background:var(--success);border-color:var(--success)}.ix-item.done .ix-due{color:var(--success);font-weight:600}
 .ix-item.failed{border-left:4px solid var(--danger)}.ix-item.failed .ix-t{color:var(--text-muted)}.ix-item.failed .ix-tick{background:var(--danger);border-color:var(--danger)}.ix-item.failed .ix-due{color:var(--danger);font-weight:600}
 .ix-item.done .ix-row,.ix-item.failed .ix-row{cursor:default}.ix-item.done .ix-row:hover,.ix-item.failed .ix-row:hover{background:none}
+.ix-item.just{animation:ixPop .45s cubic-bezier(.2,.8,.2,1)}@keyframes ixPop{0%{transform:scale(.97);background:var(--accent-soft)}100%{transform:none}}
 .ix-empty{padding:14px 2px;font-size:13.5px;color:var(--text-muted)}
+@media (prefers-reduced-motion:reduce){.ix-item.scratching .ix-scratch path{transition:none}.ix-item.just{animation:none}}
 </style>
 <script id="t12x-js">
 (function () {
@@ -10866,24 +10880,48 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
 })();
 </script>
 <script>
-/* ---------- Index: type a line, press Enter, it is due by the end of tomorrow. Tick it (click, then Confirm) or it fails.
-   The streak counts index tasks done in a row; any failure sets it to 0. Papers are never touched. ---------- */
+/* ---------- Index: quick tasks you give only to yourself. A button at the end of the Tasks tab opens this window.
+   Type + Enter saves on this device straight away (works offline) and is pushed to your account once you are online.
+   Each item is due by the end of tomorrow. Click it, Confirm, and it is scratched out and submitted; miss the deadline and it fails.
+   The streak is index tasks submitted in a row; one failure sets it to 0. Papers are never touched. ---------- */
 (function () {
-  var D = document, inp = D.getElementById('ixInput'), list = D.getElementById('ixList'), msg = D.getElementById('ixMsg'),
-      sN = D.getElementById('ixStreakN'), bestEl = D.getElementById('ixBest');
-  if (!inp || !list) return;
-  var MAX_RESOLVED = 60, openId = null, msgT = 0;
-  function who() { try { return JSON.parse(decodeURIComponent(escape(atob(localStorage.getItem('authToken').split('.')[0])))).username || 'guest'; } catch (e) { return 'guest'; } }
-  function key() { return 'time12_index_v1_' + who(); }
+  var D = document, API = 'https://bukeabrzlgcwzwtzmwld.supabase.co/functions/v1/index-tasks';
+  var UU = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, MAX_RESOLVED = 500;
+  var ov = null, inp, list, msg, sN, bestEl, syncEl, openId = null, msgT = 0, syncing = false, lastErr = false, lastTry = 0, just = null, busy = {}, started = false;
+  var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M4 12h7M4 18h5"/><path d="m15 15 2 2 4-5"/></svg>';
+  var CHEV = '<svg class="ix-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
+  function tok() { try { return localStorage.getItem('authToken') || ''; } catch (e) { return ''; } }
+  function who() { try { return JSON.parse(decodeURIComponent(escape(atob(tok().split('.')[0])))).username || 'guest'; } catch (e) { return 'guest'; } }
+  function key() { return 'time12_index_v2_' + who(); }
+  function uuid() {
+    try { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); } catch (e) {}
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) { var r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); });
+  }
   function load() {
-    try { var s = JSON.parse(localStorage.getItem(key())); if (s && Array.isArray(s.items)) return { items: s.items, streak: +s.streak || 0, best: +s.best || 0 }; } catch (e) {}
-    return { items: [], streak: 0, best: 0 };
+    var out = { items: [], best: 0 };
+    try {
+      var s = JSON.parse(localStorage.getItem(key()));
+      if (s && Array.isArray(s.items)) {
+        out.best = +s.best || 0;
+        s.items.forEach(function (i) {
+          if (!i || typeof i.t !== 'string' || !(+i.due > 0)) return;
+          var ok = UU.test(i.id || '');
+          out.items.push({ id: ok ? i.id : uuid(), t: i.t.slice(0, 140), s: i.s === 'done' || i.s === 'failed' ? i.s : 'open', due: +i.due, at: +i.at || 0, created: +i.created || +i.due, dirty: !ok || !!i.dirty });
+        });
+      }
+    } catch (e) {}
+    return out;
   }
   var curKey = key(), st = load();
   function save() {
-    var done = st.items.filter(function (i) { return i.s !== 'open'; }).sort(function (a, b) { return b.at - a.at; }).slice(0, MAX_RESOLVED);
-    st.items = st.items.filter(function (i) { return i.s === 'open'; }).concat(done);
-    try { localStorage.setItem(curKey, JSON.stringify(st)); } catch (e) {}
+    var res = st.items.filter(function (i) { return i.s !== 'open'; }).sort(function (a, b) { return b.at - a.at; }).slice(0, MAX_RESOLVED);
+    st.items = st.items.filter(function (i) { return i.s === 'open'; }).concat(res);
+    try { localStorage.setItem(curKey, JSON.stringify({ items: st.items, best: st.best })); } catch (e) {}
+  }
+  function streak() {
+    var c = 0, b = st.best || 0;
+    st.items.filter(function (i) { return i.s !== 'open'; }).sort(function (a, b) { return a.at - b.at; }).forEach(function (i) { if (i.s === 'done') { c++; if (c > b) b = c; } else c = 0; });
+    st.best = b; return c;
   }
   function endOfTomorrow() { var d = new Date(); d.setDate(d.getDate() + 1); d.setHours(23, 59, 59, 999); return d.getTime(); }
   function esc(t) { return String(t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -10891,56 +10929,143 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
     var d = new Date(t), n = new Date(), a = new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime(), b = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(), k = Math.round((b - a) / 864e5);
     return k === 0 ? 'today' : k === 1 ? 'tomorrow' : d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
   }
-  /* anything past its deadline and still open has failed; the streak drops to 0 */
-  function sweep() {
+  function sweep() {   /* past its deadline and still open: failed, streak drops to 0 */
     var now = Date.now(), late = st.items.filter(function (i) { return i.s === 'open' && now > i.due; });
     if (!late.length) return false;
-    late.forEach(function (i) { i.s = 'failed'; i.at = i.due; }); st.streak = 0; save(); return true;
+    late.forEach(function (i) { i.s = 'failed'; i.at = i.due; i.dirty = true; }); save(); return true;
   }
-  function say(t, bad) { msg.textContent = t || ''; msg.classList.toggle('bad', !!bad); clearTimeout(msgT); if (t) msgT = setTimeout(function () { msg.textContent = ''; }, 4000); }
+  function openItems() { return st.items.filter(function (i) { return i.s === 'open'; }).sort(function (a, b) { return a.due - b.due; }); }
+  function dirtyItems() { return st.items.filter(function (i) { return i.dirty; }); }
+  function acct() { if (key() !== curKey) { curKey = key(); st = load(); openId = null; } }
+
+  /* ----- the button inside the Tasks tab ----- */
+  function mount() {
+    acct(); sweep();
+    var el = D.getElementById('indexEntry');
+    if (el) {
+      var o = openItems().length, c = streak();
+      el.innerHTML = '<button type="button" class="ix-entry" data-ix-open><span class="ix-entry-ico">' + ICON + '</span>' +
+        '<span class="ix-entry-text"><b>Index</b><span>Quick tasks for yourself. Works offline.</span></span>' +
+        '<span class="ix-entry-meta">' + (dirtyItems().length ? '<i class="ix-dot" title="Waiting to sync"></i>' : '') + (o ? '<i class="ix-pill">' + o + ' open</i>' : '') + '<i class="ix-pill hot"><b>' + c + '</b> streak</i></span>' + CHEV + '</button>';
+    }
+    if (!started && tok()) { started = true; setTimeout(syncNow, 800); }
+  }
+
+  /* ----- the window ----- */
+  function build() {
+    if (ov) return;
+    ov = D.createElement('div'); ov.className = 'dialog-overlay'; ov.id = 'ixOverlay'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-labelledby', 'ixTitle');
+    ov.innerHTML = '<div class="dialog-box ix-box"><div class="ix-top"><div><div class="ix-h" id="ixTitle">Index</div>' +
+      '<div class="ix-sub">Tasks you give only to yourself. Type, press Enter, and finish it by the end of tomorrow.</div></div>' +
+      '<button type="button" class="ix-x" data-ix="close" aria-label="Close">&times;</button></div>' +
+      '<div class="ix-statrow"><span class="ix-streak" title="Index tasks submitted in a row. Failing one sets this back to 0. It never affects papers."><b id="ixStreakN">0</b> streak<i id="ixBest"></i></span><span class="ix-sync" id="ixSync"></span></div>' +
+      '<input type="text" class="ix-input" id="ixInput" placeholder="What will you get done? Press Enter" maxlength="140" autocomplete="off" spellcheck="false" aria-label="Add an index task">' +
+      '<div class="ix-msg" id="ixMsg" role="status" aria-live="polite"></div><div class="ix-list" id="ixList"></div></div>';
+    D.body.appendChild(ov);
+    inp = D.getElementById('ixInput'); list = D.getElementById('ixList'); msg = D.getElementById('ixMsg'); sN = D.getElementById('ixStreakN'); bestEl = D.getElementById('ixBest'); syncEl = D.getElementById('ixSync');
+    ov.addEventListener('mousedown', function (e) { if (e.target === ov) close(); });
+    inp.addEventListener('keydown', function (e) {
+      e.stopPropagation();   /* keep app shortcuts out of this box */
+      if (e.key !== 'Enter' || e.isComposing) return;
+      e.preventDefault();
+      var t = inp.value.replace(/\s+/g, ' ').trim(); if (!t) return;
+      sweep();
+      st.items.push({ id: uuid(), t: t, s: 'open', due: endOfTomorrow(), at: 0, created: Date.now(), dirty: true });
+      save(); inp.value = ''; openId = null; render();
+      say(navigator.onLine ? 'Added. Due by the end of tomorrow.' : 'Saved on this device. It will sync when you are online.');
+      syncNow();
+    });
+    ['keyup', 'keypress'].forEach(function (n) { inp.addEventListener(n, function (e) { e.stopPropagation(); }); });
+    ov.addEventListener('click', onClick);
+  }
+  function open() { build(); acct(); sweep(); render(); ov.classList.add('active'); setTimeout(function () { try { inp.focus(); } catch (e) {} }, 60); syncNow(); }
+  function close() { if (!ov) return; ov.classList.remove('active'); openId = null; mount(); }
+  function say(t, bad) { if (!msg) return; msg.textContent = t || ''; msg.classList.toggle('bad', !!bad); clearTimeout(msgT); if (t) msgT = setTimeout(function () { msg.textContent = ''; }, 4500); }
+  function syncText() {
+    var n = dirtyItems().length;
+    if (!navigator.onLine) return { t: n ? 'Offline. ' + n + ' waiting to sync.' : 'Offline. New items save on this device.', w: !!n };
+    if (syncing) return { t: 'Syncing…', w: false };
+    if (n) return { t: lastErr ? 'Could not sync yet. Will retry.' : 'Waiting to sync.', w: true };
+    return { t: 'All synced.', w: false };
+  }
   function render() {
-    if (key() !== curKey) { curKey = key(); st = load(); openId = null; }
-    sweep();
-    sN.textContent = st.streak; bestEl.textContent = st.best > st.streak ? ' · best ' + st.best : '';
-    var open = st.items.filter(function (i) { return i.s === 'open'; }).sort(function (a, b) { return a.due - b.due; }),
-        past = st.items.filter(function (i) { return i.s !== 'open'; }).sort(function (a, b) { return b.at - a.at; }).slice(0, 8), h = '';
-    open.forEach(function (i) {
-      h += '<div class="ix-item" data-id="' + i.id + '"><button type="button" class="ix-row" data-ix="pick" aria-expanded="' + (openId === i.id) + '"><span class="ix-tick"></span><span class="ix-t">' + esc(i.t) + '</span><span class="ix-due">Due ' + dayWord(i.due) + '</span></button>' +
+    if (!ov) return;
+    acct(); sweep();
+    var c = streak(); sN.textContent = c; bestEl.textContent = st.best > c ? ' · best ' + st.best : '';
+    var s = syncText(); syncEl.textContent = s.t; syncEl.classList.toggle('warn', s.w);
+    var op = openItems(), past = st.items.filter(function (i) { return i.s !== 'open'; }).sort(function (a, b) { return b.at - a.at; }).slice(0, 8), h = '';
+    op.forEach(function (i) {
+      h += '<div class="ix-item" data-id="' + i.id + '"><button type="button" class="ix-row" data-ix="pick" aria-expanded="' + (openId === i.id) + '"><span class="ix-tick"></span>' +
+        '<span class="ix-t"><span class="ix-tw">' + esc(i.t) + '<svg class="ix-scratch" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M2 5 L98 9 L3 13 L97 16 L2 20 L98 23 L4 27 L96 28"/></svg></span></span>' +
+        '<span class="ix-due">Due ' + dayWord(i.due) + '</span></button>' +
         (openId === i.id ? '<div class="ix-confirm"><span>Did you finish this?</span><button type="button" class="ix-btn yes" data-ix="yes">Confirm</button><button type="button" class="ix-btn no" data-ix="no">Not yet</button></div>' : '') + '</div>';
     });
-    if (!open.length) h += '<div class="ix-empty">Nothing due. Type something above and press Enter.</div>';
-    if (past.length) h += '<div class="ix-sub">Recent</div>' + past.map(function (i) {
-      return '<div class="ix-item ' + (i.s === 'done' ? 'done' : 'failed') + '"><div class="ix-row"><span class="ix-tick">' + (i.s === 'done' ? '✓' : '✕') + '</span><span class="ix-t">' + esc(i.t) + '</span><span class="ix-due">' + (i.s === 'done' ? 'Done' : 'Failed') + '</span></div></div>';
+    if (!op.length) h += '<div class="ix-empty">Nothing due. Type something above and press Enter.</div>';
+    if (past.length) h += '<div class="ix-lbl">Recent</div>' + past.map(function (i) {
+      return '<div class="ix-item ' + (i.s === 'done' ? 'done' : 'failed') + (just === i.id ? ' just' : '') + '"><div class="ix-row"><span class="ix-tick">' + (i.s === 'done' ? '✓' : '✕') + '</span><span class="ix-t">' + esc(i.t) + '</span><span class="ix-due">' + (i.s === 'done' ? 'Submitted' : 'Failed') + '</span></div></div>';
     }).join('');
-    list.innerHTML = h;
+    list.innerHTML = h; just = null;
   }
-  inp.addEventListener('keydown', function (e) {
-    e.stopPropagation();   /* keep the notes shortcuts out of this box */
-    if (e.key !== 'Enter' || e.isComposing) return;
-    e.preventDefault();
-    var t = inp.value.replace(/\s+/g, ' ').trim(); if (!t) return;
-    sweep();
-    st.items.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), t: t, s: 'open', created: Date.now(), due: endOfTomorrow(), at: 0 });
-    save(); inp.value = ''; openId = null; render(); say('Added. It is due by the end of tomorrow.');
-  });
-  ['keyup', 'keypress'].forEach(function (n) { inp.addEventListener(n, function (e) { e.stopPropagation(); }); });
-  list.addEventListener('click', function (e) {
+  function calm() { return (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) || D.documentElement.getAttribute('data-perf') === 'low'; }
+  function onClick(e) {
     var b = e.target.closest('[data-ix]'); if (!b) return;
     var row = b.closest('[data-id]'), id = row && row.getAttribute('data-id'), a = b.getAttribute('data-ix');
-    if (a === 'pick') { openId = openId === id ? null : id; render(); return; }
+    if (a === 'close') { close(); return; }
+    if (a === 'pick') { if (busy[id]) return; openId = openId === id ? null : id; render(); return; }
     if (a === 'no') { openId = null; render(); return; }
     if (a === 'yes') {
+      if (busy[id]) return;
       sweep();
       var it = st.items.filter(function (i) { return i.id === id; })[0];
-      if (it && it.s === 'open') { it.s = 'done'; it.at = Date.now(); st.streak++; if (st.streak > st.best) st.best = st.streak; save(); say('Done. Streak: ' + st.streak + '.'); }
-      else say('Too late, that one already failed.', true);
-      openId = null; render();
+      if (!it || it.s !== 'open') { say('Too late, that one already failed.', true); openId = null; render(); return; }
+      busy[id] = true;
+      function commit() {
+        delete busy[id];
+        if (it.s === 'open') { it.s = 'done'; it.at = Date.now(); it.dirty = true; just = it.id; save(); say('Submitted. Streak: ' + streak() + '.'); }
+        openId = null; render(); syncNow();
+      }
+      if (calm()) { commit(); return; }
+      row.classList.add('scratching');   /* scribble across the text, then it goes in as submitted */
+      setTimeout(commit, 720);
     }
-  });
-  render();
-  setInterval(function () { if (sweep()) render(); }, 30000);
-  D.addEventListener('visibilitychange', function () { if (!D.hidden) render(); });
-  window.addEventListener('focus', render);
+  }
+
+  /* ----- push to the account once online ----- */
+  function syncNow(rounds) {
+    if (syncing || !navigator.onLine || !tok()) { render(); mountQuiet(); return; }
+    acct();
+    var batch = dirtyItems().slice(0, 100), sent = {};
+    batch.forEach(function (i) { sent[i.id] = i.s; });
+    if (!batch.length && Date.now() - lastTry < 60000) { render(); return; }
+    syncing = true; lastTry = Date.now(); render();
+    var send = batch.map(function (i) { return { id: i.id, t: i.t, s: i.s, due: i.due, at: i.at, created: i.created }; });
+    return fetch(API, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok() }, body: JSON.stringify({ action: 'sync', items: send }) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status); return j; }); })
+      .then(function (j) {
+        var by = {}; st.items.forEach(function (i) { by[i.id] = i; });
+        (j.items || []).forEach(function (r) {
+          if (!r || !UU.test(r.id || '') || typeof r.t !== 'string') return;
+          var l = by[r.id], rs = r.s === 'done' || r.s === 'failed' ? r.s : 'open';
+          if (!l) { st.items.push({ id: r.id, t: r.t.slice(0, 140), s: rs, due: +r.due, at: +r.at || 0, created: +r.created || +r.due, dirty: false }); return; }
+          if (l.dirty && sent[l.id] !== l.s) return;       /* changed while the request was out: keep it queued */
+          if (l.s === 'open' || l.dirty) { l.s = rs; l.at = +r.at || l.at; }
+          l.dirty = false;
+        });
+        lastErr = false; save();
+      })
+      .catch(function () { lastErr = true; })
+      .then(function () { syncing = false; render(); mountQuiet(); if (!lastErr && dirtyItems().length && (rounds || 0) < 3) syncNow((rounds || 0) + 1); });
+  }
+  function mountQuiet() { if (D.getElementById('indexEntry')) mount(); }
+
+  D.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('[data-ix-open]')) { e.preventDefault(); open(); } });
+  D.addEventListener('keydown', function (e) { if (e.key === 'Escape' && ov && ov.classList.contains('active')) { e.stopPropagation(); e.preventDefault(); close(); } }, true);
+  window.addEventListener('online', function () { lastErr = false; syncNow(); });
+  window.addEventListener('offline', function () { render(); });
+  window.addEventListener('focus', function () { if (sweep()) { render(); mountQuiet(); } });
+  D.addEventListener('visibilitychange', function () { if (!D.hidden) { if (sweep()) { render(); mountQuiet(); } if (dirtyItems().length) syncNow(); } });
+  setInterval(function () { var ch = sweep(); if (ch) { render(); mountQuiet(); } if (dirtyItems().length && navigator.onLine) syncNow(); }, 30000);
+  window.T12Index = { mount: mount, open: open };
 })();
 </script>
 </body>
