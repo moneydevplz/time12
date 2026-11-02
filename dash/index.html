@@ -10153,7 +10153,7 @@ Marketing,alex99,</div>
     major: [
       { art: 'tasks', t: 'Index: quick tasks for yourself',
         s: 'A button at the end of the Tasks tab opens a window where you give yourself quick tasks. Only you can add or see them.',
-        b: ['Type a line and press Enter: it is due by the end of tomorrow', 'Click it, press Confirm, and it is scratched out and submitted', 'Miss the deadline and it fails', 'Your streak grows once a day however many you submit, and one failure sets it back to 0', 'It never touches your papers'] },
+        b: ['Type a line and press Enter: it is due by the end of tomorrow', 'Click it, press Confirm, and it is scratched out and submitted', 'Miss the deadline and it fails, then it disappears after two days', 'Your streak grows once a day however many you submit, and one failure sets it back to 0', 'It never touches your papers'] },
       { art: 'dialogs', t: 'A flat, pure-white look',
         s: 'Liquid Glass is gone. Panels, the sidebar, dialogs and the dock are solid white, and solid charcoal in dark mode.',
         b: ['No more blur, sheen or glow behind panels', 'Steadier on slower devices'] },
@@ -10959,7 +10959,7 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
    The streak is index tasks submitted in a row; one failure sets it to 0. Papers are never touched. ---------- */
 (function () {
   var D = document, API = 'https://bukeabrzlgcwzwtzmwld.supabase.co/functions/v1/index-tasks';
-  var UU = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, MAX_RESOLVED = 500, KEEP = 30 * 864e5, UNDO = 25 * 60e3;
+  var UU = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, MAX_RESOLVED = 500, KEEP = 30 * 864e5, FAILKEEP = 2 * 864e5, UNDO = 25 * 60e3;
   var ov = null, inp, list, msg, sN, bestEl, syncEl, syncT, inflight = {}, soon = 0, openId = null, msgT = 0, syncing = false, lastErr = false, lastTry = 0, just = null, busy = {}, started = false, fresh = true;
   var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M4 12h7M4 18h5"/><path d="m15 15 2 2 4-5"/></svg>';
   var CHEV = '<svg class="ix-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
@@ -10989,7 +10989,8 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
   }
   var curKey = key(), st = load();
   function save() {
-    var res = st.items.filter(function (i) { return i.s !== 'open'; }).sort(function (a, b) { return b.at - a.at; }).slice(0, MAX_RESOLVED);
+    var all = st.items.filter(function (i) { return i.s !== 'open'; }).sort(function (a, b) { return b.at - a.at; }), res = all.slice(0, MAX_RESOLVED);
+    if (all.length > res.length) apply(st.base, all.slice(MAX_RESOLVED));   /* trimmed items still count toward the streak */
     st.items = st.items.filter(function (i) { return i.s === 'open'; }).concat(res);
     try { localStorage.setItem(curKey, JSON.stringify({ items: st.items, best: st.best, base: st.base, del: st.del })); } catch (e) {}
   }
@@ -11017,14 +11018,16 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
     var d = new Date(t), n = new Date(), a = new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime(), b = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(), k = Math.round((b - a) / 864e5);
     return k === 0 ? 'today' : k === 1 ? 'tomorrow' : d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
   }
-  function sweep() {   /* older than 30 days: deleted. Past its deadline and still open: failed, streak drops to 0 */
+  function sweep() {   /* older than 30 days: deleted. Past its deadline and still open: failed, streak drops to 0. Failed for over 2 days: deleted */
     var now = Date.now(), cut = now - KEEP, ch = false, old = st.items.filter(function (i) { return i.created < cut; });
     if (old.length) { apply(st.base, old); st.items = st.items.filter(function (i) { return i.created >= cut; }); ch = true; }
     var late = st.items.filter(function (i) { return i.s === 'open' && now > i.due; });
     late.forEach(function (i) { i.s = 'failed'; i.at = i.due; i.dirty = true; ch = true; });
+    var gone = st.items.filter(function (i) { return i.s === 'failed' && i.at < now - FAILKEEP; });   /* a failed item is shown for 2 days, then it is deleted */
+    if (gone.length) { apply(st.base, gone); st.items = st.items.filter(function (i) { return gone.indexOf(i) < 0; }); ch = true; }   /* the failure stays in base, so the streak reset is never undone */
     if (ch) save(); return ch;
   }
-  /* deletable: synced, and either still open within 25 minutes of creating it, or finished. A failed one is never deletable. */
+  /* deletable: synced, and either still open within 25 minutes of creating it, or finished. A failed one can't be deleted by hand; it goes by itself 2 days after it fails. */
   function canDel(i) { return !i.dirty && !inflight[i.id] && ((i.s === 'open' && Date.now() - i.created <= UNDO) || i.s === 'done'); }
   function todo() { return dirtyItems().length + st.del.length; }
   function openItems() { return st.items.filter(function (i) { return i.s === 'open'; }).sort(function (a, b) { return a.due - b.due; }); }
@@ -11154,6 +11157,7 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
           if (!r || !UU.test(r.id || '') || typeof r.t !== 'string' || pd[r.id]) return;
           seen[r.id] = 1;
           var l = by[r.id], rs = r.s === 'done' || r.s === 'failed' ? r.s : 'open';
+          if (!l && rs === 'failed' && (+r.at || +r.due) < Date.now() - FAILKEEP) return;   /* already past its 2 days: don't bring it back */
           if (!l) { st.items.push({ id: r.id, t: r.t.slice(0, 140), s: rs, due: +r.due, at: +r.at || 0, created: +r.created || +r.due, dirty: false }); return; }
           if (l.dirty && sent[l.id] !== l.s) return;       /* changed while the request was out: keep it queued */
           if (l.s === 'open' || l.dirty) { l.s = rs; l.at = +r.at || l.at; }
@@ -11161,7 +11165,9 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
         });
         var rows = j.items || [], trunc = rows.length >= 500, oldest = Infinity;   /* gone from the server (deleted elsewhere): drop it here too */
         rows.forEach(function (r) { if (+r.created > 0 && +r.created < oldest) oldest = +r.created; });
-        st.items = st.items.filter(function (l) { return l.dirty || seen[l.id] || (trunc && l.created <= oldest); });
+        var keep = function (l) { return l.dirty || seen[l.id] || (trunc && l.created <= oldest); };
+        apply(st.base, st.items.filter(function (l) { return !keep(l); }));   /* deleted elsewhere / cleaned up: the streak keeps them */
+        st.items = st.items.filter(keep);
         if (first) fresh = false;
         lastErr = false; save();
       })
