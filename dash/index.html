@@ -103,23 +103,17 @@
     --serif: 'DM Serif Display', Georgia, serif;
     --sans: 'DM Sans', -apple-system, sans-serif;
 
-    --glass-bg: rgba(255, 255, 255, 0.92);
-    --glass-border: rgba(24, 18, 14, 0.16);
-    --glass-sheen: rgba(230, 90, 10, 0.55);
-    --glass-highlight: rgba(255, 255, 255, 0.5);
-    --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.65), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+    --glass-bg: #FFFFFF;
+    --glass-border: #E4E4E4;
+    --glass-highlight: transparent;
+    --glass-inset: 0 0 0 0 transparent;
 
-    /* Lighter "liquid glass" used across the in-app chrome (sidebar, top
-       bar, toolbar, cards) so the 3D geometry backdrop reads through it. */
-    --app-glass-bg: rgba(255, 255, 255, 0.6);
-    --app-glass-border: rgba(24, 18, 14, 0.13);
-    --app-glass-shadow: 0 8px 28px rgba(34, 24, 16, 0.09), inset 0 1px 0 rgba(255, 255, 255, 0.55), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
-
-    /* Liquid Glass specular sheen — layered under the glass fill on the
-       app chrome (dock/tabs, shortcuts, dialogs, sidebar, top bar) */
-    --liquid-sheen: linear-gradient(135deg, rgba(255, 255, 255, 0.38) 0%, rgba(255, 255, 255, 0.08) 35%, rgba(255, 255, 255, 0) 65%);
-    --liquid-pill-bg: rgba(255, 255, 255, 0.55);
-    --liquid-chip-bg: rgba(255, 255, 255, 0.42);
+    /* Flat chrome (no glass): solid white panels */
+    --app-glass-bg: #FFFFFF;
+    --app-glass-border: #E4E4E4;
+    --app-glass-shadow: 0 1px 3px rgba(34, 24, 16, 0.05), 0 6px 18px rgba(34, 24, 16, 0.05);
+    --liquid-pill-bg: #FFFFFF;
+    --liquid-chip-bg: #F6F6F6;
   }
 
   html[data-theme="dark"] {
@@ -141,19 +135,16 @@
     --shadow-soft: 0 8px 24px rgba(0, 0, 0, 0.5);
     --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
 
-    --glass-bg: rgba(27, 27, 27, 0.62);
-    --glass-border: rgba(255, 255, 255, 0.09);
-    --glass-sheen: rgba(255, 255, 255, 0.28);
-    --glass-highlight: rgba(255, 255, 255, 0.08);
-    --glass-inset: inset 0 1px 0 rgba(255, 255, 255, 0.06), inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+    --glass-bg: #1B1B1B;
+    --glass-border: #2D2D2D;
+    --glass-highlight: transparent;
+    --glass-inset: 0 0 0 0 transparent;
 
-    --app-glass-bg: rgba(24, 24, 24, 0.64);
-    --app-glass-border: rgba(255, 255, 255, 0.08);
-    --app-glass-shadow: 0 8px 28px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05), inset 0 0 0 1px rgba(255, 255, 255, 0.03);
-
-    --liquid-sheen: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.015) 35%, rgba(255, 255, 255, 0) 65%);
-    --liquid-pill-bg: rgba(255, 255, 255, 0.10);
-    --liquid-chip-bg: rgba(255, 255, 255, 0.07);
+    --app-glass-bg: #181818;
+    --app-glass-border: #2D2D2D;
+    --app-glass-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 8px 22px rgba(0, 0, 0, 0.3);
+    --liquid-pill-bg: #262626;
+    --liquid-chip-bg: #222222;
   }
 
   html, body {
@@ -290,7 +281,6 @@
   @keyframes pyBolt { 0% { opacity: 0; } 8% { opacity: 1; } 28% { opacity: 0.25; } 42% { opacity: 1; } 70% { opacity: 0.5; } 100% { opacity: 0; } }
 
   .login-shell {
-    --mx: 50%; --my: 40%; --rx: 0deg; --ry: 0deg;
     width: 100%;
     max-width: 420px;
     background: var(--glass-bg);
@@ -301,24 +291,12 @@
     position: relative;
     z-index: 1;
     overflow: hidden;
-    backdrop-filter: var(--bf, blur(calc(24px * var(--blur-k, 1))) saturate(160%));
-    -webkit-backdrop-filter: var(--bf, blur(calc(24px * var(--blur-k, 1))) saturate(160%));
-    transform: perspective(900px) rotateX(var(--rx)) rotateY(var(--ry));
+
+
     transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1), background 0.4s ease, border-color 0.4s ease;
     animation: loginRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
   .login-shell > * { position: relative; z-index: 1; }
-  .login-shell::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-    background: radial-gradient(circle at var(--mx) var(--my), var(--glass-highlight), transparent 55%);
-    opacity: 0;
-    transition: opacity 0.35s ease;
-    pointer-events: none;
-  }
-  .login-shell:hover::after { opacity: 1; }
   @keyframes loginRise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes loginItemRise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -330,7 +308,7 @@
     border-radius: var(--radius);
     cursor: pointer; color: var(--text-soft);
     display: grid; place-items: center;
-    backdrop-filter: var(--bf, blur(calc(6px * var(--blur-k, 1)))); -webkit-backdrop-filter: var(--bf, blur(calc(6px * var(--blur-k, 1))));
+
     transition: var(--t);
     animation: loginItemRise 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) both;
     animation-delay: 0.04s;
@@ -460,9 +438,9 @@
     to   { opacity: 1; transform: translateY(0); }
   }
   .sidebar {
-    background: var(--liquid-sheen), var(--app-glass-bg);
-    -webkit-backdrop-filter: var(--bf, blur(calc(28px * var(--blur-k, 1))) saturate(180%));
-    backdrop-filter: var(--bf, blur(calc(28px * var(--blur-k, 1))) saturate(180%));
+    background: var(--app-glass-bg);
+
+
     border-right: 1px solid var(--app-glass-border);
     box-shadow: var(--app-glass-shadow);
     display: flex; flex-direction: column; height: 100vh; height: 100dvh;
@@ -476,18 +454,6 @@
   .sidebar-header {
     padding: 24px 24px 20px; display: flex; justify-content: space-between; align-items: center;
     position: relative; overflow: hidden;
-  }
-  .sidebar-header::before {
-    content: ''; position: absolute; z-index: 0; pointer-events: none;
-    width: 220px; height: 220px; top: -140px; left: -80px; border-radius: 50%;
-    background: radial-gradient(circle, var(--accent) 0%, transparent 72%);
-    opacity: 0.14; filter: blur(6px);
-    animation: headerGlowDrift 14s ease-in-out infinite;
-  }
-  html[data-theme="dark"] .sidebar-header::before { opacity: 0.09; }
-  @keyframes headerGlowDrift {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    50% { transform: translate(18px, 14px) scale(1.18); }
   }
   .brand { display: flex; align-items: baseline; gap: 10px; position: relative; z-index: 1; }
   .brand-glyph {
@@ -577,8 +543,8 @@
     display: flex; flex-direction: column; gap: 10px;
     font-size: 11px; color: var(--text-muted);
     position: sticky; bottom: 0; background: var(--app-glass-bg);
-    -webkit-backdrop-filter: var(--bf, blur(calc(20px * var(--blur-k, 1))) saturate(160%));
-    backdrop-filter: var(--bf, blur(calc(20px * var(--blur-k, 1))) saturate(160%));
+
+
     z-index: 2;
     margin-top: auto;
   }
@@ -605,9 +571,9 @@
     grid-template-columns: 1fr auto 1fr; 
     align-items: center;
     padding: 0 32px;
-    background: var(--liquid-sheen), var(--app-glass-bg);
-    -webkit-backdrop-filter: var(--bf, blur(calc(24px * var(--blur-k, 1))) saturate(170%));
-    backdrop-filter: var(--bf, blur(calc(24px * var(--blur-k, 1))) saturate(170%));
+    background: var(--app-glass-bg);
+
+
     z-index: 10;
     border-bottom: 1px solid var(--app-glass-border); gap: 12px;
   }
@@ -615,9 +581,9 @@
   .sidebar-tabs { display: flex; justify-content: center; flex: 1; min-width: 0; overflow: visible; justify-self: center; width: 100%; max-width: 540px; }
   .tabs-container {  
     display: flex; align-items: center; gap: 6px; padding: 6px;
-    background: var(--liquid-sheen), var(--app-glass-bg);
-    -webkit-backdrop-filter: var(--bf, blur(calc(20px * var(--blur-k, 1))) saturate(180%));
-    backdrop-filter: var(--bf, blur(calc(20px * var(--blur-k, 1))) saturate(180%));
+    background: var(--app-glass-bg);
+
+
     border: 1px solid var(--app-glass-border);
     box-shadow: var(--app-glass-shadow);
     border-radius: 999px; flex-wrap: nowrap; width: 100%; justify-content: center;
@@ -629,11 +595,11 @@
     user-select: none; text-align: center; white-space: nowrap;
   }  
   .tab-item.active {  
-    background: var(--liquid-sheen), var(--liquid-pill-bg);
-    -webkit-backdrop-filter: var(--bf, blur(calc(10px * var(--blur-k, 1))) saturate(160%));
-    backdrop-filter: var(--bf, blur(calc(10px * var(--blur-k, 1))) saturate(160%));
+    background: var(--liquid-pill-bg);
+
+
     color: var(--text); font-weight: 600;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   }  
   .tab-item:hover:not(.active) { color: var(--text); }
 
@@ -651,8 +617,8 @@
   .dropdown-menu {
     position: absolute; top: calc(100% + 6px); left: 0; right: 0;
     background: var(--app-glass-bg);
-    -webkit-backdrop-filter: var(--bf, blur(calc(24px * var(--blur-k, 1))) saturate(170%));
-    backdrop-filter: var(--bf, blur(calc(24px * var(--blur-k, 1))) saturate(170%));
+
+
     border: 1px solid var(--app-glass-border);
     border-radius: var(--radius-lg); box-shadow: var(--app-glass-shadow), var(--shadow-soft); z-index: 20;
     display: none; flex-direction: column; overflow: hidden; padding: 4px;
@@ -704,8 +670,8 @@
   .custom-dropdown-menu {
     position: absolute; top: calc(100% + 6px); right: 0; min-width: 160px;
     background: var(--app-glass-bg);
-    -webkit-backdrop-filter: var(--bf, blur(calc(24px * var(--blur-k, 1))) saturate(170%));
-    backdrop-filter: var(--bf, blur(calc(24px * var(--blur-k, 1))) saturate(170%));
+
+
     border: 1px solid var(--app-glass-border);
     border-radius: var(--radius-lg); box-shadow: var(--app-glass-shadow), var(--shadow-soft);
     z-index: 50; display: none; flex-direction: column; padding: 4px;
@@ -733,8 +699,8 @@
   .custom-select-menu {
     position: absolute; top: calc(100% + 4px); left: 0; right: 0;
     background: var(--app-glass-bg);
-    -webkit-backdrop-filter: var(--bf, blur(calc(24px * var(--blur-k, 1))) saturate(170%));
-    backdrop-filter: var(--bf, blur(calc(24px * var(--blur-k, 1))) saturate(170%));
+
+
     border: 1px solid var(--app-glass-border);
     border-radius: var(--radius-lg); box-shadow: var(--app-glass-shadow), var(--shadow-soft);
     z-index: 100; display: none; flex-direction: column; padding: 4px;
@@ -805,8 +771,8 @@
   }
   .editor-toolbar {
     background: var(--app-glass-bg);
-    -webkit-backdrop-filter: var(--bf, blur(calc(20px * var(--blur-k, 1))) saturate(170%));
-    backdrop-filter: var(--bf, blur(calc(20px * var(--blur-k, 1))) saturate(170%));
+
+
     border: 1px solid var(--app-glass-border); border-radius: var(--radius);
     padding: 4px; display: flex; gap: 2px; box-shadow: var(--app-glass-shadow);
     pointer-events: auto; max-width: calc(100% - 48px); overflow-x: auto;
@@ -830,8 +796,8 @@
     position: absolute; right: 32px; bottom: 32px;
     font-size: 11px; color: var(--text-muted); display: flex; gap: 8px;
     pointer-events: auto; background: var(--app-glass-bg);
-    -webkit-backdrop-filter: var(--bf, blur(calc(16px * var(--blur-k, 1))) saturate(160%));
-    backdrop-filter: var(--bf, blur(calc(16px * var(--blur-k, 1))) saturate(160%));
+
+
     padding: 6px 12px; border-radius: var(--radius); border: 1px solid var(--app-glass-border); box-shadow: var(--app-glass-shadow);
   }
   .counter strong { color: var(--text); font-weight: 600; }
@@ -885,8 +851,8 @@
 
   .table-wrapper {
     background: var(--app-glass-bg);
-    -webkit-backdrop-filter: var(--bf, blur(calc(20px * var(--blur-k, 1))) saturate(160%));
-    backdrop-filter: var(--bf, blur(calc(20px * var(--blur-k, 1))) saturate(160%));
+
+
     border: 1px solid var(--app-glass-border); border-radius: var(--radius-lg);
     overflow: hidden; box-shadow: var(--app-glass-shadow); animation: fadeInTab 0.4s ease;
     transition: box-shadow 0.25s ease;
@@ -926,7 +892,7 @@
     display: flex; align-items: center; gap: 14px;
     background: var(--glass-bg); border: 1px solid var(--glass-border);
     box-shadow: var(--shadow-soft), var(--glass-inset);
-    backdrop-filter: var(--bf, blur(calc(18px * var(--blur-k, 1))) saturate(160%)); -webkit-backdrop-filter: var(--bf, blur(calc(18px * var(--blur-k, 1))) saturate(160%));
+
     border-radius: 999px; padding: 10px 12px 10px 20px;
     font-size: 12px; font-weight: 600; color: var(--text-soft);
     transform: translate(-50%, 24px); opacity: 0; pointer-events: none;
@@ -973,8 +939,8 @@
   .tk-fold {
     margin-bottom: 12px; overflow: hidden;
     background: var(--app-glass-bg);
-    -webkit-backdrop-filter: var(--bf, blur(calc(14px * var(--blur-k, 1))) saturate(150%));
-    backdrop-filter: var(--bf, blur(calc(14px * var(--blur-k, 1))) saturate(150%));
+
+
     border: 1px solid var(--app-glass-border); border-radius: var(--radius-lg);
     animation: fadeInTab 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) both;
   }
@@ -997,14 +963,14 @@
   .tk-fold-inner { min-height: 0; overflow: hidden; visibility: hidden; transition: visibility 0s linear 0.32s; }
   .tk-fold.open > .tk-fold-body > .tk-fold-inner { visibility: visible; transition-delay: 0s; }
   .tk-fold-list { display: flex; flex-direction: column; gap: 8px; padding: 4px 12px 12px; }
-  .tk-fold .task-card { background: var(--bg); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .tk-fold .task-card { background: var(--bg); box-shadow: none;}
 
   /* Task card */
   .task-card {
     position: relative; overflow: hidden;
     background: var(--app-glass-bg);
-    -webkit-backdrop-filter: var(--bf, blur(calc(14px * var(--blur-k, 1))) saturate(150%));
-    backdrop-filter: var(--bf, blur(calc(14px * var(--blur-k, 1))) saturate(150%));
+
+
     border: 1px solid var(--app-glass-border); border-radius: var(--radius-lg);
     box-shadow: var(--shadow-md);
     transition: border-color 0.2s ease;
@@ -1163,8 +1129,8 @@
 
   .graph-card {
     background: var(--app-glass-bg);
-    -webkit-backdrop-filter: var(--bf, blur(calc(20px * var(--blur-k, 1))) saturate(160%));
-    backdrop-filter: var(--bf, blur(calc(20px * var(--blur-k, 1))) saturate(160%));
+
+
     border: 1px solid var(--app-glass-border);
     border-radius: var(--radius-lg); padding: 24px; margin-bottom: 24px;
     box-shadow: var(--app-glass-shadow); animation: fadeInTab 0.4s ease;
@@ -1335,16 +1301,16 @@
   .dialog-overlay, .palette-overlay, .shortcuts-overlay {
     position: fixed; inset: 0;
     background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: var(--bf, blur(calc(8px * var(--blur-k, 1)))); -webkit-backdrop-filter: var(--bf, blur(calc(8px * var(--blur-k, 1))));
+
     display: none; align-items: center; justify-content: center;
     z-index: 1000; opacity: 0; transition: opacity 0.2s ease; padding: 24px;
   }
   .dialog-overlay.active, .palette-overlay.active, .shortcuts-overlay.active { display: flex; opacity: 1; }
 
   .dialog-box, .palette, .shortcuts-box {
-    background: var(--liquid-sheen), var(--app-glass-bg);
-    -webkit-backdrop-filter: var(--bf, blur(calc(28px * var(--blur-k, 1))) saturate(180%));
-    backdrop-filter: var(--bf, blur(calc(28px * var(--blur-k, 1))) saturate(180%));
+    background: var(--app-glass-bg);
+
+
     border: 1px solid var(--app-glass-border);
     border-radius: var(--radius-lg); box-shadow: var(--app-glass-shadow), var(--shadow-soft);
     width: 100%; max-width: 480px; transform: translateY(14px) scale(0.97);
@@ -1443,19 +1409,19 @@
   .key {
     padding: 2px 6px; font-size: 11px;
     background: var(--liquid-chip-bg);
-    -webkit-backdrop-filter: var(--bf, blur(calc(6px * var(--blur-k, 1))) saturate(160%));
-    backdrop-filter: var(--bf, blur(calc(6px * var(--blur-k, 1))) saturate(160%));
+
+
     border: 1px solid var(--app-glass-border); border-radius: 4px; font-family: var(--sans);
   }
   .shortcuts-close {
     margin-top: 24px; width: 100%; padding: 10px;
-    background: var(--liquid-sheen), var(--liquid-chip-bg);
-    -webkit-backdrop-filter: var(--bf, blur(calc(14px * var(--blur-k, 1))) saturate(170%));
-    backdrop-filter: var(--bf, blur(calc(14px * var(--blur-k, 1))) saturate(170%));
+    background: var(--liquid-chip-bg);
+
+
     border: 1px solid var(--app-glass-border); border-radius: var(--radius); cursor: pointer;
     font-family: var(--sans); font-size: 13px; font-weight: 500; color: var(--text); transition: var(--t);
   }
-  .shortcuts-close:hover { background: var(--liquid-sheen), var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+  .shortcuts-close:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
 
   /* Toast */
   .toast-container {
@@ -1495,8 +1461,8 @@
   }
   .group-card {
     background: var(--app-glass-bg);
-    -webkit-backdrop-filter: var(--bf, blur(calc(20px * var(--blur-k, 1))) saturate(160%));
-    backdrop-filter: var(--bf, blur(calc(20px * var(--blur-k, 1))) saturate(160%));
+
+
     border: 1px solid var(--app-glass-border);
     border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px;
     box-shadow: var(--app-glass-shadow); transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.2s ease;
@@ -1628,27 +1594,17 @@
     .editor-scroll { padding-top: 96px; }
   }
   /* ================= PERFORMANCE TIERS ================= */
-  :root { --blur-k: 1; }
-  html[data-perf="mid"] { --blur-k: 0.45; }
-  html[data-perf="low"] { --bf: none; }
-
   /* mid: cheaper decoration, keep the look */
   html[data-perf="mid"] .login-screen::before,
   html[data-perf="mid"] .login-screen::after { filter: blur(32px); }
   html[data-perf="mid"] .sidebar-header::before { filter: none; animation: none; }
   html[data-perf="mid"] .app.app-enter { animation-name: appFadeInLite; }
 
-  /* low: no blur compositing, no ambient motion, opaque-ish glass */
+  /* low: no ambient motion */
   html[data-perf="low"] {
-    --glass-bg: rgba(255, 255, 255, 0.97);
-    --app-glass-bg: rgba(255, 255, 255, 0.95);
-    --liquid-sheen: none;
-    --app-glass-shadow: 0 1px 0 rgba(255,255,255,.5) inset;
     --shadow-soft: 0 2px 8px rgba(34, 24, 16, 0.08);
   }
   html[data-perf="low"][data-theme="dark"] {
-    --glass-bg: rgba(27, 27, 27, 0.97);
-    --app-glass-bg: rgba(24, 24, 24, 0.96);
     --shadow-soft: 0 2px 8px rgba(0, 0, 0, 0.5);
   }
   html[data-perf="low"] .login-screen::before,
@@ -1663,8 +1619,8 @@
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
-    backdrop-filter: none !important;
-    -webkit-backdrop-filter: none !important;
+
+
     text-shadow: none !important;
   }
   html[data-perf="low"] *::before, html[data-perf="low"] *::after { filter: none !important; }
@@ -1742,7 +1698,7 @@
     font: 700 11px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     letter-spacing: .04em; text-transform: uppercase; color: #fff;
     background: var(--accent, #FD7E14); border: 1px solid rgba(0,0,0,.45);
-    box-shadow: 0 2px 6px rgba(0,0,0,.35), inset 0 1px 0 rgba(255,255,255,.35);
+    box-shadow: 0 2px 6px rgba(0,0,0,.35);
     text-shadow: 0 1px 0 rgba(0,0,0,.35); white-space: nowrap;
   }
   .t12-hint b { opacity: .45; font-weight: 700; }
@@ -1865,37 +1821,6 @@
     background: var(--surface-2); animation: none;
   }
 
-  /* ============================================================
-     SEE-THROUGH PANELS — the geometry reads through the whole app,
-     text stays crisp (lighter glass + a soft reading veil behind copy)
-     ============================================================ */
-  html:not([data-perf="low"]) { --app-glass-bg: rgba(255, 255, 255, 0.42); }
-  html[data-theme="dark"]:not([data-perf="low"]) { --app-glass-bg: rgba(24, 24, 24, 0.44); }
-  /* lower end: no blur, so keep the glass a bit denser, but let the static shapes show */
-  html[data-perf="low"] { --app-glass-bg: rgba(255, 255, 255, 0.84); }
-  html[data-perf="low"][data-theme="dark"] { --app-glass-bg: rgba(24, 24, 24, 0.86); }
-
-  /* gentler blur on the big panels, so shapes behind them stay recognisable */
-  .sidebar {
-    -webkit-backdrop-filter: var(--bf, blur(calc(14px * var(--blur-k, 1))) saturate(150%));
-    backdrop-filter: var(--bf, blur(calc(14px * var(--blur-k, 1))) saturate(150%));
-  }
-  .editor-top-bar {
-    -webkit-backdrop-filter: var(--bf, blur(calc(16px * var(--blur-k, 1))) saturate(150%));
-    backdrop-filter: var(--bf, blur(calc(16px * var(--blur-k, 1))) saturate(150%));
-  }
-  /* reading veil: softens whatever drifts behind the writing / task column, fades out toward the edges
-     so the shapes in the margins stay crisp */
-  .editor-area::before {
-    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-    background: color-mix(in srgb, var(--surface) 30%, transparent);
-    -webkit-backdrop-filter: var(--bf, blur(calc(9px * var(--blur-k, 1))));
-    backdrop-filter: var(--bf, blur(calc(9px * var(--blur-k, 1))));
-    -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 22%, #000 78%, transparent 100%);
-    mask-image: linear-gradient(90deg, transparent 0%, #000 22%, #000 78%, transparent 100%);
-  }
-
-
   /* ---------- Automated (AI-marked) tasks ---------- */
   .auto-badge {
     display: inline-flex; align-items: center; gap: 5px; margin-left: 8px; padding: 2px 8px;
@@ -2006,8 +1931,7 @@
   .auto-section { padding: 20px 22px 4px; margin-bottom: 22px; }
   /* big forms get a slightly more solid pane so the page behind (and the chart) can't bleed through the labels */
   .dialog-box[data-size] {
-    background: var(--liquid-sheen), linear-gradient(var(--app-glass-bg), var(--app-glass-bg)),
-      linear-gradient(color-mix(in srgb, var(--bg) 62%, transparent), color-mix(in srgb, var(--bg) 62%, transparent));
+    background: var(--bg);
   }
   /* drop zones are <label>s, so they were inheriting the tracked all-caps field-label style */
   .dialog-input-group label.csv-dropzone { text-transform: none; letter-spacing: normal; font-size: 13px; font-weight: 500; color: var(--text-muted); }
@@ -2070,8 +1994,8 @@
     /* when a phone dialog has to scroll, keep its buttons in reach */
     .dialog-box > .dialog-actions {
       position: sticky; bottom: -22px; z-index: 3; margin: 14px -20px -22px; padding: 12px 20px 16px;
-      background: color-mix(in srgb, var(--bg) 90%, transparent); border-top: 1px solid var(--border);
-      -webkit-backdrop-filter: var(--bf, blur(10px)); backdrop-filter: var(--bf, blur(10px));
+      background: var(--bg); border-top: 1px solid var(--border);
+
     }
   }
 
@@ -2081,7 +2005,7 @@
      ============================================================ */
   .custom-select-menu.cs-portal {
     display: flex; flex-direction: column; gap: 1px; position: fixed; z-index: 1500; padding: 4px;
-    background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none;
+    background: var(--bg);
     border: 1px solid var(--border); border-radius: var(--radius-lg);
     box-shadow: 0 14px 36px rgba(0, 0, 0, 0.18), 0 2px 6px rgba(0, 0, 0, 0.08);
     overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
@@ -2139,7 +2063,7 @@
       <button type="button" class="device-option" data-device="high">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16"/></svg>
         <span class="device-option-label">Higher End Device</span>
-        <span class="device-option-desc">Full visuals, glass effects and animations</span>
+        <span class="device-option-desc">Full visuals and animations</span>
       </button>
       <button type="button" class="device-option" data-device="low">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
@@ -2343,6 +2267,15 @@
           placeholder="The room is quiet. Begin."
           spellcheck="true"
         ></textarea>
+        <section class="ix" id="ixBox" aria-label="Index">
+          <div class="ix-head">
+            <span class="ix-title">Index</span>
+            <span class="ix-streak" id="ixStreak" title="Index tasks done in a row. Failing one sets this back to 0. It never affects papers."><b id="ixStreakN">0</b> streak<i id="ixBest"></i></span>
+          </div>
+          <input type="text" class="ix-input" id="ixInput" placeholder="Add to your index and press Enter. Due by the end of tomorrow" maxlength="140" autocomplete="off" spellcheck="false" aria-label="Add an index task">
+          <div class="ix-msg" id="ixMsg" role="status" aria-live="polite"></div>
+          <div class="ix-list" id="ixList"></div>
+        </section>
       </div>
     </div>
 
@@ -2473,7 +2406,7 @@
     position: fixed; left: 0; bottom: var(--dk-bottom); z-index: 1200; display: flex; flex-direction: row-reverse; align-items: flex-end; padding-left: 12px;
     transform: translateX(calc(var(--dk-tab) - 100%)); transition: transform .55s var(--dk-spring);
     font-family: var(--sans); color: var(--text); -webkit-tap-highlight-color: transparent; }
-  html[data-theme="dark"] #t12dk { --dk-bg: rgba(24, 24, 24, .86); --dk-ok: #4CC38A; }
+  html[data-theme="dark"] #t12dk { --dk-bg: #181818; --dk-ok: #4CC38A; }
   #t12dk[hidden] { display: none; }
   #t12dk.open { transform: translateX(0); }
   /* each tool asks for its own width; height follows the content (see fit() in the script) */
@@ -2485,7 +2418,7 @@
   /* ---- the arrow tab ---- */
   #t12dk .dk-tab { position: relative; flex: none; width: var(--dk-tab); height: 66px; padding: 0; cursor: pointer;
     border: 1px solid var(--glass-border); border-left: 0; border-radius: 0 14px 14px 0; color: var(--text-soft);
-    background: var(--dk-bg); -webkit-backdrop-filter: var(--bf, blur(calc(18px * var(--blur-k, 1))) saturate(160%)); backdrop-filter: var(--bf, blur(calc(18px * var(--blur-k, 1))) saturate(160%));
+    background: var(--dk-bg);
     box-shadow: 6px 6px 18px rgba(34, 24, 16, .08), var(--glass-inset); display: grid; place-items: center;
     transition: color .2s, translate .25s var(--dk-ease), background .2s; }
   #t12dk:not(.open) .dk-tab:hover { color: var(--accent); translate: 3px 0; }
@@ -2500,7 +2433,7 @@
   /* ---- the box ---- */
   #t12dk .dk-panel { box-sizing: border-box; width: min(var(--dk-w), calc(100vw - 56px)); overflow: hidden; border-radius: 18px;
     transition: width .5s var(--dk-ease), height .5s var(--dk-ease);
-    border: 1px solid var(--glass-border); background: var(--dk-bg); -webkit-backdrop-filter: var(--bf, blur(calc(24px * var(--blur-k, 1))) saturate(165%)); backdrop-filter: var(--bf, blur(calc(24px * var(--blur-k, 1))) saturate(165%));
+    border: 1px solid var(--glass-border); background: var(--dk-bg);
     box-shadow: var(--shadow-soft), var(--glass-inset); }
   #t12dk .dk-inner { box-sizing: border-box; width: calc(min(var(--dk-w), 100vw - 56px) - 2px); max-height: calc(var(--dk-avail) - 2px); padding: 10px; overflow-x: hidden; overflow-y: auto; scrollbar-width: thin; }
   #t12dk .dk-views { position: relative; }
@@ -2695,9 +2628,10 @@
       <!-- Chess -->
       <section class="dk-view ch" data-v="ch" role="tabpanel">
         <div class="dk-seg" id="chLvl" role="group" aria-label="Difficulty" style="margin-bottom:2px"><button type="button" data-l="1">Easy</button><button type="button" data-l="2">Normal</button><button type="button" data-l="3">Hard</button></div>
-        <div class="ch-frame" id="chFrame"><div id="chBoard"></div><div class="ch-load">Setting up the board…</div><div class="ch-gate" id="chGate" hidden></div></div>
+        <div class="ch-frame" id="chFrame"><div id="chBoard"></div><div class="ch-load">Setting up the board…</div></div>
         <div class="ch-st" id="chSt" role="status"></div>
-        <div class="dk-row ch-ctl"><button class="dk-btn" id="chNew" type="button">New game</button><button class="dk-btn" id="chUndo" type="button">Undo</button><button class="dk-btn" id="chSwap" type="button">Swap sides</button></div>
+        <div class="ch-rw" id="chRw" aria-live="polite"></div>
+        <div class="dk-row ch-ctl"><button class="dk-btn" id="chNew" type="button">New game</button><button class="dk-btn" id="chUndo" type="button" title="Taking back a move means this game can no longer earn rewards">Undo</button><button class="dk-btn" id="chSwap" type="button">Swap sides</button></div>
         <a class="ch-open" href="https://lichess.org/setup/ai" target="_blank" rel="noopener noreferrer">Want a stronger opponent? Lichess ↗</a>
       </section>
     </div>
@@ -2872,119 +2806,106 @@
   pmBell.addEventListener('click', function () { S.mute = !S.mute; pmBell.setAttribute('aria-pressed', S.mute); save(); if (!S.mute) { unlockAudio(); chime(); } });
   pmBell.setAttribute('aria-pressed', S.mute);
 
-  /* ---------------- chess (native: Chessground board + chess.js rules + a small built-in engine) ---------------- */
-  var CG = { cg: null, g: null, Chess: null, side: 'white', busy: false, loading: false, lib: null, css: false }, CDN = 'https://cdn.jsdelivr.net/npm/';
-  var VAL = { p: 100, n: 320, b: 330, r: 500, q: 900, k: 0 }, chSt = $('#chSt');
+  /* ---------------- chess (the server runs the game: it checks your move, plays the reply and decides who won) ---------------- */
+  var CG = { cg: null, g: null, Chess: null, pref: 'white', busy: false, loading: false, lib: null, css: false, game: null, st: null },
+      CDN = 'https://cdn.jsdelivr.net/npm/', CHESS_API = 'https://bukeabrzlgcwzwtzmwld.supabase.co/functions/v1/chess',
+      START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR', chSt = $('#chSt'), chRw = $('#chRw');
+  function chCall(b) {
+    var t = null; try { t = localStorage.getItem('authToken'); } catch (e) {}
+    if (!t) return Promise.reject(new Error('Sign in to play chess.'));
+    return fetch(CHESS_API, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + t }, body: JSON.stringify(b) })
+      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok || j.error) { var e = new Error(j.error || 'HTTP ' + r.status); e.data = j; throw e; } return j; }); });
+  }
   function chLib() {
     if (CG.lib) return CG.lib;
     if (!CG.css) { CG.css = true; ['base', 'brown', 'cburnett'].forEach(function (n) { var l = D.createElement('link'); l.rel = 'stylesheet'; l.href = CDN + 'chessground@9/assets/chessground.' + n + '.css'; D.head.appendChild(l); }); }
     return (CG.lib = Promise.all([import(CDN + 'chessground@9/+esm'), import(CDN + 'chess.js@1/+esm')]).catch(function (e) { CG.lib = null; throw e; }));
   }
   function mountChess() {
-    if (CG.cg || CG.loading) return;
+    if (CG.cg) { if (!CG.busy) chRefresh(); return; }
+    if (CG.loading) return;
     var f = $('#chFrame'), msg = $('.ch-load'); CG.loading = true; msg.textContent = 'Setting up the board…';
     chLib().then(function (L) {
       CG.Chess = L[1].Chess;
       CG.cg = L[0].Chessground($('#chBoard'), { coordinates: true, animation: { duration: 220 }, premovable: { enabled: false },
         draggable: { showGhost: true }, movable: { free: false, showDests: true, events: { after: onMove } } });
       if (window.ResizeObserver) new ResizeObserver(function () { if (CG.cg) CG.cg.redrawAll(); }).observe(f);
-      newGame(); f.classList.add('ok');
+      f.classList.add('ok'); chPaint(); return chRefresh();
     }).catch(function () { msg.textContent = 'The chess board couldn’t load. Check your connection or ad-blocker, then reopen this tab.'; })
       .then(function () { CG.loading = false; });
   }
-  /* ---- Papers + lock: students pay papers per game and must have no outstanding assignments. Everyone else plays free. ---- */
-  var PAPERS = 'https://bukeabrzlgcwzwtzmwld.supabase.co/functions/v1/papers';
-  function chStudent() { try { return JSON.parse(decodeURIComponent(escape(atob(localStorage.getItem('authToken').split('.')[0])))).username.indexOf('@') > 0; } catch (e) { return false; } }
-  function chApi(b) {
-    return fetch(PAPERS, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + localStorage.getItem('authToken') }, body: JSON.stringify(b) })
-      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status); return j; }); });
+  /* what the server says about you: lock, price, balance. keep = update the numbers only, leave the board alone */
+  function chRefresh(keep) {
+    return chCall({ action: 'status' }).then(function (j) {
+      CG.st = j;
+      if (!keep) { if (j.game) chShow(j.game); else { CG.game = null; CG.g = null; chPaint(); chIdle(); } }
+      chBtns();
+    }, function (e) { if (!keep) chSt.textContent = e.message; });
   }
-  function chEsc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
-  function startGame() { CG.g = new CG.Chess(); CG.busy = false; CG.cg.set({ orientation: CG.side }); chSync(); reply(); }
-  function newGame() { if (chStudent()) chGate(); else startGame(); }
-  function chGate() {
-    var g = $('#chGate'); if (!g) return startGame();
-    CG.paid = false; CG.g = CG.g || new CG.Chess(); g.hidden = false; g.innerHTML = '<span>Checking…</span>';
-    chApi({ action: 'chess_status' }).then(function (s) {
-      var cost = +s.cost || 0, bal = +s.balance || 0, k = '<img class="ch-k" src="king.png" alt="">';
-      if (s.locked) g.innerHTML = k + '<b>Chess is locked</b><span>Finish ' + (s.undone ? s.undone + ' outstanding assignment' + (s.undone === 1 ? '' : 's') : 'your outstanding assignments') + ' first.</span><button class="dk-btn" type="button" data-g="tasks">Go to Tasks</button>';
-      else if (bal < cost) g.innerHTML = k + '<b>Not enough papers</b><span>A game costs ' + cost + ' papers. You have ' + bal + '.</span>';
-      else g.innerHTML = k + '<b>' + (cost ? 'A game costs ' + cost + ' papers' : 'Free to play') + '</b><span>You have ' + bal + '. Win to claim a king.</span><button class="dk-btn" type="button" data-g="pay">' + (cost ? 'Play (−' + cost + ')' : 'Play') + '</button>';
-    }).catch(function (e) {
-      g.innerHTML = '<b>Chess is not available right now</b><span>' + chEsc(/^HTTP \d+$/.test(e.message) ? 'Try again in a moment.' : e.message) + '</span><button class="dk-btn" type="button" data-g="retry">Try again</button>';
-    });
+  function chShow(gm) { CG.game = gm; CG.g = new CG.Chess(gm.fen); chPaint(); chMsg(); chBtns(); }
+  function chPaint() {
+    var gm = CG.game, g = CG.g, live = !!(gm && g && gm.status === 'open' && !gm.over && g.turn() === gm.side), dm = new Map();
+    if (live) g.moves({ verbose: true }).forEach(function (m) { var a = dm.get(m.from); if (a) a.push(m.to); else dm.set(m.from, [m.to]); });
+    var side = gm ? (gm.side === 'w' ? 'white' : 'black') : CG.pref;
+    CG.cg.set({ fen: g ? g.fen() : START, orientation: side, turnColor: g ? (g.turn() === 'w' ? 'white' : 'black') : 'white', check: !!(g && g.isCheck()),
+      lastMove: gm && gm.lastMove ? gm.lastMove : [], movable: { color: live ? side : undefined, dests: dm } });
   }
-  function chClaim() {
-    chApi({ action: 'chess_win' }).then(function () { chSt.innerHTML = 'Checkmate. You win! <img class="ch-k" src="king.png" alt=""> +1 King'; })
-      .catch(function () { chSt.textContent = 'Checkmate, you win! Your king could not be saved. Tell your teacher.'; });
+  function chMsg() {
+    var gm = CG.game, g = CG.g; if (!gm) return chIdle();
+    if (gm.status !== 'open' || gm.over) return;
+    chSt.textContent = (g.isCheck() ? 'Check! ' : '') + (g.turn() === gm.side ? 'Your move' : 'Thinking…'); chSt.classList.remove('end');
   }
-  $('#chFrame').addEventListener('click', function (e) {
-    var b = e.target.closest('[data-g]'); if (!b) return;
-    var a = b.getAttribute('data-g'), g = $('#chGate');
-    if (a === 'tasks') { var t = document.querySelector('.tab-item[data-tab="MyTasks"]'); if (t) t.click(); }
-    else if (a === 'retry') chGate();
-    else if (a === 'pay') {
-      b.disabled = true;
-      chApi({ action: 'chess_start' }).then(function () { g.hidden = true; CG.paid = true; startGame(); })
-        .catch(function (er) { g.innerHTML = '<b>Could not start the game</b><span>' + chEsc(er.message) + '</span><button class="dk-btn" type="button" data-g="retry">Check again</button>'; });
+  function chIdle() {
+    var s = CG.st || {}, c = s.cost || 0, pl = function (n) { return n + ' paper' + (n === 1 ? '' : 's'); }, t;
+    if (s.free) t = 'Free for organizations. Pick a level, then press New game.';
+    else if (s.locked) t = 'Chess is locked. Hand in your ' + s.undone + ' outstanding assignment' + (s.undone === 1 ? '' : 's') + ' first.';
+    else if (c > (s.balance || 0)) t = 'A game costs ' + pl(c) + '. You have ' + (s.balance || 0) + '.';
+    else if (c) t = 'A game costs ' + pl(c) + ' (you have ' + s.balance + '). Pick a level, then press New game.';
+    else t = 'Pick a level, then press New game.';
+    chSt.textContent = t; chSt.classList.remove('end');
+  }
+  function chBtns() {
+    var s = CG.st, nb = $('#chNew'), c = s && !s.free ? (s.cost || 0) : 0;
+    nb.textContent = 'New game' + (c ? ' · ' + c : '');
+    nb.disabled = !!(s && !s.free && (s.locked || c > (s.balance || 0)));
+    $('#chUndo').disabled = !(CG.game && CG.game.status === 'open');
+  }
+  function rwLine(img, text) { return '<div><img class="ch-rwi" src="' + img + '.png" alt="" onerror="this.style.display=&quot;none&quot;"><span>' + text + '</span></div>'; }
+  function chEnd(j) {
+    var r = j.result, w = j.rewards, h = '', gm = j.game || {};
+    chSt.textContent = r === 'win' ? 'Checkmate. You win!' : r === 'loss' ? 'Checkmate. This one goes to the computer.' : 'Draw.'; chSt.classList.add('end');
+    if (w) {
+      h += rwLine('king', '+' + w.kings + ' king' + (w.kings > 1 ? 's (you moved your king the most)' : ''));
+      if (w.piece) h += rwLine(w.piece, w.newPiece ? 'New achievement: ' + w.piece : 'You moved your ' + w.piece + ' the most. That achievement is already yours.');
+    } else if (r === 'win' && CG.st && !CG.st.free) {
+      h = '<div><span>' + (gm.undone ? 'You used Undo, so this win earns no rewards.' : 'Win on Hard to earn rewards.') + '</span></div>';
     }
+    chRw.innerHTML = h; chRefresh(true);
+  }
+  function onMove(from, to) {
+    var gm = CG.game; if (CG.busy || !gm || gm.status !== 'open') { chPaint(); return; }
+    CG.busy = true; chSt.textContent = 'Thinking…'; chRw.innerHTML = '';
+    chCall({ action: 'move', from: from, to: to }).then(function (j) { CG.busy = false; chShow(j.game); if (j.result) chEnd(j); },
+      function (e) { CG.busy = false; if (e.data && e.data.game) chShow(e.data.game); else chRefresh(); chSt.textContent = e.message; });
+  }
+  $('#chNew').addEventListener('click', function () {
+    if (!CG.cg || CG.busy) return;
+    var gm = CG.game;
+    if (gm && gm.status === 'open' && gm.plies > (gm.side === 'w' ? 0 : 1) && !window.confirm('Start a new game? This one is already paid for and will count as lost.')) return;
+    CG.busy = true; chRw.innerHTML = ''; chSt.textContent = 'Setting up…';
+    chCall({ action: 'start', level: S.lvl, side: CG.pref }).then(function (j) { CG.busy = false; chShow(j.game); chRefresh(true); },
+      function (e) { CG.busy = false; chSt.textContent = e.message; chRefresh(true); });
   });
-
-  function chSync() {
-    var g = CG.g, mine = g.turn() === CG.side[0], over = g.isGameOver(), h = g.history({ verbose: true }), l = h[h.length - 1], dm = new Map();
-    if (mine && !over) g.moves({ verbose: true }).forEach(function (m) { var a = dm.get(m.from); if (a) a.push(m.to); else dm.set(m.from, [m.to]); });
-    CG.cg.set({ fen: g.fen(), turnColor: g.turn() === 'w' ? 'white' : 'black', check: g.isCheck(), lastMove: l ? [l.from, l.to] : [], movable: { color: CG.side, dests: dm } });
-    chSt.textContent = g.isCheckmate() ? (mine ? 'Checkmate. This one goes to the computer.' : 'Checkmate. You win!') : g.isDraw() ? 'Draw.' : (g.isCheck() ? 'Check! ' : '') + (mine ? 'Your move' : 'Thinking…');
-    chSt.classList.toggle('end', over);
-    if (over && CG.paid) { CG.paid = false; if (g.isCheckmate() && !mine) chClaim(); else chApi({ action: 'chess_end' }).catch(function () {}); }
-  }
-  function onMove(from, to) {   /* pawns reaching the last rank become queens */
-    var g = CG.g, p = g.get(from), pr = p && p.type === 'p' && (to[1] === '8' || to[1] === '1') ? 'q' : undefined;
-    try { g.move({ from: from, to: to, promotion: pr }); } catch (e) { chSync(); return; }
-    chSync(); reply();
-  }
-  function reply() {
-    var g = CG.g; if (g.isGameOver() || g.turn() === CG.side[0]) return;
-    CG.busy = true;
-    setTimeout(function () { if (CG.g !== g) return; var m = aiMove(); CG.busy = false; g.move({ from: m.from, to: m.to, promotion: m.promotion }); chSync(); }, 420);
-  }
-  function capFirst(x, y) { return (y.captured ? 1 : 0) - (x.captured ? 1 : 0); }
-  function evalG(g) {
-    var sc = 0, b = g.board(), r, c, x, v;
-    for (r = 0; r < 8; r++) for (c = 0; c < 8; c++) {
-      if (!(x = b[r][c])) continue;
-      v = VAL[x.type] + (x.type === 'p' ? (x.color === 'w' ? 6 - r : r - 1) * 8 : x.type === 'k' ? 0 : (6 - (Math.abs(c - 3.5) + Math.abs(r - 3.5)) * 2) * 2);
-      sc += x.color === 'w' ? v : -v;
-    }
-    return sc;
-  }
-  function search(g, d, a, b) {
-    var ms = g.moves({ verbose: true }), w = g.turn() === 'w', best = w ? -Infinity : Infinity, i, v;
-    if (!ms.length) return g.isCheck() ? (w ? -1e5 - d : 1e5 + d) : 0;
-    if (!d) return evalG(g);
-    ms.sort(capFirst);
-    for (i = 0; i < ms.length; i++) {
-      g.move({ from: ms[i].from, to: ms[i].to, promotion: ms[i].promotion }); v = search(g, d - 1, a, b); g.undo();
-      if (w) { if (v > best) best = v; if (v > a) a = v; } else { if (v < best) best = v; if (v < b) b = v; }
-      if (b <= a) break;
-    }
-    return best;
-  }
-  function aiMove() {
-    var g = CG.g, w = g.turn() === 'w', ms = g.moves({ verbose: true }).sort(capFirst), best = ms[0], bv = w ? -Infinity : Infinity, nz = S.lvl === 1 ? 160 : 8;
-    ms.forEach(function (m) {
-      g.move({ from: m.from, to: m.to, promotion: m.promotion });
-      var v = search(g, S.lvl - 1, w ? bv - nz : -Infinity, w ? Infinity : bv + nz) + (Math.random() - .5) * nz;
-      g.undo(); if (w ? v > bv : v < bv) { bv = v; best = m; }
-    });
-    return best;
-  }
-  $('#chNew').addEventListener('click', function () { if (CG.cg) newGame(); });
-  $('#chSwap').addEventListener('click', function () { CG.side = CG.side === 'white' ? 'black' : 'white'; if (CG.cg) newGame(); });
+  $('#chSwap').addEventListener('click', function () {
+    CG.pref = CG.pref === 'white' ? 'black' : 'white';
+    chSt.textContent = 'You’ll play ' + CG.pref + ' in your next game.';
+  });
   $('#chUndo').addEventListener('click', function () {
-    var g = CG.g; if (!g || CG.busy || !g.history().length) return;
-    g.undo(); if (g.turn() !== CG.side[0] && g.history().length) g.undo();
-    chSync(); reply();
+    var gm = CG.game; if (!gm || CG.busy || gm.status !== 'open') return;
+    if (!gm.undone && !window.confirm('Take back your last move? This game will no longer earn rewards.')) return;
+    CG.busy = true;
+    chCall({ action: 'undo' }).then(function (j) { CG.busy = false; chShow(j.game); chRw.innerHTML = '<div><span>Undo used: this game earns no rewards.</span></div>'; },
+      function (e) { CG.busy = false; chSt.textContent = e.message; });
   });
   $$('#chLvl button').forEach(function (b) {
     b.classList.toggle('on', +b.getAttribute('data-l') === S.lvl);
@@ -3533,35 +3454,6 @@
   document.getElementById('authForm').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); auth('login'); }
   });
-
-  /* ---------- Liquid Glass cursor light ---------- */
-  (function initLoginGlassTilt() {
-    const shell = document.querySelector('.login-shell');
-    if (!shell) return;
-
-    let raf = null;
-    function handleMove(e) {
-      const rect = shell.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 100;
-      const y = ((e.clientY - rect.top) / rect.height) * 100;
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        shell.style.setProperty('--mx', `${x}%`);
-        shell.style.setProperty('--my', `${y}%`);
-        shell.style.setProperty('--rx', `${((y - 50) / 50) * -3}deg`);
-        shell.style.setProperty('--ry', `${((x - 50) / 50) * 3}deg`);
-        raf = null;
-      });
-    }
-    function resetTilt() {
-      shell.style.setProperty('--mx', '50%');
-      shell.style.setProperty('--my', '40%');
-      shell.style.setProperty('--rx', '0deg');
-      shell.style.setProperty('--ry', '0deg');
-    }
-    shell.addEventListener('mousemove', (e) => { if (window.Time12Perf.tier !== 'low') handleMove(e); });
-    shell.addEventListener('mouseleave', resetTilt);
-  })();
 
   /* ---------- 3D geometry backdrop (CSS 3D, replaces the old WebGL aurora) ---------- */
   const Geo = (function () {
@@ -9508,7 +9400,7 @@ Marketing,alex99,</div>
   /* ---------- Tour: card ---------- */
   .t12t-card {
     position: fixed; left: 0; top: 0; width: 340px; max-width: calc(100vw - 24px); pointer-events: auto;
-    background: var(--liquid-sheen), var(--bg); border: 1px solid var(--glass-border); border-radius: 14px; overflow: hidden;
+    background: var(--bg); border: 1px solid var(--glass-border); border-radius: 14px; overflow: hidden;
     box-shadow: var(--shadow-soft), 0 24px 60px rgba(0, 0, 0, .3);
   }
   .t12t-card.swap { animation: t12tCardIn .42s var(--t12t-ease) both; }
@@ -9541,7 +9433,7 @@ Marketing,alex99,</div>
   /* ---------- Invite prompt ---------- */
   #t12tInvite {
     position: fixed; right: 22px; bottom: 22px; width: 340px; max-width: calc(100vw - 24px); z-index: 2147481000;
-    background: var(--liquid-sheen), var(--bg); border: 1px solid var(--glass-border); border-radius: 16px; overflow: hidden;
+    background: var(--bg); border: 1px solid var(--glass-border); border-radius: 16px; overflow: hidden;
     box-shadow: var(--shadow-soft), 0 24px 60px rgba(0, 0, 0, .28); animation: t12tInviteIn .7s cubic-bezier(.2, 1.2, .3, 1) both;
   }
   #t12tInvite.out { animation: t12tInviteOut .3s ease forwards; }
@@ -10089,12 +9981,12 @@ Marketing,alex99,</div>
 <style id="t12nf-css">
   #t12nf { --nf-ease: cubic-bezier(.2, .8, .2, 1); --nf-spring: cubic-bezier(.34, 1.4, .5, 1);
     position: fixed; inset: 0; z-index: 1900; display: none; align-items: center; justify-content: center; padding: 24px;
-    background: rgba(0, 0, 0, .42); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); opacity: 0; transition: opacity .3s ease; }
+    background: rgba(0, 0, 0, .42);opacity: 0; transition: opacity .3s ease; }
   #t12nf.active { display: flex; }          /* .active = in the DOM flow (also during the close animation) */
   #t12nf.show { opacity: 1; }               /* .show   = visible; added one frame after .active so transitions run */
 
   .nf-panel { width: 100%; max-width: 960px; max-height: calc(100vh - 48px); max-height: calc(100dvh - 48px); display: flex; flex-direction: column; outline: none;
-    background: var(--liquid-sheen), var(--bg); border: 1px solid var(--app-glass-border); border-radius: 16px;
+    background: var(--bg); border: 1px solid var(--app-glass-border); border-radius: 16px;
     box-shadow: var(--shadow-soft), 0 30px 80px rgba(0, 0, 0, .3);
     transform: translateY(22px) scale(.95); opacity: 0; transition: transform .55s var(--nf-spring), opacity .3s ease; }
   #t12nf.show .nf-panel { transform: none; opacity: 1; }   /* NOTE: panel must NOT clip (overflow) or the dropdown menu gets cut */
@@ -10106,7 +9998,7 @@ Marketing,alex99,</div>
   .nf-dd { width: 210px; }
   #t12nf .custom-select-toggle { font-weight: 600; gap: 10px; }
   #t12nf .custom-select-toggle svg { margin-left: auto; flex-shrink: 0; }
-  #t12nf .custom-select-menu { background: var(--bg); -webkit-backdrop-filter: none; backdrop-filter: none; border: 1px solid var(--border);
+  #t12nf .custom-select-menu { background: var(--bg);border: 1px solid var(--border);
     top: calc(100% + 6px); max-height: 260px; box-shadow: 0 14px 36px rgba(0, 0, 0, .2); transform-origin: top center; animation: csIn .16s var(--nf-ease) both; }
   #t12nf .custom-select-option { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
   #t12nf .custom-select-option em { font-style: normal; font-size: 11px; font-weight: 600; color: var(--accent); background: var(--accent-soft); padding: 1px 8px; border-radius: 99px; }
@@ -10231,7 +10123,10 @@ Marketing,alex99,</div>
         b: ['Admins of a group send assignments, add and remove members and watch progress', 'Admins of a sub-group manage only that sub-group, and nothing outside it', 'Set admins from the new Admins button on each group', 'Only the owner creates accounts, deletes groups, sets admins or makes AI-marked tasks'] },
       { art: 'tasks', t: 'Assign to specific people',
         s: 'Give a task to just a few people in a group instead of everyone.',
-        b: ['Choose Whole group or Specific people when you create a task', 'Pick people from a custom menu of the group’s members', 'People who join the group later don’t receive it', 'Progress only counts the people you picked'] }
+        b: ['Choose Whole group or Specific people when you create a task', 'Pick people from a custom menu of the group’s members', 'People who join the group later don’t receive it', 'Progress only counts the people you picked'] },
+      { art: 'dock', t: 'Chess is decided on the server',
+        s: 'The computer’s moves, the rules and the result now all come from our server, so a win can’t be faked from the page.',
+        b: ['Your organization sets how many papers one game costs, from the new Chess card in the Org tab', 'You can only play once every assignment is handed in', 'Win on Hard to earn a king, and a second king if you moved your king the most', 'Otherwise the piece you moved the most becomes a one-time achievement on your Rewards page', 'Undo still works, but a game with Undo can’t earn rewards'] }
     ],
     minor: [
       { art: 'papers', t: 'The Rewards tab',
@@ -10480,7 +10375,7 @@ Marketing,alex99,</div>
 <script id="t12rw-js">
 (function () {
   'use strict';
-  var D = document, B = 'https://bukeabrzlgcwzwtzmwld.supabase.co/functions/v1/', ORG = B + 'manage-organizations', PAP = B + 'papers';
+  var D = document, B = 'https://bukeabrzlgcwzwtzmwld.supabase.co/functions/v1/', ORG = B + 'manage-organizations', PAP = B + 'papers', CHS = B + 'chess';
   var CH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
   var SPARK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/></svg>';
   var box, S = { sel: null, amt: 1, d: null };
@@ -10495,11 +10390,12 @@ Marketing,alex99,</div>
   function load() {
     var org = who().indexOf('@') < 0, now = Date.now();
     var rem = call(PAP, { action: 'list' }).then(function (j) { j.ok = true; return j; }, function (e) { throw new Error(/^HTTP \d+$/.test(e.message) ? 'Couldn’t load your papers. Try again in a moment.' : e.message); });
-    if (!org) return Promise.all([call(ORG, { action: 'get_user_tasks' }), rem]).then(function (a) {
+    var chs = org ? Promise.resolve({}) : call(CHS, { action: 'rewards' }).catch(function () { return { kings: 0, achievements: [] }; });   /* chess is a bonus: never block papers */
+    if (!org) return Promise.all([call(ORG, { action: 'get_user_tasks' }), rem, chs]).then(function (a) {
       var e = 0, l = 0, x = 0, ad = 0; (a[0].tasks || []).forEach(function (t) { if (t.status === 'completed') e++; else if (t.dueDate && now > new Date(t.dueDate).getTime()) l++; });
       Object.keys(a[1].removed || {}).forEach(function (k) { x += a[1].removed[k]; });
       Object.keys(a[1].adj || {}).forEach(function (k) { ad += a[1].adj[k]; });
-      var sp = +a[1].spent || 0; return { org: false, e: e, l: l, x: x, a: ad, sp: sp, kings: +a[1].kings || 0, cost: a[1].chessCost, net: e - l - x + ad - sp, log: a[1].log || [] };
+      var sp = +a[1].spent || 0; return { org: false, e: e, l: l, x: x, a: ad, sp: sp, kings: +a[2].kings || 0, ach: a[2].achievements || [], cost: a[1].chessCost, net: e - l - x + ad - sp, log: a[1].log || [] };
     });
     return Promise.all([call(ORG, { action: 'get_task_report' }), call(ORG, { action: 'list_accounts' }), rem]).then(function (a) {
       var m = {}; (a[1].accounts || []).forEach(function (u) { m[u.id] = { id: u.id, name: u.username, e: 0, l: 0 }; });
@@ -10518,7 +10414,7 @@ Marketing,alex99,</div>
 
   /* ---- the reward tiles. To add a reward later: push another tile() here, and delete or keep the Coming soon tile below it. ---- */
   function tile(o) {
-    return '<div class="rw-tile"><div class="rw-ico"><img src="' + o.img + '" alt="" draggable="false"></div>' +
+    return '<div class="rw-tile"><div class="rw-ico" data-g="' + (o.g || '') + '"><img src="' + o.img + '" alt="" draggable="false" onerror="this.parentNode.classList.add(&quot;noimg&quot;)"></div>' +
       '<div class="rw-amt" data-n="' + o.n + '">0</div><div class="rw-name">' + o.name + '</div>' +
       '<p class="rw-desc">' + o.desc + '</p>' + (o.sub ? '<div class="rw-sub">' + o.sub + '</div>' : '') + '</div>';
   }
@@ -10529,17 +10425,26 @@ Marketing,alex99,</div>
   function tiles(d) {
     return '<div class="rw-tiles">' +
       tile({ img: 'papery.png', n: d.net, name: Math.abs(d.net) === 1 ? 'Paper' : 'Papers', desc: 'Our Mascot. He’s very... papery.', sub: d.org ? 'Total across your organization' : d.net < 0 ? 'You’re in the red. Finish tasks on time to climb back up.' : '' }) +
-      (d.org ? '' : tile({ img: 'king.png', n: d.kings, name: d.kings === 1 ? 'King' : 'Kings', desc: 'Win a game of chess against the computer to claim one.', sub: d.cost ? 'A game costs ' + d.cost + ' papers' : '' })) +
+      (d.org ? '' : tile({ img: 'king.png', g: '♚', n: d.kings, name: d.kings === 1 ? 'King' : 'Kings', desc: 'Win at chess on Hard to earn one.', sub: d.cost ? 'A game costs ' + d.cost + ' papers' : '' })) +
       soonTile() + '</div>';
   }
 
+  /* one-time chess achievements: earned by winning on Hard with that piece moved the most. Not on any leaderboard. */
+  var PIECES = [['pawn', 'Pawn', '♙'], ['knight', 'Knight', '♘'], ['bishop', 'Bishop', '♗'], ['rook', 'Rook', '♖'], ['queen', 'Queen', '♕']];
+  function ach(d) {
+    var have = {}; (d.ach || []).forEach(function (a) { have[a.piece] = a.earned_at; });
+    return '<div class="rw-card rw-ach"><h4>Achievements</h4><p class="rw-how">Win a game of chess on Hard and the piece you moved the most is yours. Each one can only be earned once.</p><div class="rw-ach-grid">' +
+      PIECES.map(function (p) {
+        return '<div class="rw-ach-i' + (have[p[0]] ? ' on' : '') + '"><div class="rw-ico-s" data-g="' + p[2] + '"><img src="' + p[0] + '.png" alt="" draggable="false" onerror="this.parentNode.classList.add(&quot;noimg&quot;)"></div><b>' + p[1] + '</b><span>' + (have[p[0]] ? 'Earned ' + new Date(have[p[0]]).toLocaleDateString() : 'Locked') + '</span></div>';
+      }).join('') + '</div></div>';
+  }
   function render() {
     var d = S.d, h = '';
     if (!d) h = '<div class="rw-msg" style="padding:70px 0;text-align:center">Counting papers…</div>';
     else if (d.err) h = '<div class="rw-msg err" style="padding:50px 0;text-align:center">' + esc(d.err) + '</div>';
     else if (!d.org) {
       h = tiles(d) + '<div class="rw-stats"><div><b class="rw-up">+' + d.e + '</b><span>Earned</span></div><div><b class="rw-dn">−' + d.l + '</b><span>Lost</span></div><div><b class="rw-dn">−' + d.x + '</b><span>Removed</span></div>' + (d.sp ? '<div><b class="rw-dn">−' + d.sp + '</b><span>Chess</span></div>' : '') + (d.a ? '<div><b class="' + (d.a > 0 ? 'rw-up' : 'rw-dn') + '">' + (d.a > 0 ? '+' : '−') + Math.abs(d.a) + '</b><span>Adjusted</span></div>' : '') + '</div>' +
-        '<p class="rw-how">Finish a task and get it checked to earn a paper. Let one close unfinished and you lose one. Your total can drop below zero.</p>' +
+        '<p class="rw-how">Finish a task and get it checked to earn a paper. Let one close unfinished and you lose one. Your total can drop below zero.</p>' + ach(d) +
         (d.log.length ? '<div class="rw-card rw-log"><h4>Taken back by your organization</h4>' + d.log.slice(0, 6).map(function (r) { return '<div><span>−' + r.amount + (r.reason ? ' · ' + esc(r.reason) : '') + '</span><span>' + new Date(r.created_at).toLocaleDateString() + '</span></div>'; }).join('') + '</div>' : '');
     } else {
       var pick = d.rows.filter(function (u) { return u.net > 0; });
@@ -10691,11 +10596,6 @@ Marketing,alex99,</div>
 .rw-f .custom-select-wrapper { width: 100%; }
 </style>
 <style id="t12x-css">
-/* ---- Flat look: no liquid glass, true white ---- */
-:root{--bf:none;--surface:#F6F6F6;--surface-2:#EEEEEE;--border:#E4E4E4;--glass-bg:#FFFFFF;--app-glass-bg:#FFFFFF;--glass-border:rgba(0,0,0,.12);--app-glass-border:rgba(0,0,0,.1);--glass-highlight:transparent;--glass-inset:none;--app-glass-shadow:0 1px 3px rgba(0,0,0,.05),0 6px 18px rgba(0,0,0,.05);--liquid-sheen:none;--liquid-pill-bg:#FFFFFF;--liquid-chip-bg:#F6F6F6}
-html:not([data-theme="dark"]){--bf:none;--surface:#F6F6F6;--surface-2:#EEEEEE;--border:#E4E4E4;--glass-bg:#FFFFFF;--app-glass-bg:#FFFFFF;--glass-highlight:transparent;--glass-inset:none;--app-glass-shadow:0 1px 3px rgba(0,0,0,.05),0 6px 18px rgba(0,0,0,.05);--liquid-sheen:none;--liquid-pill-bg:#FFFFFF;--liquid-chip-bg:#F6F6F6}
-html[data-theme="dark"]{--bf:none;--glass-bg:#1B1B1B;--app-glass-bg:#1A1A1A;--glass-highlight:transparent;--glass-inset:none;--app-glass-shadow:0 1px 3px rgba(0,0,0,.4),0 8px 22px rgba(0,0,0,.3);--liquid-sheen:none;--liquid-pill-bg:#262626;--liquid-chip-bg:#222}
-
 /* ---- Admin review queue ---- */
 .rq-wrap{margin-top:48px;padding-top:28px;border-top:2px solid var(--border)}
 .rq-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px}
@@ -10789,6 +10689,53 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
 /* ---- Admin section sub-headings ---- */
 .rq-h3{display:flex;align-items:center;gap:10px;margin:32px 0 14px;font:600 15px var(--sans);color:var(--text)}
 .rq-wrap .table-wrapper{margin-bottom:0!important}
+
+/* ---- Chess achievements + result lines (server chess) ---- */
+.rw-ico.noimg img,.rw-ico-s.noimg img{display:none}
+.rw-ico.noimg::after{content:attr(data-g);font:400 110px/1 var(--serif);color:var(--text);opacity:.85}
+.rw-ach{margin-top:18px}
+.rw-ach .rw-how{margin:0 0 20px}
+.rw-ach-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:14px}
+.rw-ach-i{display:flex;flex-direction:column;align-items:center;gap:6px;padding:20px 10px 16px;border:1px solid var(--border);border-radius:16px;text-align:center;background:var(--bg)}
+.rw-ach-i.on{border-color:var(--accent)}
+.rw-ach-i .rw-ico-s{display:grid;place-items:center;width:72px;height:72px;filter:grayscale(1);opacity:.35;transition:filter .3s,opacity .3s}
+.rw-ach-i.on .rw-ico-s{filter:none;opacity:1}
+.rw-ach-i .rw-ico-s img{width:100%;height:100%;object-fit:contain}
+.rw-ico-s.noimg::after{content:attr(data-g);font-size:52px;line-height:1;color:var(--text)}
+.rw-ach-i b{font-size:14px;color:var(--text)}
+.rw-ach-i span{font-size:12px;color:var(--text-muted)}
+.rw-row b.rw-k{color:var(--text-soft)}
+#t12dk .ch-rw{display:flex;flex-direction:column;align-items:center;gap:6px;margin:-2px 0 8px;font:600 12px var(--sans);color:var(--accent);text-align:center}
+#t12dk .ch-rw:empty{display:none}
+#t12dk .ch-rw div{display:flex;align-items:center;gap:7px}
+#t12dk .ch-rwi{width:22px;height:22px;object-fit:contain}
+#t12dk .dk-btn:disabled{opacity:.45;cursor:not-allowed}
+
+/* ---- Index: type, press Enter, finish by the end of tomorrow ---- */
+.ix{margin-top:36px;padding-top:22px;border-top:1px solid var(--border)}
+.ix-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.ix-title{font:400 20px var(--serif);color:var(--text)}
+.ix-streak{display:inline-flex;align-items:baseline;gap:6px;padding:4px 12px;border-radius:99px;background:var(--accent-soft);color:var(--accent);font:600 12.5px var(--sans);white-space:nowrap}
+.ix-streak b{font-size:15px;font-variant-numeric:tabular-nums}.ix-streak i{font-style:normal;font-weight:500;opacity:.7}
+.ix-input{width:100%;height:44px;padding:0 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font:400 15px var(--sans);outline:none;transition:border-color .15s,box-shadow .15s}
+.ix-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}.ix-input::placeholder{color:var(--text-muted)}
+.ix-msg{min-height:18px;margin:6px 2px 0;font-size:12.5px;color:var(--text-muted)}.ix-msg.bad{color:var(--danger)}
+.ix-list{display:flex;flex-direction:column;gap:8px;margin-top:6px}
+.ix-sub{margin:10px 2px 0;font:600 11px var(--sans);letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted)}
+.ix-item{border:1px solid var(--border);border-radius:12px;background:var(--bg);overflow:hidden}
+.ix-row{display:flex;align-items:center;gap:12px;width:100%;min-height:46px;padding:10px 14px;border:0;background:none;color:var(--text);font:400 14.5px var(--sans);text-align:left;cursor:pointer}
+.ix-row:hover{background:var(--surface)}
+.ix-tick{display:grid;place-items:center;flex:none;width:20px;height:20px;border:1.5px solid var(--border);border-radius:6px;font-size:12px;line-height:1;color:#fff}
+.ix-t{flex:1;min-width:0;overflow-wrap:anywhere}
+.ix-due{flex:none;font-size:12px;color:var(--text-muted)}
+.ix-confirm{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:10px 14px 12px;border-top:1px dashed var(--border);font-size:13px;color:var(--text-soft)}
+.ix-confirm span{flex:1 1 140px}
+.ix-btn{height:36px;padding:0 16px;border-radius:10px;font:600 13px var(--sans);cursor:pointer}
+.ix-btn.yes{border:1px solid var(--success);background:var(--success);color:#fff}.ix-btn.no{border:1px solid var(--border);background:none;color:var(--text-soft)}
+.ix-item.done .ix-t{text-decoration:line-through;color:var(--text-muted)}.ix-item.done .ix-tick{background:var(--success);border-color:var(--success)}
+.ix-item.failed{border-left:4px solid var(--danger)}.ix-item.failed .ix-t{color:var(--text-muted)}.ix-item.failed .ix-tick{background:var(--danger);border-color:var(--danger)}.ix-item.failed .ix-due{color:var(--danger);font-weight:600}
+.ix-item.done .ix-row,.ix-item.failed .ix-row{cursor:default}.ix-item.done .ix-row:hover,.ix-item.failed .ix-row:hover{background:none}
+.ix-empty{padding:14px 2px;font-size:13.5px;color:var(--text-muted)}
 </style>
 <script id="t12x-js">
 (function () {
@@ -10916,6 +10863,84 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
     window.addEventListener('resize', function () { if (w.classList.contains('open')) sync(); });
   });
   window.T12Board = { show: show };
+})();
+</script>
+<script>
+/* ---------- Index: type a line, press Enter, it is due by the end of tomorrow. Tick it (click, then Confirm) or it fails.
+   The streak counts index tasks done in a row; any failure sets it to 0. Papers are never touched. ---------- */
+(function () {
+  var D = document, inp = D.getElementById('ixInput'), list = D.getElementById('ixList'), msg = D.getElementById('ixMsg'),
+      sN = D.getElementById('ixStreakN'), bestEl = D.getElementById('ixBest');
+  if (!inp || !list) return;
+  var MAX_RESOLVED = 60, openId = null, msgT = 0;
+  function who() { try { return JSON.parse(decodeURIComponent(escape(atob(localStorage.getItem('authToken').split('.')[0])))).username || 'guest'; } catch (e) { return 'guest'; } }
+  function key() { return 'time12_index_v1_' + who(); }
+  function load() {
+    try { var s = JSON.parse(localStorage.getItem(key())); if (s && Array.isArray(s.items)) return { items: s.items, streak: +s.streak || 0, best: +s.best || 0 }; } catch (e) {}
+    return { items: [], streak: 0, best: 0 };
+  }
+  var curKey = key(), st = load();
+  function save() {
+    var done = st.items.filter(function (i) { return i.s !== 'open'; }).sort(function (a, b) { return b.at - a.at; }).slice(0, MAX_RESOLVED);
+    st.items = st.items.filter(function (i) { return i.s === 'open'; }).concat(done);
+    try { localStorage.setItem(curKey, JSON.stringify(st)); } catch (e) {}
+  }
+  function endOfTomorrow() { var d = new Date(); d.setDate(d.getDate() + 1); d.setHours(23, 59, 59, 999); return d.getTime(); }
+  function esc(t) { return String(t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function dayWord(t) {
+    var d = new Date(t), n = new Date(), a = new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime(), b = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(), k = Math.round((b - a) / 864e5);
+    return k === 0 ? 'today' : k === 1 ? 'tomorrow' : d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
+  }
+  /* anything past its deadline and still open has failed; the streak drops to 0 */
+  function sweep() {
+    var now = Date.now(), late = st.items.filter(function (i) { return i.s === 'open' && now > i.due; });
+    if (!late.length) return false;
+    late.forEach(function (i) { i.s = 'failed'; i.at = i.due; }); st.streak = 0; save(); return true;
+  }
+  function say(t, bad) { msg.textContent = t || ''; msg.classList.toggle('bad', !!bad); clearTimeout(msgT); if (t) msgT = setTimeout(function () { msg.textContent = ''; }, 4000); }
+  function render() {
+    if (key() !== curKey) { curKey = key(); st = load(); openId = null; }
+    sweep();
+    sN.textContent = st.streak; bestEl.textContent = st.best > st.streak ? ' · best ' + st.best : '';
+    var open = st.items.filter(function (i) { return i.s === 'open'; }).sort(function (a, b) { return a.due - b.due; }),
+        past = st.items.filter(function (i) { return i.s !== 'open'; }).sort(function (a, b) { return b.at - a.at; }).slice(0, 8), h = '';
+    open.forEach(function (i) {
+      h += '<div class="ix-item" data-id="' + i.id + '"><button type="button" class="ix-row" data-ix="pick" aria-expanded="' + (openId === i.id) + '"><span class="ix-tick"></span><span class="ix-t">' + esc(i.t) + '</span><span class="ix-due">Due ' + dayWord(i.due) + '</span></button>' +
+        (openId === i.id ? '<div class="ix-confirm"><span>Did you finish this?</span><button type="button" class="ix-btn yes" data-ix="yes">Confirm</button><button type="button" class="ix-btn no" data-ix="no">Not yet</button></div>' : '') + '</div>';
+    });
+    if (!open.length) h += '<div class="ix-empty">Nothing due. Type something above and press Enter.</div>';
+    if (past.length) h += '<div class="ix-sub">Recent</div>' + past.map(function (i) {
+      return '<div class="ix-item ' + (i.s === 'done' ? 'done' : 'failed') + '"><div class="ix-row"><span class="ix-tick">' + (i.s === 'done' ? '✓' : '✕') + '</span><span class="ix-t">' + esc(i.t) + '</span><span class="ix-due">' + (i.s === 'done' ? 'Done' : 'Failed') + '</span></div></div>';
+    }).join('');
+    list.innerHTML = h;
+  }
+  inp.addEventListener('keydown', function (e) {
+    e.stopPropagation();   /* keep the notes shortcuts out of this box */
+    if (e.key !== 'Enter' || e.isComposing) return;
+    e.preventDefault();
+    var t = inp.value.replace(/\s+/g, ' ').trim(); if (!t) return;
+    sweep();
+    st.items.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), t: t, s: 'open', created: Date.now(), due: endOfTomorrow(), at: 0 });
+    save(); inp.value = ''; openId = null; render(); say('Added. It is due by the end of tomorrow.');
+  });
+  ['keyup', 'keypress'].forEach(function (n) { inp.addEventListener(n, function (e) { e.stopPropagation(); }); });
+  list.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-ix]'); if (!b) return;
+    var row = b.closest('[data-id]'), id = row && row.getAttribute('data-id'), a = b.getAttribute('data-ix');
+    if (a === 'pick') { openId = openId === id ? null : id; render(); return; }
+    if (a === 'no') { openId = null; render(); return; }
+    if (a === 'yes') {
+      sweep();
+      var it = st.items.filter(function (i) { return i.id === id; })[0];
+      if (it && it.s === 'open') { it.s = 'done'; it.at = Date.now(); st.streak++; if (st.streak > st.best) st.best = st.streak; save(); say('Done. Streak: ' + st.streak + '.'); }
+      else say('Too late, that one already failed.', true);
+      openId = null; render();
+    }
+  });
+  render();
+  setInterval(function () { if (sweep()) render(); }, 30000);
+  D.addEventListener('visibilitychange', function () { if (!D.hidden) render(); });
+  window.addEventListener('focus', render);
 })();
 </script>
 </body>
