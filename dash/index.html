@@ -10971,12 +10971,12 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) { var r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); });
   }
   function load() {
-    var out = { items: [], best: 0, base: { c: 0, last: -1 }, del: [] };
+    var out = { items: [], best: 0, base: { days: {}, fail: 0 }, del: [] };
     try {
       var s = JSON.parse(localStorage.getItem(key()));
       if (s && Array.isArray(s.items)) {
         out.best = +s.best || 0;
-        if (s.base) out.base = { c: +s.base.c || 0, last: s.base.last == null ? -1 : +s.base.last };
+        if (s.base && s.base.days && typeof s.base.days === 'object') out.base = { days: s.base.days, fail: +s.base.fail || 0 };
         if (Array.isArray(s.del)) out.del = s.del.filter(function (x) { return UU.test(x || ''); }).slice(0, 100);
         s.items.forEach(function (i) {
           if (!i || typeof i.t !== 'string' || !(+i.due > 0)) return;
@@ -10994,13 +10994,22 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
     try { localStorage.setItem(curKey, JSON.stringify({ items: st.items, best: st.best, base: st.base, del: st.del })); } catch (e) {}
   }
   function dayKey(t) { var d = new Date(t); return d.getFullYear() * 400 + d.getMonth() * 32 + d.getDate(); }
-  function streak() {   /* +1 for each day you submitted at least one; any failure sets it back to 0 */
-    var c = st.base.c, b = st.best || 0, last = st.base.last;
-    st.items.filter(function (i) { return i.s !== 'open'; }).sort(function (a, b) { return a.at - b.at; }).forEach(function (i) {
-      if (i.s === 'done') { var k = dayKey(i.at); if (k !== last) { c++; last = k; if (c > b) b = c; } }
-      else { c = 0; last = -1; }
+  function cnt(o) { return Object.keys(o).length; }
+  function apply(o, a) {   /* idempotent: replaying an item twice changes nothing, so deleting items never lowers the streak */
+    a.filter(function (i) { return i.s !== 'open'; }).sort(function (x, y) { return x.at - y.at; }).forEach(function (i) {
+      if (i.at <= o.fail) return;
+      if (i.s === 'done') { var k = dayKey(i.at); if (!(o.days[k] >= i.at)) o.days[k] = i.at; if (cnt(o.days) > st.best) st.best = cnt(o.days); }
+      else { o.fail = i.at; for (var d in o.days) if (o.days[d] <= i.at) delete o.days[d]; }
     });
-    st.best = b; return c;
+  }
+  function full() { var o = JSON.parse(JSON.stringify(st.base)); apply(o, st.items); return { days: o.days, fail: o.fail, best: st.best }; }
+  function streak() { return cnt(full().days); }
+  function merge(r) {   /* fold the account's streak into the local one */
+    if (!r || typeof r !== 'object') return; var b = st.base;
+    b.fail = Math.max(b.fail, +r.fail || 0);
+    for (var k in (r.days || {})) { var at = +r.days[k]; if (at > b.fail && !(b.days[k] >= at)) b.days[k] = at; }
+    for (var d in b.days) if (b.days[d] <= b.fail) delete b.days[d];
+    st.best = Math.max(st.best, +r.best || 0);
   }
   function endOfTomorrow() { var d = new Date(); d.setDate(d.getDate() + 1); d.setHours(23, 59, 59, 999); return d.getTime(); }
   function esc(t) { return String(t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
@@ -11008,15 +11017,9 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
     var d = new Date(t), n = new Date(), a = new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime(), b = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(), k = Math.round((b - a) / 864e5);
     return k === 0 ? 'today' : k === 1 ? 'tomorrow' : d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
   }
-  function fold(a) {   /* items older than 30 days are deleted, but the streak they built keeps running */
-    var b = st.base;
-    a.filter(function (i) { return i.s !== 'open'; }).sort(function (x, y) { return x.at - y.at; }).forEach(function (i) {
-      if (i.s === 'done') { var k = dayKey(i.at); if (k !== b.last) { b.c++; b.last = k; if (b.c > st.best) st.best = b.c; } } else { b.c = 0; b.last = -1; }
-    });
-  }
   function sweep() {   /* older than 30 days: deleted. Past its deadline and still open: failed, streak drops to 0 */
     var now = Date.now(), cut = now - KEEP, ch = false, old = st.items.filter(function (i) { return i.created < cut; });
-    if (old.length) { fold(old); st.items = st.items.filter(function (i) { return i.created >= cut; }); ch = true; }
+    if (old.length) { apply(st.base, old); st.items = st.items.filter(function (i) { return i.created >= cut; }); ch = true; }
     var late = st.items.filter(function (i) { return i.s === 'open' && now > i.due; });
     late.forEach(function (i) { i.s = 'failed'; i.at = i.due; i.dirty = true; ch = true; });
     if (ch) save(); return ch;
@@ -11112,7 +11115,7 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
     if (a === 'del') {
       var d = st.items.filter(function (i) { return i.id === id; })[0];
       if (!d || busy[id] || !canDel(d)) { say('That one can no longer be deleted.', true); openId = null; render(); return; }
-      st.items = st.items.filter(function (i) { return i !== d; }); st.del.push(d.id); save(); openId = null; say('Deleted.'); render(); mountQuiet(); syncSoon(150); return;
+      apply(st.base, [d]); st.items = st.items.filter(function (i) { return i !== d; }); st.del.push(d.id); save(); openId = null; say('Deleted.'); render(); mountQuiet(); syncSoon(150); return;
     }
     if (a === 'yes') {
       if (busy[id]) return;
@@ -11143,10 +11146,10 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
     syncing = true; lastTry = Date.now(); render();
     var ac = window.AbortController ? new AbortController() : null, to = setTimeout(function () { if (ac) ac.abort(); }, 12000);
     var send = batch.map(function (i) { return { id: i.id, t: i.t, s: i.s, due: i.due, at: i.at, created: i.created }; });
-    return fetch(API, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok() }, body: JSON.stringify({ action: 'sync', items: send, del: dels, open: first ? 1 : 0 }), signal: ac ? ac.signal : undefined })
+    return fetch(API, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok() }, body: JSON.stringify({ action: 'sync', items: send, del: dels, open: first ? 1 : 0, streak: full() }), signal: ac ? ac.signal : undefined })
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status); return j; }); })
       .then(function (j) {
-        var by = {}, seen = {}, pd = {}; st.del = st.del.filter(function (x) { return !sentDel[x]; }); st.del.forEach(function (x) { pd[x] = 1; }); st.items.forEach(function (i) { by[i.id] = i; });
+        merge(j.streak); var by = {}, seen = {}, pd = {}; st.del = st.del.filter(function (x) { return !sentDel[x]; }); st.del.forEach(function (x) { pd[x] = 1; }); st.items.forEach(function (i) { by[i.id] = i; });
         (j.items || []).forEach(function (r) {
           if (!r || !UU.test(r.id || '') || typeof r.t !== 'string' || pd[r.id]) return;
           seen[r.id] = 1;
