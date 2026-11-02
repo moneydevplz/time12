@@ -2619,7 +2619,7 @@
       <!-- Chess -->
       <section class="dk-view ch" data-v="ch" role="tabpanel">
         <div class="dk-seg" id="chLvl" role="group" aria-label="Difficulty" style="margin-bottom:2px"><button type="button" data-l="1">Easy</button><button type="button" data-l="2">Normal</button><button type="button" data-l="3">Hard</button></div>
-        <div class="ch-frame" id="chFrame"><div id="chBoard"></div><div class="ch-load">Setting up the board…</div></div>
+        <div class="ch-frame" id="chFrame"><div id="chBoard"></div><div class="ch-load">Setting up the board…</div><div class="ch-gate" id="chGate" hidden></div></div>
         <div class="ch-st" id="chSt" role="status"></div>
         <div class="ch-rw" id="chRw" aria-live="polite"></div>
         <div class="dk-row ch-ctl"><button class="dk-btn" id="chNew" type="button">New game</button><button class="dk-btn" id="chUndo" type="button" title="Taking back a move means this game can no longer earn rewards">Undo</button><button class="dk-btn" id="chSwap" type="button">Swap sides</button></div>
@@ -2798,7 +2798,7 @@
   pmBell.setAttribute('aria-pressed', S.mute);
 
   /* ---------------- chess (the server runs the game: it checks your move, plays the reply and decides who won) ---------------- */
-  var CG = { cg: null, g: null, Chess: null, pref: 'white', busy: false, loading: false, lib: null, css: false, game: null, st: null },
+  var CG = { cg: null, g: null, Chess: null, pref: 'white', busy: false, loading: false, lib: null, css: false, game: null, st: null, gate: null, paying: false },
       CDN = 'https://cdn.jsdelivr.net/npm/', CHESS_API = 'https://bukeabrzlgcwzwtzmwld.supabase.co/functions/v1/chess',
       START = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR', chSt = $('#chSt'), chRw = $('#chRw');
   function chCall(b) {
@@ -2860,6 +2860,27 @@
     nb.textContent = 'New game' + (c ? ' · ' + c : '');
     nb.disabled = !!(s && !s.free && (s.locked || c > (s.balance || 0)));
     $('#chUndo').disabled = !(CG.game && CG.game.status === 'open');
+    chGateView();
+  }
+  /* the dark cover: a paid game only starts after you tap Play and then Confirm the price */
+  var LVN = ['', 'Easy', 'Normal', 'Hard'];
+  function chPays() { var s = CG.st; return !!(s && !s.free && (s.cost || 0) > 0); }
+  function chGateView() {
+    var el = $('#chGate'); if (!el) return;
+    var s = CG.st, gm = CG.game, c = (s && s.cost) || 0, bal = (s && s.balance) || 0, live = !!(gm && gm.status === 'open' && !gm.over);
+    var show = chPays() && (CG.paying || CG.gate === 'confirm' || (!live && !gm));
+    el.hidden = !show; if (!show) return;
+    var pl = function (n) { return n + ' paper' + (n === 1 ? '' : 's'); }, t, sub = '', b = '', click = false;
+    if (CG.paying) t = 'Setting up your game…';
+    else if (s.locked) { t = 'Chess is locked'; sub = 'Hand in your ' + s.undone + ' outstanding assignment' + (s.undone === 1 ? '' : 's') + ' first.'; }
+    else if (c > bal) { t = 'A game costs ' + pl(c); sub = 'You have ' + bal + '. You need ' + (c - bal) + ' more to play.'; }
+    else if (CG.gate === 'confirm') {
+      t = 'Use ' + pl(c) + ' to play?';
+      sub = LVN[S.lvl] + ' · you play ' + CG.pref + '. You’ll have ' + (bal - c) + ' left.' + (live ? ' Your current game will count as lost.' : '');
+      b = '<button type="button" class="dk-btn ch-go" data-g="yes">Confirm · ' + c + '</button><button type="button" class="dk-btn" data-g="no">Cancel</button>';
+    } else { t = 'A game costs ' + pl(c); sub = 'You have ' + bal + '. Tap to play.'; b = '<button type="button" class="dk-btn ch-go" data-g="ask">Play · ' + c + '</button>'; click = true; }
+    el.setAttribute('data-click', click ? '1' : '');
+    el.innerHTML = '<b>' + t + '</b>' + (sub ? '<span>' + sub + '</span>' : '') + (b ? '<div class="dk-row">' + b + '</div>' : '');
   }
   function rwLine(img, text) { return '<div><img class="ch-rwi" src="' + img + '.png" alt="" onerror="this.style.display=&quot;none&quot;"><span>' + text + '</span></div>'; }
   function chEnd(j) {
@@ -2879,17 +2900,28 @@
     chCall({ action: 'move', from: from, to: to }).then(function (j) { CG.busy = false; chShow(j.game); if (j.result) chEnd(j); },
       function (e) { CG.busy = false; if (e.data && e.data.game) chShow(e.data.game); else chRefresh(); chSt.textContent = e.message; });
   }
+  function chStart() {
+    if (!CG.cg || CG.busy) return;
+    CG.gate = null; CG.busy = true; CG.paying = chPays(); chRw.innerHTML = ''; chSt.textContent = 'Setting up…'; chGateView();
+    chCall({ action: 'start', level: S.lvl, side: CG.pref }).then(function (j) { CG.busy = false; CG.paying = false; chShow(j.game); chRefresh(true); },
+      function (e) { CG.busy = false; CG.paying = false; chSt.textContent = e.message; chGateView(); chRefresh(true); });
+  }
   $('#chNew').addEventListener('click', function () {
     if (!CG.cg || CG.busy) return;
+    if (chPays()) { CG.gate = 'confirm'; chGateView(); return; }   /* paid: the cover asks first */
     var gm = CG.game;
-    if (gm && gm.status === 'open' && gm.plies > (gm.side === 'w' ? 0 : 1) && !window.confirm('Start a new game? This one is already paid for and will count as lost.')) return;
-    CG.busy = true; chRw.innerHTML = ''; chSt.textContent = 'Setting up…';
-    chCall({ action: 'start', level: S.lvl, side: CG.pref }).then(function (j) { CG.busy = false; chShow(j.game); chRefresh(true); },
-      function (e) { CG.busy = false; chSt.textContent = e.message; chRefresh(true); });
+    if (gm && gm.status === 'open' && gm.plies > (gm.side === 'w' ? 0 : 1) && !window.confirm('Start a new game? This one will count as lost.')) return;
+    chStart();
+  });
+  $('#chGate').addEventListener('click', function (e) {
+    var b = e.target.closest('[data-g]'), a = b ? b.getAttribute('data-g') : (this.getAttribute('data-click') ? 'ask' : '');
+    if (a === 'ask') { CG.gate = 'confirm'; chGateView(); }
+    else if (a === 'no') { CG.gate = null; chGateView(); }
+    else if (a === 'yes') chStart();
   });
   $('#chSwap').addEventListener('click', function () {
     CG.pref = CG.pref === 'white' ? 'black' : 'white';
-    chSt.textContent = 'You’ll play ' + CG.pref + ' in your next game.';
+    chSt.textContent = 'You’ll play ' + CG.pref + ' in your next game.'; chGateView();
   });
   $('#chUndo').addEventListener('click', function () {
     var gm = CG.game; if (!gm || CG.busy || gm.status !== 'open') return;
@@ -2900,7 +2932,7 @@
   });
   $$('#chLvl button').forEach(function (b) {
     b.classList.toggle('on', +b.getAttribute('data-l') === S.lvl);
-    b.addEventListener('click', function () { S.lvl = +b.getAttribute('data-l'); $$('#chLvl button').forEach(function (x) { x.classList.toggle('on', x === b); }); save(); });
+    b.addEventListener('click', function () { S.lvl = +b.getAttribute('data-l'); $$('#chLvl button').forEach(function (x) { x.classList.toggle('on', x === b); }); save(); chGateView(); });
   });
 
   /* ---------------- youtube ---------------- */
@@ -10106,6 +10138,12 @@ Marketing,alex99,</div>
   var RELEASES = [{
     id: 'haze', name: 'Haze', ico: 'nf-haze', tag: 'Latest',
     major: [
+      { art: 'tasks', t: 'Index: quick tasks for yourself',
+        s: 'A button at the end of the Tasks tab opens a window where you give yourself quick tasks. Only you can add or see them.',
+        b: ['Type a line and press Enter: it is due by the end of tomorrow', 'Click it, press Confirm, and it is scratched out and submitted', 'Miss the deadline and it fails', 'Your streak grows once a day however many you submit, and one failure sets it back to 0', 'It never touches your papers'] },
+      { art: 'dialogs', t: 'A flat, pure-white look',
+        s: 'Liquid Glass is gone. Panels, the sidebar, dialogs and the dock are solid white, and solid charcoal in dark mode.',
+        b: ['No more blur, sheen or glow behind panels', 'Steadier on slower devices'] },
       { art: 'papers', t: 'Papers: a streak you can hold',
         s: 'Finish an assignment and get it checked, and you earn a paper. Let one close unfinished and you lose one.',
         b: ['One paper for every task that is verified or accepted by the AI', 'One paper lost for every task that closes unfinished', 'Your count lives in the new Rewards tab', 'Worked out from your real task record, so it can’t be faked'] },
@@ -10126,6 +10164,12 @@ Marketing,alex99,</div>
         b: ['Your organization sets how many papers one game costs, from the new Chess card in the Org tab', 'You can only play once every assignment is handed in', 'Win on Hard to earn a king, and a second king if you moved your king the most', 'Otherwise the piece you moved the most becomes a one-time achievement on your Rewards page', 'Undo still works, but a game with Undo can’t earn rewards'] }
     ],
     minor: [
+      { art: 'tasks', t: 'Index works offline',
+        s: 'Items save on your device first, so nothing waits on the network.',
+        b: ['Saved the moment you press Enter, even with no connection', 'They sync to your account once you are back online', 'A pill shows Online or Offline, and each item shows whether it has synced yet'] },
+      { art: 'dock', t: 'Chess asks before it charges',
+        s: 'The board stays dimmed until you tap Play and confirm the price.',
+        b: ['Shows the price, your papers and what you will have left', 'A game now costs 5 papers by default, and your organization can still change it', 'Locked or short on papers? The cover tells you why'] },
       { art: 'papers', t: 'The Rewards tab',
         s: 'A calm place to see your papers, right next to Notes, Tasks, Org and Analytics.',
         b: ['Your count, plus what you earned and lost', 'Organizations see every member’s papers side by side', 'Also in the command palette'] },
@@ -10323,7 +10367,9 @@ Marketing,alex99,</div>
 </script>
 
 <style id="t12hz-css">
-.nf-haze{width:14px;height:14px;flex-shrink:0;border-radius:48% 52% 50% 50%/55% 50% 50% 45%;background:radial-gradient(circle at 50% 50%,#8e1620 0,#66101a 48%,rgba(102,16,26,0) 74%);filter:blur(1.1px)}
+.nf-haze{width:14px;height:14px;flex-shrink:0;border-radius:50%;position:relative;background:radial-gradient(circle at 34% 30%,#ffd9d4 0,#ff6a5f 26%,#e5202e 62%,#a30f20 100%);box-shadow:inset 0 -1px 2px rgba(110,6,18,.45),0 0 0 1px rgba(229,32,46,.28),0 0 9px 1px rgba(229,32,46,.6),0 0 18px 4px rgba(229,32,46,.2);animation:hzGlow 3.4s ease-in-out infinite}
+@keyframes hzGlow{0%,100%{box-shadow:inset 0 -1px 2px rgba(110,6,18,.45),0 0 0 1px rgba(229,32,46,.28),0 0 9px 1px rgba(229,32,46,.6),0 0 18px 4px rgba(229,32,46,.2)}50%{box-shadow:inset 0 -1px 2px rgba(110,6,18,.45),0 0 0 1px rgba(229,32,46,.4),0 0 12px 2px rgba(255,64,64,.8),0 0 22px 6px rgba(229,32,46,.3)}}
+@media (prefers-reduced-motion:reduce){.nf-haze{animation:none}}
 .nf-oi{display:flex;align-items:center;gap:10px}
 .hz-ask{margin-top:8px;padding:12px 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);animation:hzIn .35s cubic-bezier(.2,.8,.2,1) both}
 .hz-ask-t{font-weight:600;color:var(--text);font-size:13.5px}.hz-ask-s{font-size:12.5px;color:var(--text-muted);margin:4px 0 10px;line-height:1.45}
@@ -10387,19 +10433,19 @@ Marketing,alex99,</div>
   function load() {
     var org = who().indexOf('@') < 0, now = Date.now();
     var rem = call(PAP, { action: 'list' }).then(function (j) { j.ok = true; return j; }, function (e) { throw new Error(/^HTTP \d+$/.test(e.message) ? 'Couldn’t load your papers. Try again in a moment.' : e.message); });
-    var chs = org ? Promise.resolve({}) : call(CHS, { action: 'rewards' }).catch(function () { return { kings: 0, achievements: [] }; });   /* chess is a bonus: never block papers */
+    var chs = call(CHS, { action: org ? 'status' : 'rewards' }).catch(function () { return org ? {} : { kings: 0, achievements: [] }; });   /* chess is a bonus: never block papers */
     if (!org) return Promise.all([call(ORG, { action: 'get_user_tasks' }), rem, chs]).then(function (a) {
       var e = 0, l = 0, x = 0, ad = 0; (a[0].tasks || []).forEach(function (t) { if (t.status === 'completed') e++; else if (t.dueDate && now > new Date(t.dueDate).getTime()) l++; });
       Object.keys(a[1].removed || {}).forEach(function (k) { x += a[1].removed[k]; });
       Object.keys(a[1].adj || {}).forEach(function (k) { ad += a[1].adj[k]; });
-      var sp = +a[1].spent || 0; return { org: false, e: e, l: l, x: x, a: ad, sp: sp, kings: +a[2].kings || 0, ach: a[2].achievements || [], cost: a[1].chessCost, net: e - l - x + ad - sp, log: a[1].log || [] };
+      var sp = +a[1].spent || 0; return { org: false, e: e, l: l, x: x, a: ad, sp: sp, kings: +a[2].kings || 0, ach: a[2].achievements || [], cost: a[2].cost != null ? +a[2].cost : a[1].chessCost, net: e - l - x + ad - sp, log: a[1].log || [] };
     });
-    return Promise.all([call(ORG, { action: 'get_task_report' }), call(ORG, { action: 'list_accounts' }), rem]).then(function (a) {
+    return Promise.all([call(ORG, { action: 'get_task_report' }), call(ORG, { action: 'list_accounts' }), rem, chs]).then(function (a) {
       var m = {}; (a[1].accounts || []).forEach(function (u) { m[u.id] = { id: u.id, name: u.username, e: 0, l: 0 }; });
       (a[0].reports || []).forEach(function (r) { (r.completed || []).forEach(function (c) { if (m[c.userId]) m[c.userId].e++; }); (r.failed || []).forEach(function (c) { if (m[c.userId]) m[c.userId].l++; }); });
       var rm = a[2].removed || {}, ra = a[2].adj || {}, rs = a[2].spent || {};
       var rows = Object.keys(m).map(function (k) { var u = m[k]; u.x = rm[k] || 0; u.a = ra[k] || 0; u.net = u.e - u.l - u.x + u.a - (rs[k] || 0); return u; }).sort(function (p, q) { return q.net - p.net || p.name.localeCompare(q.name); });
-      return { org: true, rows: rows, ok: a[2].ok, cost: a[2].chessCost, net: rows.reduce(function (s, u) { return s + u.net; }, 0) };
+      return { org: true, rows: rows, ok: a[2].ok, cost: a[3].cost != null ? +a[3].cost : a[2].chessCost, net: rows.reduce(function (s, u) { return s + u.net; }, 0) };
     });
   }
   function fmt(n) { return n < 0 ? '−' + Math.abs(n) : String(n); }
@@ -10542,8 +10588,8 @@ Marketing,alex99,</div>
         '<div class="rw-grid"><div class="rw-f"><label>Papers per game</label><div class="rw-step"><button type="button" data-oc="-1" aria-label="Fewer">−</button><input class="rw-n" id="ocN" inputmode="numeric" maxlength="3" value="' + c + '" aria-label="Papers per chess game"><button type="button" data-oc="1" aria-label="More">+</button></div></div>' +
         '<button type="button" class="btn-primary main" id="ocSave" style="align-self:end"' + (off ? ' disabled' : '') + '>Save</button></div><div class="rw-msg" id="ocMsg">' + (off ? 'Chess pricing is not available yet.' : '') + '</div></div></div>';
     }
-    draw(10, false);
-    call(PAP, { action: 'list' }).then(function (j) { draw(j.chessCost == null ? 10 : +j.chessCost, false); }, function () { draw(10, true); });
+    draw(5, false);
+    call(CHS, { action: 'status' }).then(function (j) { draw(j.cost == null ? 5 : +j.cost, false); }, function () { draw(5, true); });
     el.onclick = function (e) {
       var t = e.target; if (t && t.nodeType !== 1) t = t.parentElement; if (!t) return;
       var n = el.querySelector('#ocN'), st = t.closest('[data-oc]');
@@ -10670,8 +10716,14 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
 .pf-empty,.pf-msg{padding:24px 0;text-align:center;font-size:14px;color:var(--text-muted)}.pf-msg b{display:block;margin-bottom:6px;font-size:17px;color:var(--text)}.pf-foot{margin-top:26px;text-align:center;font-size:12px;color:var(--text-muted)}
 
 /* ---- Chess gate inside the focus box ---- */
-#t12dk .ch-gate{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:7px;padding:14px;text-align:center;background:var(--surface);font:500 12.5px/1.4 var(--sans);color:var(--text-soft)}
-#t12dk .ch-gate[hidden]{display:none}#t12dk .ch-gate b{font-size:14px;color:var(--text)}#t12dk .ch-gate .dk-btn{margin-top:4px}
+#t12dk .ch-gate{position:absolute;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:16px;text-align:center;background:rgba(0,0,0,.62);color:#fff;font:500 12.5px/1.45 var(--sans);border-radius:inherit}
+#t12dk .ch-gate[hidden]{display:none}#t12dk .ch-gate[data-click="1"]{cursor:pointer}
+#t12dk .ch-gate b{font:400 19px/1.2 var(--serif);color:#fff}
+#t12dk .ch-gate span{max-width:27ch;color:rgba(255,255,255,.82)}
+#t12dk .ch-gate .dk-row{justify-content:center;margin-top:6px}
+#t12dk .ch-gate .dk-btn{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.4);color:#fff}
+#t12dk .ch-gate .dk-btn:hover{background:rgba(255,255,255,.22)}
+#t12dk .ch-gate .dk-btn.ch-go{background:var(--accent);border-color:var(--accent);color:#fff}
 #t12dk .ch-k{width:34px;height:34px;object-fit:contain}#t12dk .ch-st .ch-k{width:18px;height:18px;vertical-align:-4px}
 
 /* ---- Tab pill: thicker, bolder, sized to fit six tabs. The top bar keeps its original centred 1fr / auto / 1fr grid so the pill stays put on every tab. ---- */
@@ -10725,7 +10777,14 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
 .ix-x{display:grid;place-items:center;flex:none;width:34px;height:34px;border:1px solid var(--border);border-radius:10px;background:none;color:var(--text-soft);font-size:18px;line-height:1;cursor:pointer}.ix-x:hover{border-color:var(--accent);color:var(--accent)}
 .ix-statrow{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap;margin:14px 0 10px}
 .ix-streak{display:inline-flex;align-items:baseline;gap:6px;padding:4px 12px;border-radius:99px;background:var(--accent-soft);color:var(--accent);font:600 12.5px var(--sans);white-space:nowrap}.ix-streak b{font-size:15px;font-variant-numeric:tabular-nums}.ix-streak i{font-style:normal;font-weight:500;opacity:.7}
-.ix-sync{font-size:12px;color:var(--text-muted)}.ix-sync.warn{color:var(--warn)}
+.ix-net{display:inline-flex;align-items:center;gap:7px;max-width:100%;height:28px;padding:0 11px;border:1px solid var(--border);border-radius:99px;background:var(--bg);color:var(--text-soft);font:500 12px var(--sans);cursor:pointer}
+.ix-net span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ix-nd{flex:none;width:8px;height:8px;border-radius:50%;background:var(--text-muted)}
+.ix-net.ok .ix-nd{background:var(--success)}.ix-net.wait .ix-nd{background:var(--warn)}.ix-net.err .ix-nd{background:var(--danger)}.ix-net.busy .ix-nd{background:var(--accent);animation:ixPulse 1s ease-in-out infinite}
+@keyframes ixPulse{50%{opacity:.25}}@keyframes ixSpin{to{transform:rotate(360deg)}}
+.ix-sy{flex:none;display:inline-block;width:14px;height:14px;box-sizing:border-box;border-radius:50%}
+.ix-sy.ok{background:var(--success)}.ix-sy.ok::after{content:'';display:block;width:3px;height:6px;margin:2px 0 0 4.5px;border:solid #fff;border-width:0 1.6px 1.6px 0;transform:rotate(45deg)}
+.ix-sy.wait{border:2px solid var(--warn)}.ix-sy.go{border:2px solid var(--border);border-top-color:var(--accent);animation:ixSpin .7s linear infinite}
 .ix-input{width:100%;height:44px;padding:0 14px;border:1px solid var(--border);border-radius:12px;background:var(--surface);color:var(--text);font:400 15px var(--sans);outline:none;transition:border-color .15s,box-shadow .15s}
 .ix-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}.ix-input::placeholder{color:var(--text-muted)}
 .ix-msg{min-height:18px;margin:6px 2px 0;font-size:12.5px;color:var(--text-muted)}.ix-msg.bad{color:var(--danger)}
@@ -10749,12 +10808,12 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
 .ix-item.done .ix-row,.ix-item.failed .ix-row{cursor:default}.ix-item.done .ix-row:hover,.ix-item.failed .ix-row:hover{background:none}
 .ix-item.just{animation:ixPop .45s cubic-bezier(.2,.8,.2,1)}@keyframes ixPop{0%{transform:scale(.97);background:var(--accent-soft)}100%{transform:none}}
 .ix-empty{padding:14px 2px;font-size:13.5px;color:var(--text-muted)}
-@media (prefers-reduced-motion:reduce){.ix-item.scratching .ix-scratch path{transition:none}.ix-item.just{animation:none}}
+@media (prefers-reduced-motion:reduce){.ix-net.busy .ix-nd,.ix-sy.go{animation:none}.ix-item.scratching .ix-scratch path{transition:none}.ix-item.just{animation:none}}
 </style>
 <script id="t12x-js">
 (function () {
   'use strict';
-  var D = document, PROF = 'https://bukeabrzlgcwzwtzmwld.supabase.co/functions/v1/profiles', SITE = 'https://time12.xin/';
+  var D = document, PROF = 'https://bukeabrzlgcwzwtzmwld.supabase.co/functions/v1/profiles', SITE = 'https://time12.xin/dash';
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
   function me() { try { return JSON.parse(decodeURIComponent(escape(atob(localStorage.getItem('authToken').split('.')[0])))).username || ''; } catch (e) { return ''; } }
   function api(b, auth) {
@@ -10786,7 +10845,7 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
       '<div class="pf-stats"><div><b>' + (s.verified || 0) + '</b><span>Verified tasks</span></div><div><b>' + pct(s.onTime) + '</b><span>On time</span></div><div><b><img src="papery.png" alt="">' + (s.papers || 0) + '</b><span>Papers</span></div><div><b><img src="king.png" alt="">' + (s.kings || 0) + '</b><span>Kings</span></div></div>' +
       '<h2>Badges</h2>' + (badges ? '<div class="pf-badges">' + badges + '</div>' : '<p class="pf-empty">No badges yet.</p>') +
       '<h2>Verified completion history</h2>' + (hist ? '<ul class="pf-hist">' + hist + '</ul>' : '<p class="pf-empty">Nothing verified yet.</p>') +
-      '<p class="pf-foot">Read-only profile · time12.xin</p></div>';
+      '<p class="pf-foot">Read-only profile · time12.xin/dash</p></div>';
   }
   function overlay(inner, modal) {
     var o = D.getElementById('t12pub');
@@ -10806,7 +10865,7 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
     else if (b.getAttribute('data-pf') === 'copy') copy(link(b.getAttribute('data-u')), b);
   });
   D.addEventListener('keydown', function (e) { var o = D.getElementById('t12pub'); if (e.key === 'Escape' && o && o.className === 'modal') { o.remove(); D.documentElement.classList.remove('pf-lock'); } });
-  var pu = new URLSearchParams(location.search).get('u') || ((location.pathname.match(/^\/u\/([^\/]+)/) || [])[1]);
+  var pu = new URLSearchParams(location.search).get('u') || ((location.pathname.match(/^\/(?:dash\/)?u\/([^\/]+)/) || [])[1]);
   if (pu) openProfile(decodeURIComponent(pu), false);
 
   /* ---------- Leaderboard tab ---------- */
@@ -10887,7 +10946,7 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
 (function () {
   var D = document, API = 'https://bukeabrzlgcwzwtzmwld.supabase.co/functions/v1/index-tasks';
   var UU = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, MAX_RESOLVED = 500;
-  var ov = null, inp, list, msg, sN, bestEl, syncEl, openId = null, msgT = 0, syncing = false, lastErr = false, lastTry = 0, just = null, busy = {}, started = false;
+  var ov = null, inp, list, msg, sN, bestEl, syncEl, syncT, inflight = {}, soon = 0, openId = null, msgT = 0, syncing = false, lastErr = false, lastTry = 0, just = null, busy = {}, started = false;
   var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M4 12h7M4 18h5"/><path d="m15 15 2 2 4-5"/></svg>';
   var CHEV = '<svg class="ix-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
   function tok() { try { return localStorage.getItem('authToken') || ''; } catch (e) { return ''; } }
@@ -10918,9 +10977,13 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
     st.items = st.items.filter(function (i) { return i.s === 'open'; }).concat(res);
     try { localStorage.setItem(curKey, JSON.stringify({ items: st.items, best: st.best })); } catch (e) {}
   }
-  function streak() {
-    var c = 0, b = st.best || 0;
-    st.items.filter(function (i) { return i.s !== 'open'; }).sort(function (a, b) { return a.at - b.at; }).forEach(function (i) { if (i.s === 'done') { c++; if (c > b) b = c; } else c = 0; });
+  function dayKey(t) { var d = new Date(t); return d.getFullYear() * 400 + d.getMonth() * 32 + d.getDate(); }
+  function streak() {   /* +1 for each day you submitted at least one; any failure sets it back to 0 */
+    var c = 0, b = st.best || 0, last = -1;
+    st.items.filter(function (i) { return i.s !== 'open'; }).sort(function (a, b) { return a.at - b.at; }).forEach(function (i) {
+      if (i.s === 'done') { var k = dayKey(i.at); if (k !== last) { c++; last = k; if (c > b) b = c; } }
+      else { c = 0; last = -1; }
+    });
     st.best = b; return c;
   }
   function endOfTomorrow() { var d = new Date(); d.setDate(d.getDate() + 1); d.setHours(23, 59, 59, 999); return d.getTime(); }
@@ -10956,13 +11019,13 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
     if (ov) return;
     ov = D.createElement('div'); ov.className = 'dialog-overlay'; ov.id = 'ixOverlay'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-labelledby', 'ixTitle');
     ov.innerHTML = '<div class="dialog-box ix-box"><div class="ix-top"><div><div class="ix-h" id="ixTitle">Index</div>' +
-      '<div class="ix-sub">Tasks you give only to yourself. Type, press Enter, and finish it by the end of tomorrow.</div></div>' +
+      '<div class="ix-sub">Tasks you give only to yourself. Type, press Enter, and finish it by the end of tomorrow. One streak a day.</div></div>' +
       '<button type="button" class="ix-x" data-ix="close" aria-label="Close">&times;</button></div>' +
-      '<div class="ix-statrow"><span class="ix-streak" title="Index tasks submitted in a row. Failing one sets this back to 0. It never affects papers."><b id="ixStreakN">0</b> streak<i id="ixBest"></i></span><span class="ix-sync" id="ixSync"></span></div>' +
+      '<div class="ix-statrow"><span class="ix-streak" title="Counts once per day, however many you submit. Failing one sets it back to 0. It never affects papers."><b id="ixStreakN">0</b> streak<i id="ixBest"></i></span><button type="button" class="ix-net wait" id="ixSync" data-ix="retry" title="Tap to sync now"><i class="ix-nd"></i><span id="ixSyncT"></span></button></div>' +
       '<input type="text" class="ix-input" id="ixInput" placeholder="What will you get done? Press Enter" maxlength="140" autocomplete="off" spellcheck="false" aria-label="Add an index task">' +
       '<div class="ix-msg" id="ixMsg" role="status" aria-live="polite"></div><div class="ix-list" id="ixList"></div></div>';
     D.body.appendChild(ov);
-    inp = D.getElementById('ixInput'); list = D.getElementById('ixList'); msg = D.getElementById('ixMsg'); sN = D.getElementById('ixStreakN'); bestEl = D.getElementById('ixBest'); syncEl = D.getElementById('ixSync');
+    inp = D.getElementById('ixInput'); list = D.getElementById('ixList'); msg = D.getElementById('ixMsg'); sN = D.getElementById('ixStreakN'); bestEl = D.getElementById('ixBest'); syncEl = D.getElementById('ixSync'); syncT = D.getElementById('ixSyncT');
     ov.addEventListener('mousedown', function (e) { if (e.target === ov) close(); });
     inp.addEventListener('keydown', function (e) {
       e.stopPropagation();   /* keep app shortcuts out of this box */
@@ -10973,7 +11036,7 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
       st.items.push({ id: uuid(), t: t, s: 'open', due: endOfTomorrow(), at: 0, created: Date.now(), dirty: true });
       save(); inp.value = ''; openId = null; render();
       say(navigator.onLine ? 'Added. Due by the end of tomorrow.' : 'Saved on this device. It will sync when you are online.');
-      syncNow();
+      syncSoon(350);   /* a quick burst of entries goes up as one request */
     });
     ['keyup', 'keypress'].forEach(function (n) { inp.addEventListener(n, function (e) { e.stopPropagation(); }); });
     ov.addEventListener('click', onClick);
@@ -10983,26 +11046,31 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
   function say(t, bad) { if (!msg) return; msg.textContent = t || ''; msg.classList.toggle('bad', !!bad); clearTimeout(msgT); if (t) msgT = setTimeout(function () { msg.textContent = ''; }, 4500); }
   function syncText() {
     var n = dirtyItems().length;
-    if (!navigator.onLine) return { t: n ? 'Offline. ' + n + ' waiting to sync.' : 'Offline. New items save on this device.', w: !!n };
-    if (syncing) return { t: 'Syncing…', w: false };
-    if (n) return { t: lastErr ? 'Could not sync yet. Will retry.' : 'Waiting to sync.', w: true };
-    return { t: 'All synced.', w: false };
+    if (!navigator.onLine) return { k: 'off', t: n ? 'Offline · ' + n + ' saved on this device' : 'Offline · saving on this device' };
+    if (syncing) return { k: 'busy', t: 'Syncing…' };
+    if (n) return lastErr ? { k: 'err', t: 'Can’t reach the server · will retry' } : { k: 'wait', t: 'Online · ' + n + ' waiting to sync' };
+    return { k: 'ok', t: 'Online · all synced' };
+  }
+  function syDot(i) {   /* per-item: synced, waiting, or on its way */
+    var k = !i.dirty ? 'ok' : inflight[i.id] ? 'go' : 'wait';
+    var t = k === 'ok' ? 'Synced' : k === 'go' ? 'Syncing…' : navigator.onLine ? 'Saved on this device, waiting to sync' : 'Saved on this device, will sync when you are online';
+    return '<span class="ix-sy ' + k + '" title="' + t + '" aria-label="' + t + '"></span>';
   }
   function render() {
     if (!ov) return;
     acct(); sweep();
     var c = streak(); sN.textContent = c; bestEl.textContent = st.best > c ? ' · best ' + st.best : '';
-    var s = syncText(); syncEl.textContent = s.t; syncEl.classList.toggle('warn', s.w);
+    var s = syncText(); syncEl.className = 'ix-net ' + s.k; syncT.textContent = s.t;
     var op = openItems(), past = st.items.filter(function (i) { return i.s !== 'open'; }).sort(function (a, b) { return b.at - a.at; }).slice(0, 8), h = '';
     op.forEach(function (i) {
       h += '<div class="ix-item" data-id="' + i.id + '"><button type="button" class="ix-row" data-ix="pick" aria-expanded="' + (openId === i.id) + '"><span class="ix-tick"></span>' +
         '<span class="ix-t"><span class="ix-tw">' + esc(i.t) + '<svg class="ix-scratch" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M2 5 L98 9 L3 13 L97 16 L2 20 L98 23 L4 27 L96 28"/></svg></span></span>' +
-        '<span class="ix-due">Due ' + dayWord(i.due) + '</span></button>' +
+        '<span class="ix-due">Due ' + dayWord(i.due) + '</span>' + syDot(i) + '</button>' +
         (openId === i.id ? '<div class="ix-confirm"><span>Did you finish this?</span><button type="button" class="ix-btn yes" data-ix="yes">Confirm</button><button type="button" class="ix-btn no" data-ix="no">Not yet</button></div>' : '') + '</div>';
     });
     if (!op.length) h += '<div class="ix-empty">Nothing due. Type something above and press Enter.</div>';
     if (past.length) h += '<div class="ix-lbl">Recent</div>' + past.map(function (i) {
-      return '<div class="ix-item ' + (i.s === 'done' ? 'done' : 'failed') + (just === i.id ? ' just' : '') + '"><div class="ix-row"><span class="ix-tick">' + (i.s === 'done' ? '✓' : '✕') + '</span><span class="ix-t">' + esc(i.t) + '</span><span class="ix-due">' + (i.s === 'done' ? 'Submitted' : 'Failed') + '</span></div></div>';
+      return '<div class="ix-item ' + (i.s === 'done' ? 'done' : 'failed') + (just === i.id ? ' just' : '') + '"><div class="ix-row"><span class="ix-tick">' + (i.s === 'done' ? '✓' : '✕') + '</span><span class="ix-t">' + esc(i.t) + '</span><span class="ix-due">' + (i.s === 'done' ? 'Submitted' : 'Failed') + '</span>' + syDot(i) + '</div></div>';
     }).join('');
     list.innerHTML = h; just = null;
   }
@@ -11011,6 +11079,7 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
     var b = e.target.closest('[data-ix]'); if (!b) return;
     var row = b.closest('[data-id]'), id = row && row.getAttribute('data-id'), a = b.getAttribute('data-ix');
     if (a === 'close') { close(); return; }
+    if (a === 'retry') { lastErr = false; lastTry = 0; syncNow(); return; }
     if (a === 'pick') { if (busy[id]) return; openId = openId === id ? null : id; render(); return; }
     if (a === 'no') { openId = null; render(); return; }
     if (a === 'yes') {
@@ -11021,8 +11090,8 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
       busy[id] = true;
       function commit() {
         delete busy[id];
-        if (it.s === 'open') { it.s = 'done'; it.at = Date.now(); it.dirty = true; just = it.id; save(); say('Submitted. Streak: ' + streak() + '.'); }
-        openId = null; render(); syncNow();
+        if (it.s === 'open') { var was = streak(); it.s = 'done'; it.at = Date.now(); it.dirty = true; just = it.id; save(); var now = streak(); say(now > was ? 'Submitted. Streak: ' + now + '.' : 'Submitted. Today already counts toward your streak.'); }
+        openId = null; render(); syncSoon(150);
       }
       if (calm()) { commit(); return; }
       row.classList.add('scratching');   /* scribble across the text, then it goes in as submitted */
@@ -11037,9 +11106,11 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
     var batch = dirtyItems().slice(0, 100), sent = {};
     batch.forEach(function (i) { sent[i.id] = i.s; });
     if (!batch.length && Date.now() - lastTry < 60000) { render(); return; }
+    inflight = {}; batch.forEach(function (i) { inflight[i.id] = 1; });
     syncing = true; lastTry = Date.now(); render();
+    var ac = window.AbortController ? new AbortController() : null, to = setTimeout(function () { if (ac) ac.abort(); }, 12000);
     var send = batch.map(function (i) { return { id: i.id, t: i.t, s: i.s, due: i.due, at: i.at, created: i.created }; });
-    return fetch(API, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok() }, body: JSON.stringify({ action: 'sync', items: send }) })
+    return fetch(API, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok() }, body: JSON.stringify({ action: 'sync', items: send }), signal: ac ? ac.signal : undefined })
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status); return j; }); })
       .then(function (j) {
         var by = {}; st.items.forEach(function (i) { by[i.id] = i; });
@@ -11054,8 +11125,9 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
         lastErr = false; save();
       })
       .catch(function () { lastErr = true; })
-      .then(function () { syncing = false; render(); mountQuiet(); if (!lastErr && dirtyItems().length && (rounds || 0) < 3) syncNow((rounds || 0) + 1); });
+      .then(function () { clearTimeout(to); inflight = {}; syncing = false; render(); mountQuiet(); if (!lastErr && dirtyItems().length && (rounds || 0) < 3) syncNow((rounds || 0) + 1); });
   }
+  function syncSoon(ms) { clearTimeout(soon); soon = setTimeout(function () { syncNow(); }, ms); }
   function mountQuiet() { if (D.getElementById('indexEntry')) mount(); }
 
   D.addEventListener('click', function (e) { if (e.target.closest && e.target.closest('[data-ix-open]')) { e.preventDefault(); open(); } });
