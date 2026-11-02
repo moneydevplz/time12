@@ -2815,7 +2815,7 @@
   function mountChess() {
     if (CG.cg) { if (!CG.busy) chRefresh(); return; }
     if (CG.loading) return;
-    var f = $('#chFrame'), msg = $('.ch-load'); CG.loading = true; msg.textContent = 'Setting up the board…';
+    var f = $('#chFrame'), msg = $('.ch-load'); CG.loading = true; msg.textContent = 'Setting up the board…'; chPre();
     chLib().then(function (L) {
       CG.Chess = L[1].Chess;
       CG.cg = L[0].Chessground($('#chBoard'), { coordinates: true, animation: { duration: 220 }, premovable: { enabled: false },
@@ -2825,13 +2825,20 @@
     }).catch(function () { msg.textContent = 'The chess board couldn’t load. Check your connection or ad-blocker, then reopen this tab.'; })
       .then(function () { CG.loading = false; });
   }
+  function chCk() { try { return 'time12_chess_lock_' + JSON.parse(decodeURIComponent(escape(atob(localStorage.getItem('authToken').split('.')[0].replace(/-/g, '+').replace(/_/g, '/'))))).username; } catch (e) { return ''; } }
+  function chKeep(j) { var k = chCk(); if (!k) return; try { if (j && j.locked) localStorage.setItem(k, JSON.stringify({ free: false, locked: true, undone: j.undone, cost: j.cost, balance: j.balance })); else localStorage.removeItem(k); } catch (e) {} }
+  function chPre() {   /* last time you were locked? say so at once, before anything loads */
+    var k = chCk(), c = null; if (!k || CG.st) return;
+    try { c = JSON.parse(localStorage.getItem(k)); } catch (e) {}
+    if (c && c.locked) { CG.st = c; chIdle(); chBtns(); }
+  }
   /* what the server says about you: lock, price, balance. keep = update the numbers only, leave the board alone */
   function chRefresh(keep) {
     return chCall({ action: 'status' }).then(function (j) {
-      CG.st = j;
+      CG.st = j; chKeep(j);
       if (!keep) { if (j.game) chShow(j.game); else { CG.game = null; CG.g = null; chPaint(); chIdle(); } }
       chBtns();
-    }, function (e) { if (!keep) chSt.textContent = e.message; });
+    }, function (e) { if (!keep && !(CG.st && CG.st.locked)) chSt.textContent = e.message; });
   }
   function chShow(gm) { CG.game = gm; CG.g = new CG.Chess(gm.fen); chPaint(); chMsg(); chBtns(); }
   function chPaint() {
@@ -10769,6 +10776,8 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
 .ix-entry-meta{display:flex;align-items:center;gap:6px;flex:none}
 .ix-pill{display:inline-flex;align-items:baseline;gap:4px;padding:3px 10px;border-radius:99px;background:var(--surface-2);font:600 12px var(--sans);font-style:normal;color:var(--text-soft);white-space:nowrap}.ix-pill.hot{background:var(--accent-soft);color:var(--accent)}
 .ix-dot{width:8px;height:8px;border-radius:50%;background:var(--warn)}
+.ix-gem{display:block;width:16px;height:16px;flex:none;transform:rotate(45deg);border-radius:4px;overflow:hidden;background:linear-gradient(135deg,#fff4f4,#e88f8f 55%,#ffdfdf);box-shadow:0 0 11px rgba(232,143,143,.85)}
+.ix-btn.del{color:var(--danger)}.ix-del{flex:none;display:grid;place-items:center;width:26px;height:26px;border:0;border-radius:7px;background:none;color:var(--text-muted);font-size:17px;line-height:1;cursor:pointer}.ix-del:hover{background:var(--surface-2);color:var(--danger)}
 .ix-chev{width:16px;height:16px;flex:none;color:var(--text-muted)}
 @media (max-width:520px){.ix-entry-meta .ix-pill:not(.hot){display:none}}
 .ix-box{max-width:520px;padding:26px 26px 22px}
@@ -10945,8 +10954,8 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
    The streak is index tasks submitted in a row; one failure sets it to 0. Papers are never touched. ---------- */
 (function () {
   var D = document, API = 'https://bukeabrzlgcwzwtzmwld.supabase.co/functions/v1/index-tasks';
-  var UU = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, MAX_RESOLVED = 500;
-  var ov = null, inp, list, msg, sN, bestEl, syncEl, syncT, inflight = {}, soon = 0, openId = null, msgT = 0, syncing = false, lastErr = false, lastTry = 0, just = null, busy = {}, started = false;
+  var UU = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, MAX_RESOLVED = 500, KEEP = 30 * 864e5, UNDO = 25 * 60e3;
+  var ov = null, inp, list, msg, sN, bestEl, syncEl, syncT, inflight = {}, soon = 0, openId = null, msgT = 0, syncing = false, lastErr = false, lastTry = 0, just = null, busy = {}, started = false, fresh = true;
   var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M4 12h7M4 18h5"/><path d="m15 15 2 2 4-5"/></svg>';
   var CHEV = '<svg class="ix-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"/></svg>';
   function tok() { try { return localStorage.getItem('authToken') || ''; } catch (e) { return ''; } }
@@ -10957,11 +10966,13 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) { var r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); });
   }
   function load() {
-    var out = { items: [], best: 0 };
+    var out = { items: [], best: 0, base: { c: 0, last: -1 }, del: [] };
     try {
       var s = JSON.parse(localStorage.getItem(key()));
       if (s && Array.isArray(s.items)) {
         out.best = +s.best || 0;
+        if (s.base) out.base = { c: +s.base.c || 0, last: s.base.last == null ? -1 : +s.base.last };
+        if (Array.isArray(s.del)) out.del = s.del.filter(function (x) { return UU.test(x || ''); }).slice(0, 100);
         s.items.forEach(function (i) {
           if (!i || typeof i.t !== 'string' || !(+i.due > 0)) return;
           var ok = UU.test(i.id || '');
@@ -10975,11 +10986,11 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
   function save() {
     var res = st.items.filter(function (i) { return i.s !== 'open'; }).sort(function (a, b) { return b.at - a.at; }).slice(0, MAX_RESOLVED);
     st.items = st.items.filter(function (i) { return i.s === 'open'; }).concat(res);
-    try { localStorage.setItem(curKey, JSON.stringify({ items: st.items, best: st.best })); } catch (e) {}
+    try { localStorage.setItem(curKey, JSON.stringify({ items: st.items, best: st.best, base: st.base, del: st.del })); } catch (e) {}
   }
   function dayKey(t) { var d = new Date(t); return d.getFullYear() * 400 + d.getMonth() * 32 + d.getDate(); }
   function streak() {   /* +1 for each day you submitted at least one; any failure sets it back to 0 */
-    var c = 0, b = st.best || 0, last = -1;
+    var c = st.base.c, b = st.best || 0, last = st.base.last;
     st.items.filter(function (i) { return i.s !== 'open'; }).sort(function (a, b) { return a.at - b.at; }).forEach(function (i) {
       if (i.s === 'done') { var k = dayKey(i.at); if (k !== last) { c++; last = k; if (c > b) b = c; } }
       else { c = 0; last = -1; }
@@ -10992,11 +11003,22 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
     var d = new Date(t), n = new Date(), a = new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime(), b = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(), k = Math.round((b - a) / 864e5);
     return k === 0 ? 'today' : k === 1 ? 'tomorrow' : d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' });
   }
-  function sweep() {   /* past its deadline and still open: failed, streak drops to 0 */
-    var now = Date.now(), late = st.items.filter(function (i) { return i.s === 'open' && now > i.due; });
-    if (!late.length) return false;
-    late.forEach(function (i) { i.s = 'failed'; i.at = i.due; i.dirty = true; }); save(); return true;
+  function fold(a) {   /* items older than 30 days are deleted, but the streak they built keeps running */
+    var b = st.base;
+    a.filter(function (i) { return i.s !== 'open'; }).sort(function (x, y) { return x.at - y.at; }).forEach(function (i) {
+      if (i.s === 'done') { var k = dayKey(i.at); if (k !== b.last) { b.c++; b.last = k; if (b.c > st.best) st.best = b.c; } } else { b.c = 0; b.last = -1; }
+    });
   }
+  function sweep() {   /* older than 30 days: deleted. Past its deadline and still open: failed, streak drops to 0 */
+    var now = Date.now(), cut = now - KEEP, ch = false, old = st.items.filter(function (i) { return i.created < cut; });
+    if (old.length) { fold(old); st.items = st.items.filter(function (i) { return i.created >= cut; }); ch = true; }
+    var late = st.items.filter(function (i) { return i.s === 'open' && now > i.due; });
+    late.forEach(function (i) { i.s = 'failed'; i.at = i.due; i.dirty = true; ch = true; });
+    if (ch) save(); return ch;
+  }
+  /* deletable: synced, and either still open within 25 minutes of creating it, or finished. A failed one is never deletable. */
+  function canDel(i) { return !i.dirty && !inflight[i.id] && ((i.s === 'open' && Date.now() - i.created <= UNDO) || i.s === 'done'); }
+  function todo() { return dirtyItems().length + st.del.length; }
   function openItems() { return st.items.filter(function (i) { return i.s === 'open'; }).sort(function (a, b) { return a.due - b.due; }); }
   function dirtyItems() { return st.items.filter(function (i) { return i.dirty; }); }
   function acct() { if (key() !== curKey) { curKey = key(); st = load(); openId = null; } }
@@ -11007,7 +11029,7 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
     var el = D.getElementById('indexEntry');
     if (el) {
       var o = openItems().length, c = streak();
-      el.innerHTML = '<button type="button" class="ix-entry" data-ix-open><span class="ix-entry-ico">' + ICON + '</span>' +
+      el.innerHTML = '<button type="button" class="ix-entry" data-ix-open><span class="ix-entry-ico"><i class="ix-gem"></i></span>' +
         '<span class="ix-entry-text"><b>Index</b><span>Quick tasks for yourself. Works offline.</span></span>' +
         '<span class="ix-entry-meta">' + (dirtyItems().length ? '<i class="ix-dot" title="Waiting to sync"></i>' : '') + (o ? '<i class="ix-pill">' + o + ' open</i>' : '') + '<i class="ix-pill hot"><b>' + c + '</b> streak</i></span>' + CHEV + '</button>';
     }
@@ -11066,11 +11088,11 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
       h += '<div class="ix-item" data-id="' + i.id + '"><button type="button" class="ix-row" data-ix="pick" aria-expanded="' + (openId === i.id) + '"><span class="ix-tick"></span>' +
         '<span class="ix-t"><span class="ix-tw">' + esc(i.t) + '<svg class="ix-scratch" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><path pathLength="1" d="M2 5 L98 9 L3 13 L97 16 L2 20 L98 23 L4 27 L96 28"/></svg></span></span>' +
         '<span class="ix-due">Due ' + dayWord(i.due) + '</span>' + syDot(i) + '</button>' +
-        (openId === i.id ? '<div class="ix-confirm"><span>Did you finish this?</span><button type="button" class="ix-btn yes" data-ix="yes">Confirm</button><button type="button" class="ix-btn no" data-ix="no">Not yet</button></div>' : '') + '</div>';
+        (openId === i.id ? '<div class="ix-confirm"><span>Did you finish this?</span><button type="button" class="ix-btn yes" data-ix="yes">Confirm</button><button type="button" class="ix-btn no" data-ix="no">Not yet</button>' + (canDel(i) ? '<button type="button" class="ix-btn no del" data-ix="del">Delete</button>' : '') + '</div>' : '') + '</div>';
     });
     if (!op.length) h += '<div class="ix-empty">Nothing due. Type something above and press Enter.</div>';
     if (past.length) h += '<div class="ix-lbl">Recent</div>' + past.map(function (i) {
-      return '<div class="ix-item ' + (i.s === 'done' ? 'done' : 'failed') + (just === i.id ? ' just' : '') + '"><div class="ix-row"><span class="ix-tick">' + (i.s === 'done' ? '✓' : '✕') + '</span><span class="ix-t">' + esc(i.t) + '</span><span class="ix-due">' + (i.s === 'done' ? 'Submitted' : 'Failed') + '</span>' + syDot(i) + '</div></div>';
+      return '<div class="ix-item ' + (i.s === 'done' ? 'done' : 'failed') + (just === i.id ? ' just' : '') + '" data-id="' + i.id + '"><div class="ix-row"><span class="ix-tick">' + (i.s === 'done' ? '✓' : '✕') + '</span><span class="ix-t">' + esc(i.t) + '</span><span class="ix-due">' + (i.s === 'done' ? 'Submitted' : 'Failed') + '</span>' + syDot(i) + (canDel(i) ? '<button type="button" class="ix-del" data-ix="del" title="Delete" aria-label="Delete">&times;</button>' : '') + '</div></div>';
     }).join('');
     list.innerHTML = h; just = null;
   }
@@ -11082,6 +11104,11 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
     if (a === 'retry') { lastErr = false; lastTry = 0; syncNow(); return; }
     if (a === 'pick') { if (busy[id]) return; openId = openId === id ? null : id; render(); return; }
     if (a === 'no') { openId = null; render(); return; }
+    if (a === 'del') {
+      var d = st.items.filter(function (i) { return i.id === id; })[0];
+      if (!d || busy[id] || !canDel(d)) { say('That one can no longer be deleted.', true); openId = null; render(); return; }
+      st.items = st.items.filter(function (i) { return i !== d; }); st.del.push(d.id); save(); openId = null; say('Deleted.'); render(); mountQuiet(); syncSoon(150); return;
+    }
     if (a === 'yes') {
       if (busy[id]) return;
       sweep();
@@ -11103,29 +11130,35 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
   function syncNow(rounds) {
     if (syncing || !navigator.onLine || !tok()) { render(); mountQuiet(); return; }
     acct();
-    var batch = dirtyItems().slice(0, 100), sent = {};
+    var batch = dirtyItems().slice(0, 100), sent = {}, dels = st.del.slice(0, 50), sentDel = {}, first = fresh;
+    dels.forEach(function (x) { sentDel[x] = 1; });
     batch.forEach(function (i) { sent[i.id] = i.s; });
-    if (!batch.length && Date.now() - lastTry < 60000) { render(); return; }
+    if (!batch.length && !dels.length && Date.now() - lastTry < 60000) { render(); return; }
     inflight = {}; batch.forEach(function (i) { inflight[i.id] = 1; });
     syncing = true; lastTry = Date.now(); render();
     var ac = window.AbortController ? new AbortController() : null, to = setTimeout(function () { if (ac) ac.abort(); }, 12000);
     var send = batch.map(function (i) { return { id: i.id, t: i.t, s: i.s, due: i.due, at: i.at, created: i.created }; });
-    return fetch(API, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok() }, body: JSON.stringify({ action: 'sync', items: send }), signal: ac ? ac.signal : undefined })
+    return fetch(API, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tok() }, body: JSON.stringify({ action: 'sync', items: send, del: dels, open: first ? 1 : 0 }), signal: ac ? ac.signal : undefined })
       .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status); return j; }); })
       .then(function (j) {
-        var by = {}; st.items.forEach(function (i) { by[i.id] = i; });
+        var by = {}, seen = {}, pd = {}; st.del = st.del.filter(function (x) { return !sentDel[x]; }); st.del.forEach(function (x) { pd[x] = 1; }); st.items.forEach(function (i) { by[i.id] = i; });
         (j.items || []).forEach(function (r) {
-          if (!r || !UU.test(r.id || '') || typeof r.t !== 'string') return;
+          if (!r || !UU.test(r.id || '') || typeof r.t !== 'string' || pd[r.id]) return;
+          seen[r.id] = 1;
           var l = by[r.id], rs = r.s === 'done' || r.s === 'failed' ? r.s : 'open';
           if (!l) { st.items.push({ id: r.id, t: r.t.slice(0, 140), s: rs, due: +r.due, at: +r.at || 0, created: +r.created || +r.due, dirty: false }); return; }
           if (l.dirty && sent[l.id] !== l.s) return;       /* changed while the request was out: keep it queued */
           if (l.s === 'open' || l.dirty) { l.s = rs; l.at = +r.at || l.at; }
           l.dirty = false;
         });
+        var rows = j.items || [], trunc = rows.length >= 500, oldest = Infinity;   /* gone from the server (deleted elsewhere): drop it here too */
+        rows.forEach(function (r) { if (+r.created > 0 && +r.created < oldest) oldest = +r.created; });
+        st.items = st.items.filter(function (l) { return l.dirty || seen[l.id] || (trunc && l.created <= oldest); });
+        if (first) fresh = false;
         lastErr = false; save();
       })
       .catch(function () { lastErr = true; })
-      .then(function () { clearTimeout(to); inflight = {}; syncing = false; render(); mountQuiet(); if (!lastErr && dirtyItems().length && (rounds || 0) < 3) syncNow((rounds || 0) + 1); });
+      .then(function () { clearTimeout(to); inflight = {}; syncing = false; render(); mountQuiet(); if (!lastErr && todo() && (rounds || 0) < 3) syncNow((rounds || 0) + 1); });
   }
   function syncSoon(ms) { clearTimeout(soon); soon = setTimeout(function () { syncNow(); }, ms); }
   function mountQuiet() { if (D.getElementById('indexEntry')) mount(); }
@@ -11135,9 +11168,10 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
   window.addEventListener('online', function () { lastErr = false; syncNow(); });
   window.addEventListener('offline', function () { render(); });
   window.addEventListener('focus', function () { if (sweep()) { render(); mountQuiet(); } });
-  D.addEventListener('visibilitychange', function () { if (!D.hidden) { if (sweep()) { render(); mountQuiet(); } if (dirtyItems().length) syncNow(); } });
-  setInterval(function () { var ch = sweep(); if (ch) { render(); mountQuiet(); } if (dirtyItems().length && navigator.onLine) syncNow(); }, 30000);
+  D.addEventListener('visibilitychange', function () { if (!D.hidden) { if (sweep()) { render(); mountQuiet(); } if (todo()) syncNow(); } });
+  setInterval(function () { var ch = sweep(); if (ch) { render(); mountQuiet(); } if (todo() && navigator.onLine) syncNow(); }, 30000);
   window.T12Index = { mount: mount, open: open };
+  setTimeout(function () { if (!started && tok()) { started = true; syncNow(); } }, 2500);   /* the 30-day clean-up runs whenever Time12 opens */
 })();
 </script>
 </body>
