@@ -12,7 +12,7 @@
 <meta property="og:image" content="https://time12.xin/taiwan.png">
 <meta property="og:url" content="https://time12.xin/">
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Time12","applicationCategory":"ProductivityApplication","operatingSystem":"Web","description":"Task and submission tracking for classes and teams. Assign tasks to groups, collect text, links and files, verify or reject submissions, and read completion analytics.","url":"https://time12.xin/","image":"https://time12.xin/taiwan.png","audience":{"@type":"Audience","audienceType":"Teachers, managers, students and employees"},"featureList":["Groups and sub-groups","Tasks with exact due date and time","Submissions with text, links and files up to 25 MB","Verify or reject submissions","Analytics with 1D to ALL periods and Excel export","CSV and Excel bulk account import","Offline-first notes with sync","Command palette and keyboard shortcuts","Light and dark themes"]}
+{"@context":"https://schema.org","@type":"SoftwareApplication","name":"Time12","applicationCategory":"ProductivityApplication","operatingSystem":"Web","description":"Task and submission tracking for classes and teams. Assign tasks to groups, collect text, links and files, verify or reject submissions, and read completion analytics.","url":"https://time12.xin/","image":"https://time12.xin/taiwan.png","audience":{"@type":"Audience","audienceType":"Teachers, managers, students and employees"},"featureList":["Groups, sub-groups and group admins","Tasks with an exact due time, for a whole group or specific people","Submissions with text, links and files up to 25 MB","Verify or reject with a reason, every attempt kept","AI-marked tasks against your own checklist","Analytics from 1D to ALL, with history and Excel export","CSV and Excel bulk account import","Offline-first notes with sync and export","Papers, Rewards and a public Leaderboard","Index: a private streak to-do","Focus toolbox with timers, YouTube and chess","Command palette and keyboard shortcuts","Light and dark themes"]}
 </script>
 <script>
 (function(){var t=null;try{t=localStorage.getItem('Time12-theme')}catch(e){}
@@ -22,7 +22,7 @@ document.documentElement.setAttribute('data-theme',t);})();
 <link id="favicon" rel="icon" type="image/png" href="taiwan.png?v=1790864213">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Covered+By+Your+Grace&family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{color-scheme:light;
@@ -491,6 +491,39 @@ details[open] summary:after{transform:rotate(180deg)}
 :root[data-theme="dark"] .aur i{background:radial-gradient(closest-side,rgba(255,255,255,.055),transparent)}
 :root[data-theme="dark"] .sh u,:root[data-theme="dark"] .cube u{background:rgba(255,255,255,.03)}
 :root[data-theme="dark"] .band{background:rgba(255,255,255,.035)}
+
+/* ===== v3: flat paper, red pen ===== */
+:root{--disp:'Archivo','Arial Narrow',system-ui,sans-serif;--pen:'Covered By Your Grace','Segoe Print',cursive;--red:#D6281E;
+--bg:#fff;--card:#fff;--soft-bg:#F3F3F3;--surface-2:#EBEBEB;--ink:#000;--soft:#3A3A3A;--mute:#6B6B6B;--line:#DCDCDC;--acc-soft:#FFF0E0;--shadow:transparent}
+:root[data-theme="dark"]{--bg:#161616;--card:#1D1D1D;--soft-bg:#1A1A1A;--surface-2:#262626;--ink:#F4F4F4;--soft:#B8B8B8;--mute:#8C8C8C;--line:#2E2E2E;--acc-soft:#2A2A2A;--red:#FF6257}
+.aur,.geo,.sh,.cube{display:none!important}
+nav{background:var(--bg);backdrop-filter:none;-webkit-backdrop-filter:none}
+.sec.tint{background:var(--soft-bg)}
+.band{background:var(--soft-bg);backdrop-filter:none;-webkit-backdrop-filter:none;border-radius:4px}
+.win,.dlg,.pal,.card,.life{box-shadow:none;border-radius:4px}
+.win,.dlg{border:1.5px solid var(--ink)}
+.btn{border-radius:4px;color:#000}.btn:hover{box-shadow:none}
+.pn{background:var(--bg);border-radius:3px}
+.app{min-width:700px}.pill span{padding:5px 10px;font-size:12px}
+h1,h2,.rl h3,.sl h3,.sl .n,.tally b,.fin h2,.tx h3,.step b,.logo,.band h2{font-family:var(--disp);font-weight:800;font-stretch:108%;letter-spacing:-.035em}
+.logo{font-size:22px}
+.h h1{font-size:clamp(34px,8.4vw,128px)}
+.fin h2{font-size:clamp(34px,7.6vw,116px)}
+.rl h3{font-size:clamp(40px,8vw,112px)}
+.sl h3{font-weight:700}
+h2{font-size:clamp(28px,3.8vw,46px);font-weight:700}
+.tx h3{font-size:clamp(24px,2.8vw,32px);font-weight:700;font-stretch:100%;letter-spacing:-.025em}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips span{padding:4px 10px;border:1px solid var(--line);border-radius:99px;font-size:12px;color:var(--soft)}
+.chips .on{border-color:var(--acc);background:var(--acc-soft);color:var(--ink)}
+.slip{position:absolute;right:8vw;top:22%;width:min(290px,60vw);padding:18px 20px 20px 38px;background:var(--card);border:1.5px solid var(--ink);border-radius:3px;transform:rotate(2.5deg);font-size:13px;color:var(--mute);background-image:linear-gradient(90deg,transparent 24px,var(--red) 24px,var(--red) 25px,transparent 25px)}
+.slip b{display:block;font:700 18px/1.2 var(--disp);letter-spacing:-.02em;color:var(--ink)}
+.slip .sst{display:inline-block;margin-top:12px;padding:3px 11px;border-radius:99px;font-weight:600;font-size:12px;background:var(--surface-2);color:var(--mute)}
+.slip[data-s="2"] .sst{background:color-mix(in srgb,var(--warn) 18%,transparent);color:var(--warn)}
+.slip[data-s="3"] .sst{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+.slip[data-s="4"] .sst{background:color-mix(in srgb,var(--ok) 18%,transparent);color:var(--ok)}
+.slip .note{font:400 24px/1.15 var(--pen);color:var(--red);margin-top:12px;min-height:2.4em}
+@media(max-width:940px){.slip{top:30%;right:5vw}}
 </style>
 </head>
 <body>
@@ -531,7 +564,7 @@ details[open] summary:after{transform:rotate(180deg)}
 
 <!-- ============ STORY ============ -->
 <div class="aur" id="aur" aria-hidden="true"><i></i><i></i><i></i></div>
-<div class="geo" id="geo" aria-hidden="true"><div class="sh" data-k="cube"></div><div class="sh" data-k="gyro"></div><div class="sh" data-k="torus"></div></div>
+<div class="geo" id="geo" aria-hidden="true"></div>
 <section class="story" id="story"><div class="pin" id="pin">
 <div class="ring" id="ring" aria-hidden="true"></div>
 <header class="ly h"><h1 aria-label="Stop asking “Are you done?”"><span class="ln sm" data-sp>Stop asking</span><span class="ln" data-sp>“Are you done?”</span></h1></header>
@@ -541,25 +574,25 @@ details[open] summary:after{transform:rotate(180deg)}
 </div></section>
 
 <!-- ============ WHO ============ -->
-<section class="sec" id="who"><div class="sh lg pa" data-k="gyro" data-sc="run" style="right:6vw;top:90px" aria-hidden="true"></div><div class="wrap">
+<section class="sec" id="who"><div class="wrap">
 <h2 class="rv" data-sc>For whoever assigns, and whoever hands in.</h2>
 <div class="roles">
 <div class="rl" data-sc><h3><span>Teachers</span></h3><p>Post homework with a deadline. Verify every hand-in.</p></div>
 <div class="rl" data-sc><h3><span>Managers</span></h3><p>Assign to teams. See who is stuck.</p></div>
-<div class="rl" data-sc><h3><span>Students</span></h3><p>See what is due. Hand it in.</p></div>
+<div class="rl" data-sc><h3><span>Students</span></h3><p>See what is due. Hand it in. Keep your streak.</p></div>
 </div>
 </div></section>
 
 <!-- ============ HOW ============ -->
 <section class="sec tint hz" id="how" data-sc="pin"><div class="hzp">
 <div class="hzt">Five steps, one screen.</div>
-<div class="cube" aria-hidden="true"><u></u><u></u><u></u><u></u><u></u><u></u></div>
+<div class="slip" id="slip" data-s="0" aria-hidden="true"><b>Lab report: Pendulum</b><small>Physics 10B · Due Oct 14, 11:59 PM</small><br><span class="sst">Not assigned yet</span><p class="note"></p></div>
 <div class="trk">
 <div class="sl"><b class="n">1</b><h3>Set up</h3><p>Create groups and accounts, or import a class from one file.</p></div>
-<div class="sl"><b class="n">2</b><h3>Assign</h3><p>Pick a group, set an exact due time, attach links or files.</p></div>
+<div class="sl"><b class="n">2</b><h3>Assign</h3><p>Pick a group or just a few people, set an exact due time, attach links or files.</p></div>
 <div class="sl"><b class="n">3</b><h3>Hand in</h3><p>Members submit text, links and files.</p></div>
-<div class="sl"><b class="n">4</b><h3>Verify or reject</h3><p>Rejected work can be sent again until the deadline.</p></div>
-<div class="sl"><b class="n">5</b><h3>Read results</h3><p>See who was on time, late, open or missed.</p></div>
+<div class="sl"><b class="n">4</b><h3>Verify or reject</h3><p>Send it back with a reason. Every attempt is kept as its own version.</p></div>
+<div class="sl"><b class="n">5</b><h3>Read results</h3><p>See who was on time, late, open or missed, and how a class grows over months.</p></div>
 </div>
 <div class="bar"><i></i></div>
 </div></section>
@@ -567,16 +600,17 @@ details[open] summary:after{transform:rotate(180deg)}
 <!-- ============ TOUR ============ -->
 <section class="sec" id="tour" style="padding-top:84px"><div class="wrap">
 <h2>Inside the app</h2>
-<p class="subh">These are the screens you will use, drawn from the app itself. The four tabs across the top are Notes, My Tasks, Org and Analytics.</p>
+<p class="subh">These are the screens you will use, drawn from the app itself. The tabs across the top are Notes, Tasks, Org, Analytics, Rewards and Leaderboard.</p>
 
 <!-- T1 Org tree -->
 <div class="tour">
-<div class="tx rv" data-sc=""><div class="sh sm" data-k="cube" data-sc="run" aria-hidden="true"></div>
+<div class="tx rv" data-sc="">
 <h3>Organize people into groups and sub-groups</h3>
 <p>The Org tab is where the organization account builds its structure.</p>
 <ul>
 <li><b>Groups nest.</b> Add a sub-group to any group, add members, or remove them with one click.</li>
 <li><b>Add existing or create new.</b> Put current accounts in a group, or make new accounts and assign them immediately.</li>
+<li><b>Group admins.</b> Make someone an admin of a group or sub-group so they can run it without owning the whole organization.</li>
 <li><b>Accounts are named under your organization,</b> like <code>aisha@ms.hart</code>.</li>
 <li><b>Manage passwords.</b> Re-roll a password, delete one account, or select several and delete them together.</li>
 </ul>
@@ -584,13 +618,13 @@ details[open] summary:after{transform:rotate(180deg)}
 <div class="stage tilt" data-sc=""><div class="win" role="img" aria-label="Time12 Org tab with groups, a nested sub-group and a sub-accounts table">
 <div class="wbar"><i></i><i></i><i></i><span>time12.xin/dash</span></div>
 <div class="wbody"><div class="app">
-<div class="top"><div class="l"><i></i>Ready</div><div class="pill"><span>Notes</span><span>My Tasks</span><span class="on">Org</span><span>Analytics</span></div><div class="r"><span class="ab p">Add ▾</span></div></div>
+<div class="top"><div class="l"><i></i>Ready</div><div class="pill"><span>Notes</span><span>Tasks</span><span class="on">Org</span><span>Analytics</span><span>Rewards</span><span>Leaderboard</span></div><div class="r"><span class="ab p">Add ▾</span></div></div>
 <div class="gc">
-<div class="gh"><div class="gn">Physics 10B <span class="gid">ID: 3f9a12c0</span></div><div class="ga"><span class="ab">Add Member</span><span class="ab">+ Sub-Group</span><span class="ab d">Delete</span></div></div>
+<div class="gh"><div class="gn">Physics 10B <span class="gid">ID: 3f9a12c0</span></div><div class="ga"><span class="ab">Admins</span><span class="ab">Add Member</span><span class="ab">+ Sub-Group</span><span class="ab d">Delete</span></div></div>
 <div class="mem"><span>aisha@ms.hart <em>×</em></span><span>omar@ms.hart <em>×</em></span><span>lina@ms.hart <em>×</em></span><span class="org">Show 9 more</span></div>
 </div>
 <div class="nest"><div class="gc">
-<div class="gh"><div class="gn">Lab team A <span class="gid">ID: 9b21e7d4</span></div><div class="ga"><span class="ab">Add Member</span><span class="ab">+ Sub-Group</span><span class="ab d">Delete</span></div></div>
+<div class="gh"><div class="gn">Lab team A <span class="gid">ID: 9b21e7d4</span></div><div class="ga"><span class="ab">Admins</span><span class="ab">Add Member</span><span class="ab">+ Sub-Group</span><span class="ab d">Delete</span></div></div>
 <div class="mem"><span>yusuf@ms.hart <em>×</em></span><span>mei@ms.hart <em>×</em></span></div>
 </div></div>
 <div class="tbl" style="margin-top:6px">
@@ -605,13 +639,14 @@ details[open] summary:after{transform:rotate(180deg)}
 
 <!-- T2 Create task -->
 <div class="tour flip">
-<div class="tx rv" data-sc=""><div class="sh sm" data-k="slabs" data-sc="run" aria-hidden="true"></div>
+<div class="tx rv" data-sc="">
 <h3>Assign a task with a real deadline</h3>
 <p>Every task goes to one group, and everyone in it receives it.</p>
 <ul>
 <li><b>Exact due time,</b> not just a day. It defaults to 11:59 PM today.</li>
 <li><b>Reference links and files</b> go with the task, up to 25 MB per file.</li>
-<li><b>Description is optional.</b> Title, group and due time are required.</li>
+<li><b>Whole group or specific people.</b> People who join the group later do not receive it.</li>
+<li><b>Standard or Automated.</b> An automated task is marked by AI against your checklist, see below.</li>
 <li><b>Deadlines are enforced.</b> After the due time, unsubmitted tasks close.</li>
 </ul>
 </div>
@@ -620,6 +655,7 @@ details[open] summary:after{transform:rotate(180deg)}
 <div class="f2"><label>Task title</label><div class="in v">Lab report: Pendulum</div></div>
 <div class="f2"><label>Description <i>(optional)</i></label><div class="in v" style="align-items:flex-start;min-height:52px">Measure the period at five string lengths and plot T² against L.</div></div>
 <div class="f2"><label>Assign to group</label><div class="in v">Physics 10B <span>⌄</span></div></div>
+<div class="f2"><label>Task type</label><div class="in v">Standard Task <span>⌄</span></div></div>
 <div class="f2"><label>Due date &amp; time</label><div class="in v">10/14/2026, 11:59 PM</div></div>
 <div class="f2"><label>Attach links <i>(optional)</i></label><div class="two"><div class="in v">https://…/pendulum-handout</div><div class="in v">Lab handout</div></div><span class="ab">+ Add Link</span></div>
 <div class="f2" style="margin-top:12px"><label>Attach files <i>(optional, max 25 MB each)</i></label><div class="drop"><svg class="i"><use href="#upload"/></svg>Click to browse or drag &amp; drop</div></div>
@@ -629,49 +665,46 @@ details[open] summary:after{transform:rotate(180deg)}
 
 <!-- T3 My tasks -->
 <div class="tour">
-<div class="tx rv" data-sc=""><div class="sh sm" data-k="gyro" data-sc="run" aria-hidden="true"></div>
-<h3>Members see exactly what is theirs</h3>
-<p>The My Tasks tab is a member's own dashboard.</p>
+<div class="tx rv" data-sc="">
+<h3>Tasks sort themselves by what needs you next</h3>
+<p>The Tasks tab is a member's own dashboard.</p>
 <ul>
-<li><b>Status at a glance.</b> The colored top edge and badge show not started, pending, completed, rejected or overdue.</li>
-<li><b>Everything in one card:</b> description, reference materials, your submission and your submitted links.</li>
-<li><b>Last 60 days</b> graph of your task volume over time.</li>
-<li><b>Closed means closed.</b> Past the due time, the card says Deadline Passed — Submissions Closed.</li>
+<li><b>Four groups:</b> To do, In review, Overdue and Completed. Each one collapses.</li>
+<li><b>Sent-back work jumps to the top</b> of To do, with the reviewer's note.</li>
+<li><b>Closed means closed.</b> Past the due time, submissions close and the card says so.</li>
+<li><b>One summary line</b> counts every group at a glance.</li>
 </ul>
 </div>
 <div class="stage tilt" data-sc=""><div class="win" role="img" aria-label="Time12 My Tasks tab with a 60 day graph and task cards">
 <div class="wbar"><i></i><i></i><i></i><span>time12.xin/dash</span></div>
 <div class="wbody"><div class="app">
-<div class="top"><div class="l"><i></i>Ready</div><div class="pill"><span>Notes</span><span class="on">My Tasks</span><span>Org</span><span>Analytics</span></div><div class="r"></div></div>
-<div class="mt">My Assigned Tasks</div>
+<div class="top"><div class="l"><i></i>Ready</div><div class="pill"><span>Notes</span><span class="on">Tasks</span><span>Org</span><span>Analytics</span><span>Rewards</span><span>Leaderboard</span></div><div class="r"></div></div>
+<div class="mt">Tasks</div>
 <div class="mm"><span>Member Dashboard</span></div>
-<div class="gcard"><div class="gt">Last 60 Days<small>Task volume over time</small></div>
-<svg viewBox="0 0 100 40" preserveAspectRatio="none" id="g60" aria-hidden="true"></svg></div>
-
+<div class="sect" style="margin-bottom:10px">To do<small>2</small></div>
 <div class="tc rejected"><div class="tch"><div><div class="tct">Lab report: Pendulum</div><div class="tcm">Physics 10B · Due: Oct 14, 2026, 11:59 PM</div></div><span class="badge rejected">Rejected</span></div>
-<div class="tcd">Measure the period at five string lengths and plot T² against L.</div>
-<div class="rev"><b>YOUR SUBMISSION</b>Table and graph attached.</div>
-<div class="tcl"><span class="lab">Reference materials</span><a href="#"><svg class="i"><use href="#link"/></svg>Lab handout</a></div>
-<div class="tcf"><span class="ab p">Submit Task</span></div></div>
-
-<div class="tc pending"><div class="tch"><div><div class="tct">Reading response: Chapter 4</div><div class="tcm">English 10 · Due: Oct 12, 2026, 8:00 AM</div></div><span class="badge pending">Pending</span></div>
-<div class="rev"><b>YOUR SUBMISSION</b>Two paragraphs on the narrator's shift in tone.</div></div>
-
-<div class="tc overdue" style="margin-bottom:0"><div class="tch"><div><div class="tct">Weekly safety quiz</div><div class="tcm">Physics 10B · <span class="od">Due: Oct 8, 2026, 11:59 PM</span></div></div><span class="badge overdue">Overdue</span></div>
-<div class="tcf"><span class="closed">Deadline Passed — Submissions Closed</span></div></div>
+<div class="rev"><b>NOTE FROM YOUR TEACHER</b>Missing sources. Add two sources and rewrite the conclusion.</div>
+<div class="tcf"><span class="ab p">Resubmit</span></div></div>
+<div class="tc"><div class="tch"><div><div class="tct">Circuit worksheet</div><div class="tcm">Physics 10B · Due: Oct 16, 2026, 8:00 AM</div></div><span class="badge">Not started</span></div></div>
+<div class="sect sec2">In review<small>1</small></div>
+<div class="rw"><div class="m"><b>Reading response: Chapter 4</b><small>English 10 · Handed in Oct 11</small></div><span class="badge pending">Pending</span></div>
+<div class="sect sec2">Overdue<small>1</small></div>
+<div class="rw"><div class="m"><b>Weekly safety quiz</b><small class="od">Deadline Passed — Submissions Closed</small></div><span class="badge overdue">Overdue</span></div>
+<div class="sect sec2">Completed<small>8</small></div>
+<div class="rw" style="margin-bottom:0"><div class="m"><b>Motion graphs</b><small>Verified Sep 24</small></div><span class="badge done">Completed</span></div>
 </div></div></div></div>
 </div>
 
 <!-- T4 Submit + review -->
 <div class="tour flip">
-<div class="tx rv" data-sc=""><div class="sh sm" data-k="torus" data-sc="run" aria-hidden="true"></div>
-<h3>Hand in text, links and files in one step</h3>
-<p>Members need at least one of the three. Leaders then review it from the Org tab.</p>
+<div class="tx rv" data-sc="">
+<h3>Hand in, review, send back with a reason</h3>
+<p>Members need at least one of text, links or files. Leaders review from the Org tab.</p>
 <ul>
-<li><b>Text, links and files</b> can be combined, up to 25 MB per file.</li>
-<li><b>Verify or Reject</b> appears next to every pending submission.</li>
-<li><b>Whole group visible.</b> Members who have not handed in still show as not started, so nobody hides.</li>
-<li><b>Long lists stay tidy.</b> Show the first three members, expand for the rest.</li>
+<li><b>Files are read for you.</b> Text from .txt, .md, .csv and .docx lands in the answer box. For photos and scans you are asked first, then it is transcribed.</li>
+<li><b>Reject with a reason.</b> Tap Incomplete, Wrong format, Missing sources, Off topic or Hard to read, then add a note.</li>
+<li><b>Every attempt is kept</b> as its own version, with its own note: v2, v3 and so on.</li>
+<li><b>Whole group visible.</b> Members who have not handed in show as not started, so nobody hides.</li>
 </ul>
 </div>
 <div class="stage tilt" data-sc="" style="flex-direction:column;gap:18px;align-items:center">
@@ -694,12 +727,13 @@ details[open] summary:after{transform:rotate(180deg)}
 <button class="more" type="button" tabindex="-1">Show 9 more</button>
 </div>
 </div></div></div>
+<div class="dlg" role="img" aria-label="Reject dialog with reason chips"><div class="dt">Send back to omar</div><div class="dx">Tell omar exactly what to change. This attempt stays in the history.</div><div class="chips"><span>Incomplete</span><span>Wrong format</span><span class="on">Missing sources</span><span>Off topic</span><span>Hard to read</span></div><div class="f2" style="margin-top:12px"><div class="in v">Add two sources and rewrite the conclusion.</div></div><div class="da"><span class="ab">Cancel</span><span class="ab p">Reject</span></div></div>
 </div>
 </div>
 
 <!-- T5 Analytics -->
 <div class="tour full">
-<div class="tx rv" data-sc=""><div class="sh sm" data-k="cube" data-sc="run" aria-hidden="true"></div>
+<div class="tx rv" data-sc="">
 <h3>Analytics that answer “who is behind?”</h3>
 <p>One organization-wide report, explored by period, person, group or task. Members see only their own history.</p>
 <ul>
@@ -708,12 +742,13 @@ details[open] summary:after{transform:rotate(180deg)}
 <li><b>Drill down</b> from the whole organization to a group, a person or a single task, with breadcrumbs back.</li>
 <li><b>Needs attention</b> lists people with missed deadlines. Search finds any person, group or task.</li>
 <li><b>Include sub-groups</b> rolls child groups into a parent. <b>Download Excel</b> exports the current view.</li>
+<li><b>History and growth.</b> Save snapshots of a team's results, then compare past groups with the current one.</li>
 </ul>
 </div>
 <div class="win tilt" data-sc="" role="img" aria-label="Time12 Analytics tab showing completion stats, a 30 day chart and ranked lists">
 <div class="wbar"><i></i><i></i><i></i><span>time12.xin/dash</span></div>
 <div class="wbody"><div class="app" style="min-width:680px">
-<div class="top"><div class="l"><i></i>Ready</div><div class="pill"><span>Notes</span><span>My Tasks</span><span>Org</span><span class="on">Analytics</span></div><div class="r"><span class="ab">Refresh</span></div></div>
+<div class="top"><div class="l"><i></i>Ready</div><div class="pill"><span>Notes</span><span>Tasks</span><span>Org</span><span class="on">Analytics</span><span>Rewards</span><span>Leaderboard</span></div><div class="r"><span class="ab">Refresh</span></div></div>
 <div class="mt">Analytics</div>
 <div class="mm"><span>24 people</span><u></u><span>3 groups</span><u></u><span>9 tasks</span></div>
 <div class="an-tools"><div class="in"><span>Search a person, group or task</span></div><div class="seg"><span class="on">All</span><span>People</span><span>Groups</span><span>Tasks</span></div></div>
@@ -768,7 +803,7 @@ details[open] summary:after{transform:rotate(180deg)}
 
 <!-- T6 Bulk import -->
 <div class="tour">
-<div class="tx rv" data-sc=""><div class="sh sm" data-k="slabs" data-sc="run" aria-hidden="true"></div>
+<div class="tx rv" data-sc="">
 <h3>Set up a whole class from one file</h3>
 <p>Add Account has a Single Account tab and an Import CSV/Excel tab.</p>
 <ul>
@@ -794,7 +829,7 @@ details[open] summary:after{transform:rotate(180deg)}
 
 <!-- T7 Notes -->
 <div class="tour flip">
-<div class="tx rv" data-sc=""><div class="sh sm" data-k="gyro" data-sc="run" aria-hidden="true"></div>
+<div class="tx rv" data-sc="">
 <h3>Notes that keep working without a connection</h3>
 <p>Every account also has a private notes tab.</p>
 <ul>
@@ -802,6 +837,7 @@ details[open] summary:after{transform:rotate(180deg)}
 <li><b>Autosaves</b> as you type. Word count and reading time update live.</li>
 <li><b>Formatting toolbar:</b> bold, italic, underline, two heading levels, bullets, quotes, links and code.</li>
 <li><b>Search</b> across your notes from the sidebar or the command palette.</li>
+<li><b>Export</b> any note as Markdown, Word or plain text, or send it straight to an open assignment.</li>
 </ul>
 </div>
 <div class="stage tilt" data-sc=""><div class="win" role="img" aria-label="Time12 Notes tab with sidebar, editor and formatting toolbar">
@@ -827,9 +863,70 @@ details[open] summary:after{transform:rotate(180deg)}
 </div></div></div></div>
 </div>
 
-<!-- T8 Palette -->
+<!-- T-AI -->
 <div class="tour">
-<div class="tx rv" data-sc=""><div class="sh sm" data-k="torus" data-sc="run" aria-hidden="true"></div>
+<div class="tx rv" data-sc="">
+<h3>Let AI mark the work against your checklist</h3>
+<p>Create an Automated Task, write what to check for, and set a pass mark.</p>
+<ul>
+<li><b>You write the checklist:</b> a short marking scheme with marks for each point.</li>
+<li><b>You set the pass mark,</b> from 50% to 100%.</li>
+<li><b>Good work is accepted on the spot.</b> The rest goes back with feedback and a one-tap Fix and resubmit.</li>
+<li><b>Attempts to sway the AI are flagged</b> and sent back. Only the owner creates automated tasks.</li>
+</ul></div>
+<div class="stage tilt" data-sc=""><div class="dlg" role="img" aria-label="Automated task with a checklist and two AI-marked attempts">
+<div class="dt">Lab report: Pendulum</div><div class="dx">Automated · 10 marks · accepted at 60%</div>
+<div class="f2"><label>What to check for</label><div class="in v" style="align-items:flex-start;line-height:1.7;font-size:12px">- Five string lengths measured (4)<br>- T² plotted against L (4)<br>- g stated with units (2)</div></div>
+<div class="rw"><div class="m"><b>Attempt 1 · AI 5/10</b><small>Axes are unlabeled and g has no units.</small></div><span class="badge rejected n">Sent back</span></div>
+<div class="rw" style="margin-bottom:0"><div class="m"><b>Attempt 2 · AI 8/10</b><small>Clear graph, g = 9.7 m/s².</small></div><span class="badge done n">Accepted</span></div>
+</div></div>
+</div>
+
+<!-- T-Papers -->
+<div class="tour flip">
+<div class="tx rv" data-sc="">
+<h3>Papers turn finished work into a streak</h3>
+<p>Finish a task and get it checked and you earn a paper. Let one close unfinished and you lose one.</p>
+<ul>
+<li><b>Counted from the real task record,</b> so it cannot be faked.</li>
+<li><b>The Rewards tab</b> shows what you earned and lost. Organizations see every member side by side.</li>
+<li><b>Organizations can take papers back,</b> with a note the member can read.</li>
+<li><b>The Leaderboard</b> ranks public profiles by papers, kings or verified work. Tap a row to see someone's verified work and badges.</li>
+</ul></div>
+<div class="stage tilt" data-sc=""><div class="win" role="img" aria-label="Time12 Rewards tab with paper totals and a ranked list">
+<div class="wbody"><div class="app" style="min-width:0;padding-top:18px">
+<div class="mt">Rewards <img src="papery.png" alt="" width="26" style="vertical-align:-5px" onerror="this.remove()"></div>
+<div class="stats" style="grid-template-columns:repeat(4,1fr)"><div class="stat"><b>11</b><span>Papers</span></div><div class="stat"><b>14</b><span>Earned</span></div><div class="stat"><b>2</b><span>Lost</span></div><div class="stat"><b class="bad">1</b><span>Removed</span></div></div>
+<div class="sect">Leaderboard<small>Papers</small></div>
+<div class="rw"><div class="m"><b>aisha</b><small>Verified work: 31</small></div><span class="pc">31</span></div>
+<div class="rw"><div class="m"><b>mei</b><small>Verified work: 27</small></div><span class="pc">27</span></div>
+<div class="rw" style="margin-bottom:0"><div class="m"><b>omar</b><small>Verified work: 22</small></div><span class="pc">22</span></div>
+</div></div></div></div>
+</div>
+
+<!-- T-Index -->
+<div class="tour">
+<div class="tx rv" data-sc="">
+<h3>A private to-do, a focus box and a chess board</h3>
+<p>Small tools for the days between deadlines.</p>
+<ul>
+<li><b>Index</b> holds quick tasks only you can see. Type a line, press Enter, finish it by the end of tomorrow. The streak grows once a day and one failure resets it. It works offline.</li>
+<li><b>The toolbox</b> has a stopwatch, a Pomodoro timer, a YouTube player (video or audio only) and chess against the computer. Timers keep running while it is closed.</li>
+<li><b>Chess costs papers,</b> 5 by default, set by your organization. It unlocks once every assignment is handed in, and a win on Hard earns a king.</li>
+</ul></div>
+<div class="stage tilt" data-sc=""><div class="dlg" role="img" aria-label="Index window with a streak and three personal tasks">
+<div class="dt">Index</div><div class="dx">Tasks you give only to yourself.</div>
+<span class="badge review n">4 day streak</span>
+<div class="in" style="margin:12px 0">What will you get done? Press Enter</div>
+<div class="rw"><i class="chk on"></i><div class="m"><b style="text-decoration:line-through;color:var(--mute)">Read chapter 5</b><small>Submitted</small></div></div>
+<div class="rw"><i class="chk"></i><div class="m"><b>Redo the pendulum axes</b><small>Due tomorrow, 11:59 PM</small></div></div>
+<div class="rw" style="margin-bottom:0"><i class="chk"></i><div class="m"><b>Email Mr. Hart about the lab</b><small>Due tomorrow, 11:59 PM</small></div></div>
+</div></div>
+</div>
+
+<!-- T8 Palette -->
+<div class="tour flip">
+<div class="tx rv" data-sc="">
 <h3>Keyboard shortcuts and a command palette</h3>
 <p>Press <code>Ctrl K</code> to run a command or jump to a note without leaving the keyboard.</p>
 <ul>
@@ -862,7 +959,7 @@ details[open] summary:after{transform:rotate(180deg)}
 </div></section>
 
 <!-- ============ STACK ============ -->
-<section class="sec tint" id="stack"><div class="sh lg pa" data-k="slabs" data-sc="run" style="right:8vw;top:70px" aria-hidden="true"></div><div class="wrap">
+<section class="sec tint" id="stack"><div class="wrap">
 <h2>How it's built</h2>
 <p class="subh">Plain web technology, chosen to stay quick on school laptops and phones.</p>
 <div class="stack">
@@ -870,38 +967,41 @@ details[open] summary:after{transform:rotate(180deg)}
 <div data-sc="" class="card"><h3><span class="ic"><svg class="i"><use href="#db"/></svg></span>Supabase</h3><p>Postgres and Edge Functions power sign-in, organizations, tasks, notes sync and file upload and download.</p></div>
 <div data-sc="" class="card"><h3><span class="ic"><svg class="i"><use href="#disk"/></svg></span>IndexedDB</h3><p>Notes live in your browser first, with a sync queue and an automatic sync every five seconds.</p></div>
 <div data-sc="" class="card"><h3><span class="ic"><svg class="i"><use href="#sheet"/></svg></span>SheetJS</h3><p>Reads <code>.xlsx</code>, <code>.xls</code> and <code>.csv</code> imports and writes your Excel exports, all inside the browser.</p></div>
-<div data-sc="" class="card"><h3><span class="ic"><svg class="i"><use href="#glow"/></svg></span>WebGL</h3><p>A shader draws the soft aurora behind sign-in and the app, with glass panels over it. Lower End mode switches it off.</p></div>
+<div data-sc="" class="card"><h3><span class="ic"><svg class="i"><use href="#glow"/></svg></span>Flat and solid</h3><p>Pure white panels, or solid charcoal in dark mode. No blur, sheen or glow, so it stays steady on slower devices.</p></div>
 <div data-sc="" class="card"><h3><span class="ic"><svg class="i"><use href="#type"/></svg></span>DM Serif Display and DM Sans</h3><p>One serif for titles and one sans for everything else, in light and dark themes you can toggle with <code>Ctrl J</code>.</p></div>
 <div data-sc="" class="card wide"><h3><span class="ic"><svg class="i"><use href="#device"/></svg></span>Tuned to your device</h3>
 <p>On your first visit, Time12 asks what you are using. It also reads reduced-motion and data-saver settings and drops to a lighter mode on its own if frames run slow. Switch any time from the button beside the theme toggle.</p>
-<div class="dev"><div><svg class="i"><use href="#device"/></svg><b>Higher End Device</b>Full visuals, glass effects and animations</div><div><svg class="i"><use href="#phone"/></svg><b>Lower End Device</b>No animations, lightweight and fast</div></div></div>
+<div class="dev"><div><svg class="i"><use href="#device"/></svg><b>Higher End Device</b>Full visuals and animations</div><div><svg class="i"><use href="#phone"/></svg><b>Lower End Device</b>No animations, lightweight and fast</div></div></div>
 <div data-sc="" class="card"><h3><span class="ic"><svg class="i"><use href="#lock"/></svg></span>UniClvrPass</h3><p>Accounts sign in with a username and password through UniClvrPass. No email address is required.</p></div>
 </div>
 </div></section>
 
 <!-- ============ FAQ ============ -->
-<section class="sec" id="faq"><div class="sh lg pa" data-k="torus" data-sc="run" style="right:10vw;top:90px" aria-hidden="true"></div><div class="wrap">
+<section class="sec" id="faq"><div class="wrap">
 <h2>Common questions</h2>
 <div class="faq">
 <details data-sc=""><summary>Who creates tasks, groups and accounts?</summary><p>The organization account, meaning whoever registers. It adds groups, sub-groups and member accounts. Member accounts do not see the Add button in the Org tab.</p></details>
 <details data-sc=""><summary>What can a member hand in?</summary><p>Text, links and files, in any combination. Files can be up to 25 MB each. At least one of the three is required.</p></details>
-<details data-sc=""><summary>What happens when a submission is rejected?</summary><p>The task returns to the member as Rejected and they can submit again until the deadline. In Analytics it shows as Redo, and the task view says it needs resubmission.</p></details>
+<details data-sc=""><summary>What happens when a submission is rejected?</summary><p>The task goes back to the member as Rejected, with your reason. They can resubmit until the deadline, and every attempt stays in the history as its own version.</p></details>
 <details data-sc=""><summary>What happens after the deadline?</summary><p>A task nobody handed in is marked overdue, and the member sees Deadline Passed — Submissions Closed. Analytics counts it as missed.</p></details>
 <details data-sc=""><summary>Can I export results?</summary><p>Yes. The Analytics tab has a Download Excel button for the current view: the whole organization, a group, a person or a single task.</p></details>
 <details data-sc=""><summary>Do I need an email address to sign up?</summary><p>No. You register with a username and a password. Accounts you create for members use the same, named under your organization.</p></details>
+<details data-sc=""><summary>What is an Automated Task?</summary><p>You write what to check for and a pass mark. The AI marks each submission against it, accepts work that clears the mark and sends the rest back with feedback. Only the organization owner can create one.</p></details>
+<details data-sc=""><summary>What are papers?</summary><p>You earn a paper for each task that is verified or accepted by the AI, and lose one for each task that closes unfinished. They are counted from the real task record and shown in the Rewards tab.</p></details>
+<details data-sc=""><summary>Can someone other than the owner run a group?</summary><p>Yes. Make them an admin of a group. They can send assignments, add and remove members and watch progress for that group and its sub-groups, and nothing outside them.</p></details>
 <details data-sc=""><summary>Does it work offline?</summary><p>Notes do. They are saved on your device first and sync when you are back online. Tasks and submissions need a connection.</p></details>
 </div>
 </div></section>
 
 <!-- ============ PARTNERS ============ -->
-<section class="sec partners" id="partners"><div class="sh md pa" data-k="cube" data-sc="run" style="right:9vw;top:34px" aria-hidden="true"></div><div class="wrap">
+<section class="sec partners" id="partners"><div class="wrap">
 <h2>Trusted partners</h2>
 <p class="subh">Tools and teams we work with and recommend.</p>
 </div>
 <div class="mq" data-sc="" aria-label="Trusted partners: Tabula, SmoothRecorder and Prod99"><div class="mq-track"></div></div>
 </section>
 
-<div class="final"><div class="wrap"><div class="band bnd" data-sc=""><div class="sh md pa" data-k="cube" data-sc="run" style="left:7%;top:20%" aria-hidden="true"></div><div class="sh md pa" data-k="gyro" data-sc="run" style="right:7%;bottom:18%" aria-hidden="true"></div>
+<div class="final"><div class="wrap"><div class="band bnd" data-sc="">
 <h2 class="ln" data-sp>Create your first group.</h2>
 <p>Register with a username and password, create your first group, and see who is done, who is pending and who is late.</p>
 <a class="btn" href="https://time12.xin/dash">Open Time12 <svg class="i" width="18" height="18"><use href="#arrow"/></svg></a>
@@ -1026,6 +1126,12 @@ return d;}
 document.querySelectorAll('.mq-track').forEach(function(track){track.appendChild(set(false));track.appendChild(set(true));});
 new MutationObserver(function(){imgs.forEach(function(im){im.src=im.getAttribute('data-n')+th()+'.png';});}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
 })();
+
+/* ---------- how-it-works paper slip ---------- */
+(function(){var how=document.getElementById('how'),sl=document.getElementById('slip');if(!how||!sl)return;
+var T=[['Not assigned yet',''],['Not started',''],['Pending',''],['Rejected','Missing sources. Add two and send it again.'],['Completed','Resubmitted as v2. Verified.']],st=sl.querySelector('.sst'),nt=sl.querySelector('.note'),last=-1;
+function f(){var b=how.getBoundingClientRect(),v=Math.max(0,Math.min(1,-b.top/(b.height-innerHeight))),i=Math.round(v*4);if(i!==last){last=i;sl.setAttribute('data-s',i);st.textContent=T[i][0];nt.textContent=T[i][1];}}
+addEventListener('scroll',f,{passive:true});f();})();
 </script>
 </body>
 </html>
