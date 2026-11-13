@@ -53,6 +53,7 @@ label{display:block;font-weight:700;margin-bottom:5px}
 #app{display:none;height:100%;grid-template-columns:250px minmax(0,1fr)}
 aside{display:flex;flex-direction:column;min-height:0;border-right:3px dashed var(--orange);background:rgba(255,255,255,.7)}
 aside .top{padding:18px 18px 6px;font-size:1.9rem;font-weight:700;color:var(--pink);text-shadow:2px 2px 0 var(--yellow);transform:rotate(-2deg)}
+.org{margin:0 18px;font-weight:700;color:var(--muted);font-size:.9rem}
 aside h2{font-size:.9rem;color:var(--muted);margin:12px 18px 6px}
 #rooms{list-style:none;margin:0;padding:0 10px;flex:1;overflow-y:auto}
 #rooms button{width:100%;text-align:left;background:none;border:0;padding:7px 12px;border-radius:12px;cursor:pointer;font-weight:700}
@@ -99,7 +100,7 @@ form.send .btn{padding:7px 18px;background:var(--green-f);border-color:var(--gre
   <div class="login-side">
     <div class="mark">Mockem</div>
     <p>Chat with your people.</p>
-    <small>Signs in with UniClvrPass</small>
+    <small>Chats stay inside your organization.</small>
   </div>
   <div class="login-main">
     <div class="card"><form id="authForm" autocomplete="on">
@@ -118,6 +119,7 @@ form.send .btn{padding:7px 18px;background:var(--green-f);border-color:var(--gre
 <div id="app">
   <aside>
     <div class="top">Mockem</div>
+    <div class="org" id="orgName"></div>
     <h2>Rooms</h2>
     <ul id="rooms"></ul>
     <form class="addroom" id="addRoom"><input id="newRoom" maxlength="40" placeholder="Add a room" aria-label="Add a room"></form>
@@ -135,10 +137,9 @@ form.send .btn{padding:7px 18px;background:var(--green-f);border-color:var(--gre
   </main>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
 const AUTH_URL = 'https://lbujqhnadkwqgojbhalw.supabase.co/functions/v1/auth';
-const db = window.supabase.createClient('https://vbdmenslbebogqbfdlmz.supabase.co','sb_publishable_HdQBm-7n58VGs8e6oNd_Tg_o9LUR3Hp');
+const CHAT_URL = 'https://vbdmenslbebogqbfdlmz.supabase.co/functions/v1/chat';
 const $ = id => document.getElementById(id);
 
 /* ---- session (same keys as other UniClvrPass pages) ---- */
@@ -151,6 +152,17 @@ function getSession(){
 }
 function setSession(d){ try{ localStorage.setItem('userId',d.userId); localStorage.setItem('username',d.username); localStorage.setItem('authToken',d.token);}catch(e){} }
 function clearSession(){ try{ ['userId','username','authToken'].forEach(k=>localStorage.removeItem(k)); }catch(e){} }
+
+/* ---- chat API: the server verifies the token and decides your org ---- */
+class AuthError extends Error{}
+async function api(body){
+  const s=getSession(); if(!s) throw new AuthError('Not signed in');
+  const r=await fetch(CHAT_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+s.authToken},body:JSON.stringify(body)});
+  const d=await r.json().catch(()=>({}));
+  if(r.status===401) throw new AuthError(d.error||'Your session has expired. Sign in again.');
+  if(!r.ok) throw new Error(d.error||'Something went wrong.');
+  return d;
+}
 
 /* ---- sign in ---- */
 function loginMsg(t,k){ $('loginMsg').textContent=t; $('loginMsg').className='msg-line '+(k||''); }
@@ -170,26 +182,44 @@ $('authForm').addEventListener('submit', async e=>{
 });
 
 /* ---- app state ---- */
-let me=null, room='general', channel=null, seen=new Set(), lastRow=null;
-function getRooms(){ try{ const r=JSON.parse(localStorage.getItem('rooms')||'[]'); if(Array.isArray(r)&&r.length) return r; }catch(e){} return ['general']; }
-function saveRooms(r){ try{ localStorage.setItem('rooms',JSON.stringify(r)); }catch(e){} }
+let me=null, org='', room='general', seen=new Set(), lastRow=null, lastId=0, timer=null, openToken=0;
+const shown = u => u.split('@')[0];
+const roomKey = () => 'rooms:'+org;
+function localRooms(){ try{ const r=JSON.parse(localStorage.getItem(roomKey())||'[]'); if(Array.isArray(r)) return r; }catch(e){} return []; }
+function saveRooms(r){ try{ localStorage.setItem(roomKey(),JSON.stringify(r)); }catch(e){} }
+let rooms=['general'];
+function mergeRooms(extra){ rooms=[...new Set(['general',...localRooms(),...extra])]; saveRooms(rooms); }
 
-function enterApp(){
+function setConn(k,t){ $('conn').className='conn '+k; $('conn').textContent=t; }
+
+async function enterApp(){
   me=getSession(); if(!me) return showLogin();
   $('login').style.display='none'; $('app').style.display='grid';
-  $('meName').textContent=me.username;
-  drawRooms(); openRoom(getRooms()[0]);
+  $('meName').textContent=shown(me.username);
+  setConn('','Connecting…');
+  try{
+    const info=await api({action:'me'});
+    org=info.org; $('orgName').textContent=org;
+    mergeRooms([]); drawRooms();
+    api({action:'rooms'}).then(r=>{ mergeRooms(r.rooms||[]); drawRooms(); }).catch(()=>{});
+    openRoom(rooms[0]);
+  }catch(err){ handleErr(err); }
 }
-function showLogin(){
-  if(channel){ db.removeChannel(channel); channel=null; }
+function showLogin(msg){
+  stopPoll();
   $('app').style.display='none'; $('login').style.display='';
+  if(msg) loginMsg(msg,'error');
   setTimeout(()=>$('u').focus(),50);
 }
-$('logout').onclick=()=>{ clearSession(); me=null; showLogin(); };
+function handleErr(err){
+  if(err instanceof AuthError){ clearSession(); me=null; showLogin(err.message); }
+  else setConn('bad','Offline');
+}
+$('logout').onclick=()=>{ clearSession(); me=null; loginMsg(''); showLogin(); };
 
 function drawRooms(){
   const ul=$('rooms'); ul.innerHTML='';
-  getRooms().forEach(r=>{
+  rooms.forEach(r=>{
     const li=document.createElement('li'), b=document.createElement('button');
     b.textContent='# '+r; b.type='button';
     if(r===room) b.setAttribute('aria-current','true');
@@ -199,26 +229,23 @@ function drawRooms(){
 }
 $('addRoom').addEventListener('submit',e=>{
   e.preventDefault();
-  const n=$('newRoom').value.trim().toLowerCase().replace(/[^a-z0-9-_ ]/g,'').replace(/\s+/g,'-');
+  const n=$('newRoom').value.trim().toLowerCase().replace(/[^a-z0-9_ -]/g,'').replace(/\s+/g,'-').slice(0,40);
   if(!n) return;
-  const rs=getRooms(); if(!rs.includes(n)){ rs.push(n); saveRooms(rs); }
-  $('newRoom').value=''; openRoom(n);
+  mergeRooms([n]); $('newRoom').value=''; openRoom(n);
 });
 
-function setConn(k,t){ $('conn').className='conn '+k; $('conn').textContent=t; }
-
-function render(m,isNew){
-  if(seen.has(m.id)) return; seen.add(m.id);
+function render(m){
+  if(seen.has(m.id)) return; seen.add(m.id); if(m.id>lastId) lastId=m.id;
   const list=$('list'); const em=list.querySelector('.empty'); if(em) em.remove();
-  const t=new Date(m.created_at);
+  const t=new Date(m.created_at), name=shown(m.username);
   const cont=lastRow&&lastRow.user===m.username&&(t-lastRow.time)<5*60*1000;
   const row=document.createElement('div'); row.className='row '+(cont?'cont':'head');
   let h=0; for(const c of m.username) h=(h*31+c.charCodeAt(0))%360; row.style.setProperty('--h',h);
-  const av=document.createElement('div'); av.className='av'; av.textContent=m.username.charAt(0).toUpperCase();
+  const av=document.createElement('div'); av.className='av'; av.textContent=name.charAt(0).toUpperCase();
   const body=document.createElement('div');
   if(!cont){
     const meta=document.createElement('div'); meta.className='meta';
-    const n=document.createElement('b'); n.textContent=m.username;
+    const n=document.createElement('b'); n.textContent=name;
     const tm=document.createElement('time'); tm.textContent=t.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
     meta.append(n,tm); body.appendChild(meta);
   }
@@ -229,35 +256,42 @@ function render(m,isNew){
   if(near||m.username===me.username) list.scrollTop=list.scrollHeight;
 }
 
+function stopPoll(){ if(timer){ clearInterval(timer); timer=null; } }
+async function poll(tok){
+  if(document.hidden||tok!==openToken) return;
+  try{
+    const d=await api({action:'history',room,afterId:lastId});
+    if(tok!==openToken) return;
+    (d.messages||[]).forEach(render); setConn('live','Live');
+  }catch(err){ handleErr(err); }
+}
+
 async function openRoom(r){
-  room=r; seen=new Set(); lastRow=null;
-  if(channel){ await db.removeChannel(channel); channel=null; }
-  drawRooms();
-  $('roomTitle').textContent='# '+room;
-  const list=$('list'); list.innerHTML='';
-  setConn('','Connecting…');
-  const {data,error}=await db.from('messages').select('*').eq('room',room).order('created_at',{ascending:false}).limit(100);
-  if(error){ setConn('bad','Offline'); list.innerHTML='<p class="empty">Messages could not be loaded. Check your connection and reopen the room.</p>'; return; }
-  if(!data.length) list.innerHTML='<p class="empty">Nobody has said anything yet. Go first!</p>';
-  data.reverse().forEach(m=>render(m,false)); list.scrollTop=list.scrollHeight;
-  const mine=room;
-  channel=db.channel('room:'+mine)
-    .on('postgres_changes',{event:'INSERT',schema:'public',table:'messages',filter:'room=eq.'+mine},p=>{ if(room===mine) render(p.new,true); })
-    .subscribe(s=>{
-      if(s==='SUBSCRIBED') setConn('live','Live');
-      else if(s==='CHANNEL_ERROR'||s==='TIMED_OUT') setConn('bad','Reconnecting…');
-    });
+  stopPoll(); const tok=++openToken;
+  room=r; seen=new Set(); lastRow=null; lastId=0;
+  drawRooms(); $('roomTitle').textContent='# '+room;
+  const list=$('list'); list.innerHTML=''; setConn('','Connecting…');
+  try{
+    const d=await api({action:'history',room});
+    if(tok!==openToken) return;
+    if(!d.messages.length) list.innerHTML='<p class="empty">Nobody has said anything yet. Go first!</p>';
+    d.messages.forEach(render); list.scrollTop=list.scrollHeight; setConn('live','Live');
+    timer=setInterval(()=>poll(tok),2500);
+  }catch(err){ handleErr(err); if(!(err instanceof AuthError)) list.innerHTML='<p class="empty">Messages could not be loaded. Check your connection and reopen the room.</p>'; }
   $('text').focus();
 }
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&me) poll(openToken); });
 
 $('send').addEventListener('submit',async e=>{
   e.preventDefault();
   const body=$('text').value.trim(); if(!body||!me) return;
   $('sendBtn').disabled=true;
-  const {error}=await db.from('messages').insert({room,username:me.username,body});
-  $('sendBtn').disabled=false;
-  if(error){ setConn('bad','Message not sent'); return; }
-  $('text').value=''; $('text').focus();
+  try{
+    const d=await api({action:'send',room,body});
+    const em=$('list').querySelector('.empty'); if(em) em.remove();
+    render(d.message); $('text').value='';
+  }catch(err){ if(err instanceof AuthError) handleErr(err); else setConn('bad',err.message||'Message not sent'); }
+  finally{ $('sendBtn').disabled=false; $('text').focus(); }
 });
 
 if(getSession()) enterApp(); else showLogin();
