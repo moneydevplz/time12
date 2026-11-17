@@ -1,1 +1,507 @@
-this is nibble
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nibble</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script>
+(() => {
+  "use strict";
+
+  const AUTH_URL = "https://lbujqhnadkwqgojbhalw.supabase.co/functions/v1/auth";
+  const LOGIN_URL = "https://pass.time12.xin/";
+  const LOGIN_ORIGIN = "https://pass.time12.xin";
+
+  const COOKIE = "time12pass_token";
+  const STATE_KEY = "time12pass_state";
+  const BOUNCE_KEY = "time12pass_bounce";
+  const secure = location.protocol === "https:" ? "; Secure" : "";
+  // Apps on time12.xin and its subdomains share one cookie, also set by the login page.
+  const COOKIE_DOMAIN = "time12.xin";
+  const onSharedDomain = location.hostname === COOKIE_DOMAIN || location.hostname.endsWith("." + COOKIE_DOMAIN);
+  const cookieAttrs = `${onSharedDomain ? "; Domain=" + COOKIE_DOMAIN : ""}; Path=/; SameSite=Lax${secure}`;
+
+  // ---- Cookie ----
+  function readCookie() {
+    const hit = document.cookie.split("; ").find((c) => c.startsWith(COOKIE + "="));
+    return hit ? decodeURIComponent(hit.slice(COOKIE.length + 1)) : null;
+  }
+  function writeCookie(token, expiresAt) {
+    const ms = new Date(expiresAt).getTime();
+    const maxAge = Number.isFinite(ms) ? Math.max(0, Math.floor((ms - Date.now()) / 1000)) : 7 * 24 * 3600;
+    document.cookie = `${COOKIE}=${encodeURIComponent(token)}; Max-Age=${maxAge}${cookieAttrs}`;
+  }
+  function clearCookie() {
+    document.cookie = `${COOKIE}=; Max-Age=0${cookieAttrs}`;
+  }
+
+  // ---- Coming back from a full-page redirect: the token arrives in the URL fragment ----
+  function takeTokenFromUrl() {
+    if (!location.hash.includes("token=")) return false;
+    const p = new URLSearchParams(location.hash.slice(1));
+    const token = p.get("token");
+    const expectedState = sessionStorage.getItem(STATE_KEY);
+    history.replaceState(null, "", location.pathname + location.search); // keep the token out of the address bar
+    sessionStorage.removeItem(STATE_KEY);
+    if (!token || !expectedState || p.get("state") !== expectedState) return false; // not a sign-in we started
+    writeCookie(token, p.get("expiresAt"));
+    if (readCookie() !== token) throw new Error("Time12 Pass: this browser is blocking cookies for this site.");
+    return true;
+  }
+
+  // A token is only good here if Time12 Pass made it for THIS site: this site's own origin, or "time12.xin" on Time12's own domain.
+  const audOk = (aud) => aud === location.origin || (aud === COOKIE_DOMAIN && onSharedDomain && location.protocol === "https:");
+
+  // ---- Ask Time12 Pass whether a token is still good ----
+  async function verify(token) {
+    const res = await fetch(AUTH_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({ action: "verify" }),
+    });
+    if (res.status === 401) return null; // bad, expired or logged-out token
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.success) throw new Error("Time12 Pass: verify failed (" + res.status + ")");
+    if (!audOk(data.aud)) return null; // made for another site (or an old token with no site): treat as signed out
+    return { userId: data.userId, username: data.username, aud: data.aud, expiresAt: data.expiresAt };
+  }
+
+  function randomState() {
+    const bytes = crypto.getRandomValues(new Uint8Array(16));
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  function goToLogin(extra) {
+    const state = randomState();
+    sessionStorage.setItem(STATE_KEY, state);
+    sessionStorage.setItem(BOUNCE_KEY, String(Date.now()));
+    const back = location.origin + location.pathname + location.search;
+    location.href = `${LOGIN_URL}?redirect=${encodeURIComponent(back)}&state=${state}${extra}`;
+  }
+
+  // ---- Popup sign-in. Call this from inside a click handler: a browser blocks window.open()
+  // that doesn't happen synchronously inside a direct user gesture. ----
+  function signIn() {
+    return new Promise((resolve, reject) => {
+      const state = randomState();
+      const url = `${LOGIN_URL}?popup=1&redirect=${encodeURIComponent(location.origin)}&state=${state}`;
+      const popup = window.open(url, "time12pass", "width=420,height=640");
+      if (!popup) {
+        reject(new Error("Time12 Pass: popup blocked. Call signIn() directly inside a click handler."));
+        return;
+      }
+
+      let done = false;
+      function cleanup() {
+        clearInterval(poll);
+        window.removeEventListener("message", onMessage);
+      }
+      function onMessage(event) {
+        if (event.origin !== LOGIN_ORIGIN) return; // only the Time12 Pass tab we opened
+        if (!event.data || event.data.type !== "time12pass" || event.data.state !== state) return; // not our request
+        done = true;
+        cleanup();
+        try { popup.close(); } catch {}
+        if (event.data.error) {
+          reject(new Error(event.data.error === "cancelled" ? "Time12 Pass: sign-in was cancelled." : "Time12 Pass: " + event.data.error));
+          return;
+        }
+        writeCookie(event.data.token, event.data.expiresAt);
+        verify(event.data.token).then((user) => {
+          if (user) return resolve(user);
+          clearCookie();
+          reject(new Error("Time12 Pass: sign-in didn't verify."));
+        }).catch((err) => { clearCookie(); reject(err); });
+      }
+      const poll = setInterval(() => {
+        if (popup.closed && !done) { cleanup(); reject(new Error("Time12 Pass: sign-in window was closed.")); }
+      }, 500);
+      window.addEventListener("message", onMessage);
+    });
+  }
+
+  // ---- Public API ----
+  async function requireLogin(options = {}) {
+    takeTokenFromUrl();
+    const token = readCookie();
+    if (token) {
+      const user = await verify(token); // throws if Time12 Pass can't be reached, so the person stays signed in
+      if (user) {
+        sessionStorage.removeItem(BOUNCE_KEY);
+        return user;
+      }
+      clearCookie();
+    }
+    // Stop a redirect loop if the login page keeps sending the person straight back.
+    if (Date.now() - Number(sessionStorage.getItem(BOUNCE_KEY) || 0) < 15000) {
+      throw new Error("Time12 Pass: sign-in keeps sending you back. Check that the page is on https (or http://localhost) and that cookies and storage are allowed.");
+    }
+    goToLogin(options.switchAccount ? "&prompt=login" : "");
+    return new Promise(() => {}); // the page is navigating away
+  }
+
+  async function getUser() {
+    takeTokenFromUrl();
+    const token = readCookie();
+    return token ? verify(token) : null;
+  }
+
+  async function logout(returnTo = location.origin + "/") {
+    const token = readCookie();
+    clearCookie();
+    if (token) {
+      try {
+        await fetch(AUTH_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify({ action: "logout" }),
+        });
+      } catch {}
+    }
+    // Also end the shared session on the login page, then come back.
+    location.href = `${LOGIN_URL}?logout=1&redirect=${encodeURIComponent(returnTo)}`;
+  }
+
+  window.Time12Pass = { signIn, requireLogin, getUser, logout, token: readCookie };
+})();
+</script>
+<style>
+:root{
+  --paper:#fff; --ink:#3b3355; --muted:#7c7596;
+  --pink:#ff7a8a; --orange:#ffa94d; --yellow:#f6d33c; --green:#4cc16f; --blue:#4dabf7; --purple:#9775fa;
+  --pink-f:#ffe0e5; --orange-f:#ffeacc; --yellow-f:#fff6bd; --green-f:#d9f6e2; --blue-f:#d8edff; --purple-f:#e8dffd;
+  --err:#d6336c; --ok:#2f9e57;
+  --font:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --wob1:255px 18px 225px 20px/20px 225px 18px 255px;
+  --wob2:18px 200px 22px 240px/240px 20px 200px 18px;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%;margin:0}
+@supports(height:100dvh){html,body{height:100dvh}}
+body{font:16px/1.45 var(--font);color:var(--ink);background:var(--paper) url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='960' height='760'><g fill-opacity='.62' stroke-width='3' stroke-dasharray='2 5' stroke-opacity='.9'><g fill='rgb(255,179,193)' stroke='rgb(255,179,193)'><circle cx='80' cy='90' r='62'/><circle cx='640' cy='330' r='40'/><circle cx='880' cy='640' r='34'/></g><g fill='rgb(184,240,200)' stroke='rgb(184,240,200)'><circle cx='300' cy='40' r='38'/><circle cx='470' cy='470' r='36'/></g><g fill='rgb(168,220,255)' stroke='rgb(168,220,255)'><circle cx='520' cy='130' r='80'/><circle cx='60' cy='500' r='70'/><circle cx='760' cy='520' r='42'/></g><g fill='rgb(255,214,165)' stroke='rgb(255,214,165)'><circle cx='760' cy='70' r='46'/><circle cx='260' cy='560' r='44'/></g><g fill='rgb(253,242,160)' stroke='rgb(253,242,160)'><circle cx='170' cy='300' r='34'/><circle cx='840' cy='280' r='66'/><circle cx='150' cy='680' r='30'/></g><g fill='rgb(212,193,255)' stroke='rgb(212,193,255)'><circle cx='380' cy='260' r='58'/><circle cx='560' cy='610' r='70'/></g></g></svg>") 0 0/960px 760px}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:3px dashed var(--purple);outline-offset:3px}
+.boot #login{visibility:hidden}
+.btn,.box,.addroom input,#rooms button[aria-current=true],.av,.card{filter:url(#pencil)}
+.btn{background:var(--pink-f);border:3px solid var(--pink);border-radius:var(--wob1);padding:10px 20px;font-weight:700;cursor:pointer;box-shadow:3px 3px 0 var(--pink);transition:transform .08s}
+.btn:hover:not(:disabled){transform:rotate(-1.5deg) scale(1.03)}
+.btn:active:not(:disabled){transform:translate(2px,2px);box-shadow:1px 1px 0 var(--pink)}
+.btn:disabled{opacity:.55;cursor:default}
+.msg-line{min-height:1.3em;font-size:.9rem;margin:0}
+.msg-line.error{color:var(--err);font-weight:700}.msg-line.ok{color:var(--ok)}
+
+/* sign in */
+#login{min-height:100%;display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr)}
+.login-side{padding:48px;display:flex;flex-direction:column;justify-content:space-between}
+.login-side .mark{font-size:3rem;font-weight:700;color:var(--pink);transform:rotate(-3deg);text-shadow:3px 3px 0 var(--yellow);align-self:flex-start}
+.login-side p{max-width:14ch;font-size:2rem;line-height:1.15;font-weight:700;margin:0;transform:rotate(1deg)}
+.login-side small{color:var(--muted)}
+.login-main{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:32px}
+.card{width:100%;max-width:380px;background:#fff;border:3px solid var(--purple);border-radius:var(--wob1);padding:30px 28px;box-shadow:5px 5px 0 var(--purple-f);display:flex;flex-direction:column;gap:16px}
+.card h1{font-size:2rem;margin:0 0 4px;background:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='8'><path d='M0 4Q5 0 10 4T20 4T30 4T40 4' fill='none' stroke='rgb(255,122,138)' stroke-width='2.5' stroke-linecap='round'/></svg>") repeat-x left bottom;padding-bottom:10px;display:inline-block}
+.card .sub{margin:6px 0 0;color:var(--muted)}
+.t12-powered{text-align:center;font-size:11px;letter-spacing:.04em;opacity:.65;padding:16px 0}
+.t12-powered strong{font-weight:700;letter-spacing:.06em}
+
+/* app */
+#app{display:none;height:100%;grid-template-columns:250px minmax(0,1fr)}
+aside{display:flex;flex-direction:column;min-height:0;border-right:3px dashed var(--orange);background:rgba(255,255,255,.7)}
+aside .top{padding:18px 18px 6px;font-size:1.9rem;font-weight:700;color:var(--pink);text-shadow:2px 2px 0 var(--yellow);transform:rotate(-2deg)}
+.org{margin:0 18px;font-weight:700;color:var(--muted);font-size:.9rem}
+aside h2{font-size:.9rem;color:var(--muted);margin:12px 18px 6px}
+#rooms{list-style:none;margin:0;padding:0 10px;flex:1;min-width:0;overflow-y:auto;overflow-x:hidden}
+#rooms button{width:100%;text-align:left;background:none;border:3px solid transparent;border-radius:var(--wob2);padding:4px 10px;cursor:pointer;font-weight:700;transition:background .15s,border-color .15s,transform .15s}
+#rooms button:hover{background:var(--blue-f);transform:translateX(3px)}
+#rooms button[aria-current=true]{background:var(--yellow-f);border-color:var(--yellow);transform:none}
+.addroom{padding:10px 12px}
+.addroom input{width:100%;padding:7px 12px;background:#fff;border:3px solid var(--orange);border-radius:var(--wob2);font-size:.9rem}
+.addroom input:focus{background:var(--yellow-f)}
+.me{padding:12px 18px;display:flex;align-items:center;gap:10px;border-top:3px dashed var(--blue)}
+.me span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:700}
+.me button{background:none;border:0;cursor:pointer;color:var(--err);text-decoration:underline wavy;font-size:.85rem}
+
+main{display:flex;flex-direction:column;min-height:0;min-width:0}
+.bar{display:flex;align-items:center;gap:12px;padding:14px 24px;background:rgba(255,255,255,.7);border-bottom:3px dashed var(--green)}
+.bar h1{font-size:1.4rem;margin:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.conn{font-size:.85rem;color:var(--muted);font-weight:700}
+.conn.live{color:var(--ok)}.conn.bad{color:var(--err)}
+
+/* one pane per room: kept alive so switching is instant and scroll position survives */
+#stage{flex:1;position:relative;min-height:0}
+.pane{position:absolute;inset:0;overflow-y:auto;overscroll-behavior:contain;padding:10px 0;opacity:0;transform:translateY(8px);visibility:hidden;transition:opacity .2s,transform .2s,visibility 0s .2s}
+.pane.on{opacity:1;transform:none;visibility:visible;transition-delay:0s}
+.sk{display:block;height:44px;margin:12px 24px;width:min(420px,70%);border-radius:var(--wob2);background:linear-gradient(90deg,var(--blue-f),#fff,var(--blue-f)) 0 0/200% 100%;animation:sh 1.2s linear infinite}
+.sk.b{width:min(280px,50%);animation-delay:.2s}
+@keyframes sh{to{background-position:-200% 0}}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.98)}}
+#jump{position:absolute;left:50%;bottom:12px;z-index:2;padding:6px 16px;background:var(--blue-f);border-color:var(--blue);box-shadow:3px 3px 0 var(--blue);opacity:0;transform:translate(-50%,10px);pointer-events:none;transition:opacity .15s,transform .15s}
+#jump.show{opacity:1;transform:translateX(-50%);pointer-events:auto}
+
+.row{--h:280;display:grid;grid-template-columns:42px 1fr;gap:12px;padding:3px 24px}
+.row.head{margin-top:12px}
+.row.new{animation:pop .25s ease-out}
+.av{width:42px;height:42px;border-radius:50%;background:hsl(var(--h) 90% 85%);border:3px solid hsl(var(--h) 75% 62%);display:flex;align-items:center;justify-content:center;font-weight:700;color:hsl(var(--h) 55% 30%);margin-top:2px}
+.row.cont .av{visibility:hidden;height:0}
+.meta{display:flex;gap:8px;align-items:baseline}
+.meta b{color:hsl(var(--h) 65% 38%)}.meta time{font-size:.78rem;color:var(--muted)}
+.text{white-space:pre-wrap;overflow-wrap:anywhere;background:rgba(255,255,255,.88);display:inline-block;padding:2px 8px;margin-left:-8px;border-radius:10px}
+.empty{margin:48px auto;text-align:center;max-width:30ch;font-size:1.2rem;font-weight:700;background:rgba(255,255,255,.9);padding:14px;border-radius:var(--wob1);border:3px dashed var(--pink)}
+form.send{padding:12px 24px 20px}
+form.send .box{display:flex;gap:10px;background:#fff;border:3px solid var(--purple);border-radius:var(--wob2);padding:6px 6px 6px 16px}
+form.send input{flex:1;min-width:0;border:0;background:transparent;padding:6px 0;outline:none}
+form.send .box:focus-within{background:var(--yellow-f)}
+form.send .btn{padding:7px 18px;background:var(--green-f);border-color:var(--green);box-shadow:3px 3px 0 var(--green)}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+@media (max-width:760px){
+  #login{grid-template-columns:1fr}.login-side{display:none}
+  #app{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}
+  /* rooms become a swipeable chip strip */
+  aside{flex-direction:row;align-items:center;gap:8px;border-right:0;border-bottom:3px dashed var(--orange);padding:6px 10px}
+  aside .top{padding:0;font-size:1.3rem}
+  .org,aside h2,.me span{display:none}
+  #rooms{display:flex;gap:6px;padding:4px 2px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+  #rooms::-webkit-scrollbar{display:none}
+  #rooms li{flex:none}
+  #rooms button{width:auto;white-space:nowrap}
+  #rooms button:hover{transform:none}
+  .addroom{padding:0;width:104px;flex:none}
+  .addroom input{font-size:16px;padding:5px 10px}
+  .me{padding:0;border:0;flex:none}
+  .bar{padding:10px 14px}
+  .row,form.send{padding-left:14px;padding-right:14px}
+  form.send{padding-bottom:max(14px,env(safe-area-inset-bottom))}
+  form.send input{font-size:16px}
+}
+</style>
+</head>
+<body class="boot">
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="pencil" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="7" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="3.5"/></filter></svg>
+
+<div id="login">
+  <div class="login-side">
+    <div class="mark">Nibble</div>
+    <p>Chat with your people.</p>
+    <small>Chats stay inside your organization.</small>
+  </div>
+  <div class="login-main">
+    <div class="card">
+      <div>
+        <h1>Hop in</h1>
+        <p class="sub">Use your Time12 Pass account to open Nibble.</p>
+      </div>
+      <p class="msg-line" id="loginMsg" role="alert"></p>
+      <button class="btn" id="signIn" type="button">Sign in with Time12 Pass</button>
+    </div>
+    <footer class="t12-powered">Powered by <strong>Time12</strong></footer>
+  </div>
+</div>
+
+<div id="app">
+  <aside>
+    <div class="top">Nibble</div>
+    <div class="org" id="orgName"></div>
+    <h2>Rooms</h2>
+    <ul id="rooms"></ul>
+    <form class="addroom" id="addRoom"><input id="newRoom" maxlength="40" placeholder="Add a room" aria-label="Add a room"></form>
+    <div class="me"><span id="meName"></span><button id="logout" type="button">Sign out</button></div>
+  </aside>
+  <main>
+    <div class="bar"><h1 id="roomTitle"></h1><span class="conn" id="conn">Connecting…</span></div>
+    <div id="stage" aria-live="polite"><button class="btn" id="jump" type="button">Newer messages ↓</button></div>
+    <form class="send" id="send">
+      <div class="box">
+        <input id="text" maxlength="1000" placeholder="Type a message" autocomplete="off" aria-label="Message">
+        <button class="btn" id="sendBtn" type="submit">Send</button>
+      </div>
+    </form>
+  </main>
+</div>
+
+<script>
+const CHAT_URL = 'https://vbdmenslbebogqbfdlmz.supabase.co/functions/v1/chat';
+const $ = id => document.getElementById(id);
+
+/* ---- chat API: the server verifies the Time12 Pass token and decides your org ---- */
+class AuthError extends Error{}
+async function api(body){
+  const t=Time12Pass.token(); if(!t) throw new AuthError('Not signed in');
+  const r=await fetch(CHAT_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify(body)});
+  const d=await r.json().catch(()=>({}));
+  if(r.status===401) throw new AuthError(d.error||'Your session has expired. Sign in again.');
+  if(!r.ok) throw new Error(d.error||'Something went wrong.');
+  return d;
+}
+
+/* ---- sign in (Time12 Pass popup) ---- */
+function loginMsg(t,k){ $('loginMsg').textContent=t; $('loginMsg').className='msg-line '+(k||''); }
+$('signIn').addEventListener('click',()=>{
+  const p=Time12Pass.signIn(); // must start synchronously inside the click
+  $('signIn').disabled=true; loginMsg('Finish signing in in the Time12 Pass window…');
+  p.then(u=>{ loginMsg(''); enterApp(u); })
+   .catch(err=>{ const quiet=/cancelled|closed/.test(err.message); loginMsg(quiet?'':err.message,'error'); })
+   .finally(()=>{ $('signIn').disabled=false; });
+});
+
+/* ---- app state ---- */
+let me=null, org='', room='', panes=new Map(), timer=null, openToken=0, rooms=['general'];
+const shown = u => u.split('@')[0];
+const roomKey = () => 'rooms:'+org, lastKey = () => 'room:'+org;
+const nearEnd = el => el.scrollHeight-el.scrollTop-el.clientHeight<100;
+function localRooms(){ try{ const r=JSON.parse(localStorage.getItem(roomKey())||'[]'); if(Array.isArray(r)) return r; }catch(e){} return []; }
+function saveRooms(r){ try{ localStorage.setItem(roomKey(),JSON.stringify(r)); }catch(e){} }
+function mergeRooms(extra){ rooms=[...new Set(['general',...localRooms(),...extra])]; saveRooms(rooms); }
+function setConn(k,t){ $('conn').className='conn '+k; $('conn').textContent=t; }
+
+async function enterApp(user){
+  me=user; document.body.classList.remove('boot');
+  panes.forEach(p=>p.el.remove()); panes.clear(); room='';
+  $('login').style.display='none'; $('app').style.display='grid';
+  $('meName').textContent=shown(me.username); setConn('','Connecting…');
+  try{
+    const info=await api({action:'me'});
+    org=info.org; $('orgName').textContent=org;
+    mergeRooms([]); drawRooms();
+    api({action:'rooms'}).then(r=>{ mergeRooms(r.rooms||[]); drawRooms(); }).catch(()=>{});
+    let last=''; try{ last=localStorage.getItem(lastKey())||''; }catch(e){}
+    openRoom(rooms.includes(last)?last:rooms[0]);
+  }catch(err){ handleErr(err); }
+}
+function showLogin(msg){
+  stopPoll(); openToken++; document.body.classList.remove('boot');
+  $('app').style.display='none'; $('login').style.display='';
+  loginMsg(msg||'',msg?'error':'');
+  setTimeout(()=>$('signIn').focus(),50);
+}
+function handleErr(err){
+  if(err instanceof AuthError){ me=null; showLogin(err.message); }
+  else setConn('bad','Offline');
+}
+$('logout').onclick=()=>{ stopPoll(); Time12Pass.logout(); };
+
+/* ---- rooms ---- */
+function drawRooms(){
+  const ul=$('rooms'); ul.textContent='';
+  rooms.forEach(r=>{
+    const li=document.createElement('li'), b=document.createElement('button');
+    b.textContent='# '+r; b.type='button'; b.dataset.room=r;
+    if(r===room) b.setAttribute('aria-current','true');
+    b.onclick=()=>openRoom(r);
+    li.appendChild(b); ul.appendChild(li);
+  });
+}
+function markRoom(){
+  document.querySelectorAll('#rooms button').forEach(b=>{
+    if(b.dataset.room===room){ b.setAttribute('aria-current','true'); b.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'}); }
+    else b.removeAttribute('aria-current');
+  });
+}
+$('addRoom').addEventListener('submit',e=>{
+  e.preventDefault();
+  const n=$('newRoom').value.trim().toLowerCase().replace(/[^a-z0-9_ -]/g,'').replace(/\s+/g,'-').slice(0,40);
+  if(!n) return;
+  mergeRooms([n]); drawRooms(); $('newRoom').value=''; openRoom(n);
+});
+document.addEventListener('keydown',e=>{
+  if(!me||!e.altKey||(e.key!=='ArrowUp'&&e.key!=='ArrowDown')) return;
+  e.preventDefault();
+  const next=rooms[rooms.indexOf(room)+(e.key==='ArrowDown'?1:-1)];
+  if(next) openRoom(next);
+});
+
+/* every room keeps its own pane, so switching is instant and scroll position survives */
+function pane(r){
+  let p=panes.get(r);
+  if(!p){
+    const el=document.createElement('div'); el.className='pane'; el.inert=true;
+    p={el,seen:new Set(),last:null,lastId:0,loaded:false};
+    el.addEventListener('scroll',()=>{ if(r===room&&nearEnd(el)) $('jump').classList.remove('show'); },{passive:true});
+    $('stage').appendChild(el); panes.set(r,p);
+  }
+  return p;
+}
+function note(p,t){ const e=document.createElement('p'); e.className='empty'; e.textContent=t; p.el.replaceChildren(e); }
+
+function render(m,p){
+  if(p.seen.has(m.id)) return; p.seen.add(m.id); if(m.id>p.lastId) p.lastId=m.id;
+  const el=p.el, em=el.querySelector('.empty'); if(em) em.remove();
+  const t=new Date(m.created_at), name=shown(m.username);
+  const cont=p.last&&p.last.user===m.username&&(t-p.last.time)<5*60*1000;
+  const row=document.createElement('div'); row.className='row '+(cont?'cont':'head')+(p.loaded?' new':'');
+  let h=0; for(const c of m.username) h=(h*31+c.charCodeAt(0))%360; row.style.setProperty('--h',h);
+  const av=document.createElement('div'); av.className='av'; av.textContent=name.charAt(0).toUpperCase();
+  const body=document.createElement('div');
+  if(!cont){
+    const meta=document.createElement('div'); meta.className='meta';
+    const n=document.createElement('b'); n.textContent=name;
+    const tm=document.createElement('time'); tm.textContent=t.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+    meta.append(n,tm); body.appendChild(meta);
+  }
+  const tx=document.createElement('div'); tx.className='text'; tx.textContent=m.body; body.appendChild(tx);
+  row.append(av,body);
+  const near=nearEnd(el), mine=m.username===me.username;
+  el.appendChild(row); p.last={user:m.username,time:t};
+  if(near||mine) el.scrollTop=el.scrollHeight;
+  else if(p.loaded&&p===panes.get(room)) $('jump').classList.add('show');
+}
+$('jump').onclick=()=>{ const p=panes.get(room); if(p) p.el.scrollTo({top:p.el.scrollHeight,behavior:'smooth'}); $('jump').classList.remove('show'); };
+
+function stopPoll(){ if(timer){ clearInterval(timer); timer=null; } }
+async function poll(tok){
+  const p=panes.get(room);
+  if(document.hidden||tok!==openToken||!p) return;
+  try{
+    const d=await api({action:'history',room,afterId:p.lastId});
+    if(tok!==openToken) return;
+    (d.messages||[]).forEach(m=>render(m,p)); setConn('live','Live');
+  }catch(err){ handleErr(err); }
+}
+
+async function openRoom(r){
+  const p=pane(r);
+  if(r===room&&p.loaded) return;
+  stopPoll(); const tok=++openToken; room=r;
+  try{ localStorage.setItem(lastKey(),r); }catch(e){}
+  panes.forEach(q=>{ const on=q===p; q.el.classList.toggle('on',on); q.el.inert=!on; });
+  markRoom(); $('roomTitle').textContent='# '+r; $('jump').classList.remove('show');
+  if(!p.loaded) p.el.innerHTML='<i class="sk"></i><i class="sk b"></i><i class="sk"></i>';
+  setConn('','Connecting…');
+  try{
+    // a room we've already opened only asks for what's new
+    const d=await api(p.loaded?{action:'history',room:r,afterId:p.lastId}:{action:'history',room:r});
+    if(tok!==openToken) return;
+    const first=!p.loaded;
+    if(first){ p.el.textContent=''; if(!d.messages.length) note(p,'Nobody in # '+r+' yet. Go first!'); }
+    d.messages.forEach(m=>render(m,p));
+    if(first){ p.loaded=true; p.el.scrollTop=p.el.scrollHeight; }
+    setConn('live','Live');
+    timer=setInterval(()=>poll(tok),2500);
+  }catch(err){
+    if(tok!==openToken) return;
+    handleErr(err);
+    if(!p.loaded&&!(err instanceof AuthError)) note(p,'Messages could not be loaded. Tap the room to try again.');
+  }
+  if(tok===openToken&&matchMedia('(hover:hover)').matches) $('text').focus();
+}
+document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&me) poll(openToken); });
+
+$('send').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const body=$('text').value.trim(), r=room; if(!body||!me||!r) return;
+  $('sendBtn').disabled=true;
+  try{
+    const d=await api({action:'send',room:r,body});
+    render(d.message,pane(r)); $('text').value='';
+  }catch(err){ if(err instanceof AuthError) handleErr(err); else setConn('bad',err.message||'Message not sent'); }
+  finally{ $('sendBtn').disabled=false; $('text').focus(); }
+});
+
+(async()=>{
+  try{ const u=await Time12Pass.getUser(); if(u) enterApp(u); else showLogin(); }
+  catch(e){ showLogin('Could not reach Time12 Pass. Check your connection.'); }
+})();
+</script>
+</body>
+</html>
