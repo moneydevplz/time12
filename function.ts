@@ -2,10 +2,13 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 /*
- * UniClvrPass auth function. Every call is POST with a JSON body { action, ... }.
+ * Time12 Pass (formerly UniClvrPass) auth function. Every call is POST with a JSON body { action, ... }.
  *   register  { username, password }           -> 201 { success, userId, username, token, expiresAt }
  *   login     { username, password }           -> 200 { success, userId, username, token, expiresAt }
  *             The token from register/login is a SESSION token (aud "pass"). Only the login page holds it.
+ *             Called directly from another site's own page (not pass.time12.xin, not a server), this
+ *             still works but carries a `deprecation` notice until the sunset date below, then 410s with
+ *             `{ code: "use_redirect", loginUrl }`. A server-side caller (no Origin header) is unaffected.
  *   issue     { audience } + Bearer <session token>
  *                                              -> 200 { success, userId, username, aud, token, expiresAt }
  *             Makes a token for ONE site. audience = that site's origin ("https://notes.example.com"),
@@ -15,7 +18,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
  *             before per-site tokens existed). Apps and servers must reject a token whose aud is not their own.
  *   whoami    alias of verify (kept for older apps)
  *   logout    (Authorization: Bearer <token>)  -> 200 { success } | 401   (revokes that one token)
- * Every failure is { success: false, error } with 400 / 401 / 409 / 429 / 500.
+ * Every failure is { success: false, error } with 400 / 401 / 409 / 410 / 429 / 500.
  */
 
 const corsHeaders = {
@@ -273,6 +276,50 @@ async function limitByIp(req: Request, name: string, cfg: { limit: number; windo
   return rl.allowed ? null : tooMany(rl.retryAfter);
 }
 
+// --- Sunsetting direct sign-in calls from another site's own page ---
+// Before the redirect flow existed, an integrating site's own front-end called register/login straight
+// from its own page (the "UniClvrPass" pattern). Time12 Pass replaces that with the hosted
+// pass.time12.xin flow, so this calling pattern is being retired.
+//
+// A browser always attaches a real Origin header to a cross-site POST, and page JS cannot override it,
+// so it tells apart three callers: the hosted login page itself (PASS_ORIGIN - always fine, forever),
+// a server calling with no browser involved (no Origin header at all - the still-supported "runs on a
+// server" pattern from the docs, always fine, forever), and some other site's own front-end (any other
+// Origin - the pattern being retired). A non-browser client can still send any Origin it likes, so this
+// is a migration signal, not a security boundary: it never substitutes for the `aud` check, rate
+// limiting or the password check, and it never gates `verify`, `logout` or `issue`, only `register`
+// and `login` calls made straight from someone else's page.
+const PASS_ORIGIN = "https://pass.time12.xin";
+// 16 days after Wed 2 Dec 2026, in Time12's home timezone (Gulf Standard Time, UTC+4, no DST).
+const LEGACY_DIRECT_AUTH_SUNSET_AT = Date.parse("2026-12-18T00:00:00+04:00");
+
+// The Origin of a browser page calling us directly, or null if this is the login page itself or a
+// server-side caller (no Origin header) - callers this sunset never applies to.
+function legacyCallerOrigin(req: Request): string | null {
+  const origin = req.headers.get("origin");
+  return origin && origin !== PASS_ORIGIN ? origin : null;
+}
+
+function legacyRetiredResponse(origin: string) {
+  const loginUrl = `${PASS_ORIGIN}/?redirect=${encodeURIComponent(origin)}`;
+  return fail(
+    410,
+    "Signing people in directly from your own page has been retired. Send them to Time12 Pass instead.",
+    { code: "use_redirect", loginUrl }
+  );
+}
+
+function legacyDeprecationNotice(): Record<string, unknown> {
+  const sunsetAt = new Date(LEGACY_DIRECT_AUTH_SUNSET_AT).toISOString();
+  const daysLeft = Math.max(0, Math.ceil((LEGACY_DIRECT_AUTH_SUNSET_AT - Date.now()) / 86_400_000));
+  return {
+    message: `Calling login/register straight from your own page is retiring on ${sunsetAt}. Switch to the Time12 Pass redirect flow (Time12Pass.requireLogin()) before then.`,
+    sunsetAt,
+    daysLeft,
+    migrateTo: `${PASS_ORIGIN}/`,
+  };
+}
+
 // --- Username rule (also enforced by a CHECK constraint on users.username) ---
 // Letters, digits and #. Optional single @ for organisations ("org@") and sub-accounts ("name@org").
 // Each side of the @ is at most 20 characters.
@@ -340,6 +387,12 @@ serve(async (req) => {
 
     // ---------- register ----------
     if (action === "register") {
+      const legacyOrigin = legacyCallerOrigin(req);
+      if (legacyOrigin && Date.now() >= LEGACY_DIRECT_AUTH_SUNSET_AT) {
+        console.warn(`auth: blocked post-sunset direct register from ${legacyOrigin}`);
+        return legacyRetiredResponse(legacyOrigin);
+      }
+
       const limited = await limitByIp(req, "register", LIMITS.registerIp);
       if (limited) return limited;
 
@@ -407,6 +460,7 @@ serve(async (req) => {
           username: data[0].username,
           token,
           expiresAt: new Date(exp).toISOString(),
+          ...(legacyOrigin ? { deprecation: legacyDeprecationNotice() } : {}),
         },
         201
       );
@@ -414,6 +468,12 @@ serve(async (req) => {
 
     // ---------- login ----------
     if (action === "login") {
+      const legacyOrigin = legacyCallerOrigin(req);
+      if (legacyOrigin && Date.now() >= LEGACY_DIRECT_AUTH_SUNSET_AT) {
+        console.warn(`auth: blocked post-sunset direct login from ${legacyOrigin}`);
+        return legacyRetiredResponse(legacyOrigin);
+      }
+
       const limited = await limitByIp(req, "login", LIMITS.loginIp);
       if (limited) return limited;
 
@@ -470,6 +530,7 @@ serve(async (req) => {
         username: user.username,
         token,
         expiresAt: new Date(exp).toISOString(),
+        ...(legacyOrigin ? { deprecation: legacyDeprecationNotice() } : {}),
       });
     }
 

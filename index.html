@@ -408,6 +408,10 @@ try {
   const state = (params.get("state") || "").slice(0, 200);
   const forceLogin = params.get("prompt") === "login";
   const wantsLogout = params.get("logout") === "1";
+  // Popup mode: opened with window.open(...) from an integrating site, instead of a full-page redirect.
+  // Requires BOTH ?popup=1 (an explicit opt-in) and a real opener, so a plain link that happens to leave
+  // window.opener set never gets its tab silently closed on us.
+  const wantsPopup = params.get("popup") === "1" && !!window.opener && window.opener !== window;
   let redirectUrl = null;
   let defaultMsg = "";   // shown under the form when there is nothing else to say
 
@@ -563,8 +567,21 @@ try {
     ]);
   }
   // ---- Sending the person back to the app --------------------------------
-  // The token goes in the URL fragment (#...), which browsers never send to servers.
+  // Popup mode: message the opener directly and close. Nothing is ever sent to a site that wasn't
+  // just shown in this same window (redirectUrl), and the message is targeted at that site's exact
+  // origin, never "*", so no other page listening for messages can see the token.
+  function postToOpener(extra) {
+    const payload = { type: "time12pass", ...(state ? { state } : {}), ...extra };
+    try { window.opener.postMessage(payload, redirectUrl.origin); } catch {}
+  }
+  // Full-page mode: the token goes in the URL fragment (#...), which browsers never send to servers.
   function goBack(session) {
+    if (wantsPopup) {
+      postToOpener({ token: session.token, expiresAt: session.expiresAt });
+      try { window.close(); } catch {}
+      showMessage("Signed in", "You can close this window.", []);
+      return;
+    }
     const h = new URLSearchParams();
     h.set("token", session.token);
     h.set("expiresAt", session.expiresAt);
@@ -574,18 +591,25 @@ try {
     location.replace(u.href);
   }
   function goBackTo(session) {
-    showLoading("Taking you back to " + redirectUrl.host + "…");
+    showLoading(wantsPopup ? "Finishing sign-in…" : "Taking you back to " + redirectUrl.host + "…");
     goBack(session);
   }
   // The "Allow this site?" screen. The full address is shown (punycode for look-alike letters), as plain text.
   function askToAllow(session) {
     const site = redirectUrl.origin;
     const allow = () => { approve(site); goBackTo(session); };
+    const cancel = () => {
+      if (wantsPopup) {
+        postToOpener({ error: "cancelled" });
+        try { window.close(); } catch {}
+      }
+      showMessage("Not signed in", "Nothing was sent to " + site + ". You can close this tab.", [
+        { label: "Allow", primary: true, onClick: allow },
+      ]);
+    };
     showMessage("Allow " + redirectUrl.host + "?", session.username + " will be shared with " + site + ". Only continue if you trust it.", [
       { label: "Allow", primary: true, onClick: allow },
-      { label: "Cancel", primary: false, onClick: () => showMessage("Not signed in", "Nothing was sent to " + site + ". You can close this tab.", [
-        { label: "Allow", primary: true, onClick: allow },
-      ]) },
+      { label: "Cancel", primary: false, onClick: cancel },
     ]);
   }
   // Swap the session token for a token made for one site (or for "time12.xin").
@@ -641,7 +665,11 @@ try {
     if (s) { try { await api({ action: "logout" }, s.token); } catch {} }
     clearSession();
     clearSharedCookie();
-    if (redirectUrl && isAllowed(redirectUrl)) { location.replace(redirectUrl.href); return; }
+    if (redirectUrl && isAllowed(redirectUrl)) {
+      if (wantsPopup) { postToOpener({ loggedOut: true }); try { window.close(); } catch {} return; }
+      location.replace(redirectUrl.href);
+      return;
+    }
     const actions = [{ label: "Sign in again", primary: true, onClick: showForm }];
     if (redirectUrl) actions.push({ label: "Back to " + redirectUrl.host, primary: false, onClick: () => location.replace(redirectUrl.href) });
     showMessage("You’re signed out", redirectUrl ? "You can go back to " + redirectUrl.host + " or close this tab." : "You can close this tab.", actions);
