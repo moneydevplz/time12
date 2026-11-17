@@ -707,8 +707,10 @@ async function checkToken(token) {
     body: JSON.stringify({ action: "verify" }),
   });
   const data = await res.json();
-  // aud must be your own site: location.origin (or "time12.xin" for apps on time12.xin)
-  return res.ok && data.success && data.aud === location.origin ? { userId: data.userId, username: data.username } : null;
+  // Apps on time12.xin and its subdomains use the shared first-party audience.
+  const onTime12Domain = location.hostname === "time12.xin" || location.hostname.endsWith(".time12.xin");
+  const expectedAud = onTime12Domain && location.protocol === "https:" ? "time12.xin" : location.origin;
+  return res.ok && data.success && data.aud === expectedAud ? { userId: data.userId, username: data.username } : null;
 }
 ```
 
@@ -758,6 +760,20 @@ A successful `register`/`login` from another site's own page, made *before* 2026
 - Register: 20 per IP per hour.
 - Issue: 120 per person per 10 minutes.
 - Past a limit you get 429 with `retryAfter`.
+
+### Deployed implementation notes (verified 2026-11-17)
+
+These details were checked against the live `auth` Edge Function and the database schema, rather than inferred from this guide.
+
+- **Deployment:** the `auth` Edge Function is active at version 23. Its Supabase `verify_jwt` gateway setting is `false`; the function validates its own signed tokens in `Authorization: Bearer ...`. All calls are still expected to use HTTPS. `OPTIONS` requests are answered for CORS preflight.
+- **Server-side secrets:** the function creates its Supabase client with `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`, and signs tokens with `SECRET_AUTH_KEY`. These are Edge Function environment secrets. Never put any of them in browser code, HTML, a public repository, or a client-side environment variable. The browser needs only the public auth endpoint and the token returned by the hosted sign-in flow.
+- **Database dependencies:** the function reads and writes `public.users`, `public.revoked_tokens` and `public.rate_limits`, and calls `public.rl_hit(p_key text, p_limit integer, p_window_seconds integer)`, which returns `allowed` and `retry_after`. The deployed `rl_hit` function atomically increments a per-key counter and resets it when its window expires. The three tables have RLS enabled; the Edge Function accesses them using its server-side service-role client. Do not expose these tables or the service-role key to app clients.
+- **Password storage:** new passwords use PBKDF2-SHA-256 with 600,000 iterations and a fresh 16-byte random salt per account. The stored format is `pbkdf2-sha256$<iterations>$<salt>$<hash>`. Existing 64-character SHA-256 hashes are still accepted and are upgraded after a successful login; hashes with a lower PBKDF2 iteration count are upgraded too. A failed best-effort upgrade does not block an otherwise valid login.
+- **Password input:** passwords are compared exactly as submitted. Registration rejects passwords longer than 128 characters and passwords with a leading or trailing space. Do not silently trim passwords in an integrating app.
+- **Token signing and revocation:** tokens are opaque `base64-payload.HMAC-SHA-256-signature` strings, not JWTs. The payload contains `username`, `exp` (milliseconds since Unix epoch), and `aud`; site tokens also contain `sid`, the SHA-256 hash of the session token that issued them. A site token is rejected if either its own token hash or its parent session hash is in `revoked_tokens`. Authentication also checks that the user still exists.
+- **Audience normalization:** `issue` accepts the literal `time12.xin`, or an HTTPS URL for a site. `http://localhost` and `http://127.0.0.1` are allowed for local testing. URL paths and query strings are reduced to the origin; credentials and other HTTP origins are rejected. The audience is therefore an origin, not a page URL.
+- **Legacy direct sign-in cutoff:** the deployed code's exact cutoff is `2026-12-18T00:00:00+04:00`. Before then, direct browser calls to `register`/`login` from an origin other than `https://pass.time12.xin` still work but include a `deprecation` object. At or after the cutoff, those calls receive `410` with `code: "use_redirect"` and a `loginUrl`. Calls with no `Origin` header (server-side) and calls originating from `https://pass.time12.xin` are exempt. This Origin check is only a migration mechanism, not an authentication boundary.
+
 
 ---
 
@@ -809,7 +825,7 @@ Before the popup and redirect flows existed, a site's own front-end called `regi
 | Now | Nothing breaks. A direct `register`/`login` call from another site's own page still works exactly as before, but its success reply now also carries a `deprecation` object (`message`, `sunsetAt`, `daysLeft`, `migrateTo`). Calls from `pass.time12.xin` itself, and from a server (no `Origin` header at all), never carry this — they're not affected by any of this, ever. |
 | **2026-12-18, 00:00 Gulf Standard Time (UTC+4)** | The same direct call from another site's own page starts getting `410 Gone` instead: `{ "success": false, "error": "...", "code": "use_redirect", "loginUrl": "https://pass.time12.xin/?redirect=<your origin>" }`. |
 
-16 days from the point this was written (Wed 2 Dec 2026) landed on 2026-12-18. Nothing else about the API changes on that date — `verify`, `logout` and `issue` are untouched, forever, and so is any call made from a real server rather than a browser page.
+The deployed function uses the fixed cutoff `2026-12-18T00:00:00+04:00`. Nothing else about the API changes at that time: `verify`, `logout` and `issue` are not gated by this sunset, and neither are calls from the hosted login page itself or server-side callers that send no `Origin` header.
 
 ### Who this does and doesn't affect
 
