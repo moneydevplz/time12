@@ -6,6 +6,167 @@
 <meta name="theme-color" content="#F1F1EC" />
 <script>try{if(localStorage.getItem("Time12-theme")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
 <script>
+(() => {
+  "use strict";
+
+  const AUTH_URL = "https://lbujqhnadkwqgojbhalw.supabase.co/functions/v1/auth";
+  const LOGIN_URL = "https://pass.time12.xin/";
+  const LOGIN_ORIGIN = "https://pass.time12.xin";
+
+  const COOKIE = "time12pass_token";
+  const STATE_KEY = "time12pass_state";
+  const BOUNCE_KEY = "time12pass_bounce";
+  const secure = location.protocol === "https:" ? "; Secure" : "";
+  // Apps on time12.xin and its subdomains share one cookie, also set by the login page.
+  const COOKIE_DOMAIN = "time12.xin";
+  const onSharedDomain = location.hostname === COOKIE_DOMAIN || location.hostname.endsWith("." + COOKIE_DOMAIN);
+  const cookieAttrs = `${onSharedDomain ? "; Domain=" + COOKIE_DOMAIN : ""}; Path=/; SameSite=Lax${secure}`;
+
+  // ---- Cookie ----
+  function readCookie() {
+    const hit = document.cookie.split("; ").find((c) => c.startsWith(COOKIE + "="));
+    return hit ? decodeURIComponent(hit.slice(COOKIE.length + 1)) : null;
+  }
+  function writeCookie(token, expiresAt) {
+    const ms = new Date(expiresAt).getTime();
+    const maxAge = Number.isFinite(ms) ? Math.max(0, Math.floor((ms - Date.now()) / 1000)) : 7 * 24 * 3600;
+    document.cookie = `${COOKIE}=${encodeURIComponent(token)}; Max-Age=${maxAge}${cookieAttrs}`;
+  }
+  function clearCookie() {
+    document.cookie = `${COOKIE}=; Max-Age=0${cookieAttrs}`;
+  }
+
+  // ---- Coming back from a full-page redirect: the token arrives in the URL fragment ----
+  function takeTokenFromUrl() {
+    if (!location.hash.includes("token=")) return false;
+    const p = new URLSearchParams(location.hash.slice(1));
+    const token = p.get("token");
+    const expectedState = sessionStorage.getItem(STATE_KEY);
+    history.replaceState(null, "", location.pathname + location.search); // keep the token out of the address bar
+    sessionStorage.removeItem(STATE_KEY);
+    if (!token || !expectedState || p.get("state") !== expectedState) return false; // not a sign-in we started
+    writeCookie(token, p.get("expiresAt"));
+    if (readCookie() !== token) throw new Error("Time12 Pass: this browser is blocking cookies for this site.");
+    return true;
+  }
+
+  // A token is only good here if Time12 Pass made it for THIS site: this site's own origin, or "time12.xin" on Time12's own domain.
+  const audOk = (aud) => aud === location.origin || (aud === COOKIE_DOMAIN && onSharedDomain && location.protocol === "https:");
+
+  // ---- Ask Time12 Pass whether a token is still good ----
+  async function verify(token) {
+    const res = await fetch(AUTH_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({ action: "verify" }),
+    });
+    if (res.status === 401) return null; // bad, expired or logged-out token
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.success) throw new Error("Time12 Pass: verify failed (" + res.status + ")");
+    if (!audOk(data.aud)) return null; // made for another site (or an old token with no site): treat as signed out
+    return { userId: data.userId, username: data.username, aud: data.aud, expiresAt: data.expiresAt };
+  }
+
+  function randomState() {
+    const bytes = crypto.getRandomValues(new Uint8Array(16));
+    return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
+  }
+
+  function goToLogin(extra) {
+    const state = randomState();
+    sessionStorage.setItem(STATE_KEY, state);
+    sessionStorage.setItem(BOUNCE_KEY, String(Date.now()));
+    const back = location.origin + location.pathname + location.search;
+    location.href = `${LOGIN_URL}?redirect=${encodeURIComponent(back)}&state=${state}${extra}`;
+  }
+
+  // ---- Popup sign-in. Call this from inside a click handler: a browser blocks window.open()
+  // that doesn't happen synchronously inside a direct user gesture. ----
+  function signIn() {
+    return new Promise((resolve, reject) => {
+      const state = randomState();
+      const url = `${LOGIN_URL}?popup=1&redirect=${encodeURIComponent(location.origin)}&state=${state}`;
+      const popup = window.open(url, "time12pass", "width=420,height=640");
+      if (!popup) {
+        reject(new Error("Time12 Pass: popup blocked. Call signIn() directly inside a click handler."));
+        return;
+      }
+
+      let done = false;
+      function cleanup() {
+        clearInterval(poll);
+        window.removeEventListener("message", onMessage);
+      }
+      function onMessage(event) {
+        if (event.origin !== LOGIN_ORIGIN) return; // only the Time12 Pass tab we opened
+        if (!event.data || event.data.type !== "time12pass" || event.data.state !== state) return; // not our request
+        done = true;
+        cleanup();
+        try { popup.close(); } catch {}
+        if (event.data.error) {
+          reject(new Error(event.data.error === "cancelled" ? "Time12 Pass: sign-in was cancelled." : "Time12 Pass: " + event.data.error));
+          return;
+        }
+        writeCookie(event.data.token, event.data.expiresAt);
+        verify(event.data.token).then((user) => {
+          if (user) return resolve(user);
+          clearCookie();
+          reject(new Error("Time12 Pass: sign-in didn't verify."));
+        }).catch((err) => { clearCookie(); reject(err); });
+      }
+      const poll = setInterval(() => {
+        if (popup.closed && !done) { cleanup(); reject(new Error("Time12 Pass: sign-in window was closed.")); }
+      }, 500);
+      window.addEventListener("message", onMessage);
+    });
+  }
+
+  // ---- Public API ----
+  async function requireLogin(options = {}) {
+    takeTokenFromUrl();
+    const token = readCookie();
+    if (token) {
+      const user = await verify(token); // throws if Time12 Pass can't be reached, so the person stays signed in
+      if (user) {
+        sessionStorage.removeItem(BOUNCE_KEY);
+        return user;
+      }
+      clearCookie();
+    }
+    // Stop a redirect loop if the login page keeps sending the person straight back.
+    if (Date.now() - Number(sessionStorage.getItem(BOUNCE_KEY) || 0) < 15000) {
+      throw new Error("Time12 Pass: sign-in keeps sending you back. Check that the page is on https (or http://localhost) and that cookies and storage are allowed.");
+    }
+    goToLogin(options.switchAccount ? "&prompt=login" : "");
+    return new Promise(() => {}); // the page is navigating away
+  }
+
+  async function getUser() {
+    takeTokenFromUrl();
+    const token = readCookie();
+    return token ? verify(token) : null;
+  }
+
+  async function logout(returnTo = location.origin + "/") {
+    const token = readCookie();
+    clearCookie();
+    if (token) {
+      try {
+        await fetch(AUTH_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+          body: JSON.stringify({ action: "logout" }),
+        });
+      } catch {}
+    }
+    // Also end the shared session on the login page, then come back.
+    location.href = `${LOGIN_URL}?logout=1&redirect=${encodeURIComponent(returnTo)}`;
+  }
+
+  window.Time12Pass = { signIn, requireLogin, getUser, logout, token: readCookie };
+})();
+</script>
+<script>
 /* ---------- Time12 performance tiers: high > mid > low ----------
    Start optimistic (high), downgrade from hardware hints now and from a live
    FPS benchmark later. Override: ?perf=low|mid|high  or  Time12Perf.set('low') */
@@ -427,7 +588,7 @@
     display: flex; justify-content: center; align-items: center;
   }
   .powered-by { font-size: 11px; color: var(--text-muted); letter-spacing: 0.04em; }
-  .powered-by .uniclvrpass { font-weight: 600; color: var(--text-soft); letter-spacing: 0.06em; }
+  .powered-by strong { font-weight: 600; color: var(--text-soft); letter-spacing: 0.06em; }
 
   /* ============================================================
      APP LAYOUT
@@ -2093,27 +2254,16 @@
     </div>
     <div class="login-tagline">Make Time True</div>
 
-    <form id="authForm">
-      <div class="login-form-group">
-        <label for="username">Username</label>
-        <input type="text" id="username" name="username" placeholder="enter username" required autocomplete="off" />
-      </div>
-
-      <div class="login-form-group">
-        <label for="password">Password</label>
-        <input type="password" id="password" name="password" placeholder="enter password" required autocomplete="off" />
-      </div>
-
+    <form id="authForm" onsubmit="return false">
       <div class="login-button-group">
-        <button type="button" class="btn-auth btn-auth-primary magnetic" id="registerBtn">Register</button>
-        <button type="button" class="btn-auth btn-auth-secondary magnetic" id="loginBtn">Login</button>
+        <button type="button" class="btn-auth btn-auth-primary magnetic" id="loginBtn">Sign in / Register</button>
       </div>
 
       <div class="login-message" id="message"></div>
     </form>
 
     <div class="login-footer">
-      <div class="powered-by">powered by <span class="uniclvrpass">UniClvrPass</span></div>
+      <div class="powered-by">Powered by <strong>Time12</strong></div>
     </div>
   </div>
 </div>
@@ -2834,7 +2984,7 @@
     chBoot().then(function () { if (!CG.cg) return; if (!CG.game) chPaint(); if (!CG.busy) return chRefresh(); }).then(done, done);
   }
   chBoot();
-  function chCk() { try { return 'time12_chess_lock_' + JSON.parse(decodeURIComponent(escape(atob(localStorage.getItem('authToken').split('.')[0].replace(/-/g, '+').replace(/_/g, '/'))))).username; } catch (e) { return ''; } }
+  function chCk() { try { var u = localStorage.getItem('username'); return u ? 'time12_chess_lock_' + u : ''; } catch (e) { return ''; } }
   function chKeep(j) { var k = chCk(); if (!k) return; try { if (j && j.locked) localStorage.setItem(k, JSON.stringify({ free: false, locked: true, undone: j.undone, cost: j.cost, balance: j.balance })); else localStorage.removeItem(k); } catch (e) {} }
   function chPre() {   /* last time you were locked? say so at once, before anything loads */
     var k = chCk(), c = null; if (!k || CG.st) return;
@@ -3090,7 +3240,6 @@
   const SUPABASE_URL = 'https://bukeabrzlgcwzwtzmwld.supabase.co';
   const EDGE_FUNCTION_NAME = 'sync-notes';
   const AUTO_SYNC_INTERVAL = 5000;
-  const AUTH_API_URL = 'https://lbujqhnadkwqgojbhalw.supabase.co/functions/v1/auth';          
   const ORG_API_URL  = 'https://bukeabrzlgcwzwtzmwld.supabase.co/functions/v1/manage-organizations';
   const FILE_API_URL = 'https://bukeabrzlgcwzwtzmwld.supabase.co/functions/v1';              
   const FILE_LINK_PREFIX = FILE_API_URL + '/download-file/';
@@ -3110,6 +3259,7 @@
       headers: { 'Authorization': `Bearer ${token}` },
       body: fd
     });
+    if (await endedByResponse(res, token)) throw new Error(SESSION_ENDED_MSG);
     let data = {};
     try { data = await res.json(); } catch {}
     if (!res.ok || !data.success) throw new Error(data.error || `Upload failed (HTTP ${res.status})`);
@@ -3132,6 +3282,7 @@
     try {
       toast('Downloading…', 'success');
       const res = await fetch(FILE_LINK_PREFIX + fileId, { headers: { 'Authorization': `Bearer ${token}` }, mode: 'cors' });
+      if (await endedByResponse(res, token)) throw new Error(SESSION_ENDED_MSG);
       if (!res.ok) throw new Error((await res.text().catch(() => '')) || `HTTP ${res.status}`);
       let name = fallbackName || 'download';
       const cd = res.headers.get('Content-Disposition') || '';
@@ -3364,6 +3515,38 @@
     }
   });
 
+  /* ---------- Session ended mid-use (401 from an authed call) ----------
+     Pass really revokes tokens, so signing out in another Time12 app or tab leaves this tab holding a dead token.
+     On a 401 we first check that the session is really dead (a 401 can also mean a function rejected the token's
+     aud, and signing people out for that would just loop), then clear it once and show the sign-in screen.
+     Local notes stay in IndexedDB; signing in again picks them back up. */
+  const SESSION_ENDED_MSG = 'Your session ended. Please sign in again.';
+  let sessionEndHandled = false;
+  async function sessionIsDead(sentToken) {
+    let cookieTok = '';
+    try { cookieTok = Time12Pass.token() || ''; } catch {}
+    if (cookieTok !== sentToken) return true;           // the shared session was signed out (or replaced) elsewhere
+    try { return !(await Time12Pass.getUser()); }       // Pass says this token is dead
+    catch { return false; }                             // Pass unreachable: never sign anyone out over that
+  }
+  async function handleUnauthorized(sentToken) {
+    try { if (localStorage.getItem('authToken') !== sentToken) return false; } catch {}  // already replaced: nothing to do
+    if (sessionEndHandled) return true;
+    if (!(await sessionIsDead(sentToken))) return false;
+    if (sessionEndHandled) return true;                 // another call got here first
+    sessionEndHandled = true;
+    clearSession();
+    try { syncManager.stopAutoSync(); } catch {}
+    showLogin();
+    showLoginMessage(SESSION_ENDED_MSG, 'error');
+    return true;
+  }
+  // Use right after a fetch: true when the response was a 401 that really ended the session.
+  async function endedByResponse(res, sentToken) {
+    return res.status === 401 && await handleUnauthorized(sentToken);
+  }
+  window.t12SessionEnded = handleUnauthorized;          // for the separate rewards / profiles scripts
+
   /* ---------- Theme ---------- */
   const SUN_ICON = `<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>`;
   const MOON_ICON = `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`;
@@ -3443,9 +3626,6 @@
   const loginScreen = document.getElementById('loginScreen');
   const Time12App = document.getElementById('Time12App');
   const messageEl = document.getElementById('message');
-  const usernameInput = document.getElementById('username');
-  const passwordInput = document.getElementById('password');
-  const registerBtn = document.getElementById('registerBtn');
   const loginBtn = document.getElementById('loginBtn');
 
   function showLoginMessage(text, type = 'error') {
@@ -3458,6 +3638,7 @@
   }
 
   function enterApp(isFreshLogin = false) {
+    sessionEndHandled = false;
     loginScreen.classList.add('hidden');
     Time12App.style.display = 'grid';
     Time12App.classList.remove('app-enter');
@@ -3472,64 +3653,43 @@
     Time12App.style.display = 'none';
     Geo.loginOn();
     loginScreen.classList.remove('hidden');
-    usernameInput.value = '';
-    passwordInput.value = '';
     clearLoginMessage();
-    setTimeout(() => { if (!document.documentElement.hasAttribute('data-need-device')) usernameInput.focus(); }, 100);
+    loginBtn.disabled = false;
+    setTimeout(() => { if (!document.documentElement.hasAttribute('data-need-device')) loginBtn.focus(); }, 100);
   }
 
-  async function auth(action) {
-    const username = usernameInput.value.trim();
-    const password = passwordInput.value.trim();
-
-    if (!username || !password) {
-      showLoginMessage('Please enter username and password');
-      return;
-    }
-
-    showLoginMessage('Processing...', 'loading');
-    registerBtn.disabled = true;
-    loginBtn.disabled = true;
-
+  /* ---------- Time12 Pass sign-in (popup) ----------
+     The password is only ever typed on pass.time12.xin. The token is copied into the
+     keys the rest of the app already reads (authToken / userId / username). */
+  function applySession(user) {
     try {
-      const response = await fetch(AUTH_API_URL, {
-        method: 'POST',
-        mode: 'cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, username, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        showLoginMessage(`HTTP ${response.status}: ${data.error || 'Server error'}`);
-        return;
-      }
-
-      if (data.success) {
-        showLoginMessage(
-          action === 'register' ? 'Account created — welcome to Time12' : 'Welcome back to Time12',
-          'success'
-        );
-        localStorage.setItem('userId', data.userId);
-        localStorage.setItem('username', data.username);
-        localStorage.setItem('authToken', data.token);
-        setTimeout(() => { enterApp(true); try { window.Time12Tour && Time12Tour.afterAuth(action, data.username); } catch (e) {} }, 700);
-      } else {
-        showLoginMessage(data.error || 'Authentication failed');
-      }
-    } catch (error) {
-      showLoginMessage('Error: ' + error.message);
-    } finally {
-      registerBtn.disabled = false;
-      loginBtn.disabled = false;
-    }
+      localStorage.setItem('authToken', Time12Pass.token());
+      localStorage.setItem('userId', user.userId);
+      localStorage.setItem('username', user.username);
+    } catch {}
   }
 
-  registerBtn.addEventListener('click', (e) => { e.preventDefault(); auth('register'); });
-  loginBtn.addEventListener('click', (e) => { e.preventDefault(); auth('login'); });
-  document.getElementById('authForm').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); auth('login'); }
+  loginBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    // signIn() must run synchronously inside the click, before any await / .then()
+    const attempt = Time12Pass.signIn();
+    loginBtn.disabled = true;
+    showLoginMessage('Finish signing in in the Time12 Pass window…', 'loading');
+    attempt.then((user) => {
+      applySession(user);
+      showLoginMessage('Welcome to Time12', 'success');
+      setTimeout(() => { enterApp(true); try { window.Time12Tour && Time12Tour.afterAuth('login', user.username); } catch (e) {} }, 700);
+    }).catch((err) => {
+      const m = String((err && err.message) || err);
+      if (/popup blocked/i.test(m)) {
+        // browser refused the popup: fall back to the full-page Time12 Pass flow
+        Time12Pass.requireLogin().then((user) => { applySession(user); enterApp(true); }).catch((e2) => showLoginMessage(e2.message));
+      } else if (/cancelled|closed/i.test(m)) {
+        clearLoginMessage();
+      } else {
+        showLoginMessage(m);
+      }
+    }).finally(() => { loginBtn.disabled = false; });
   });
 
   /* ---------- 3D geometry backdrop (CSS 3D, replaces the old WebGL aurora) ---------- */
@@ -3867,7 +4027,7 @@
           document.documentElement.removeAttribute('data-need-device');
           Geo.unmount(document.querySelector('.geo-picker'));
           devicePicker.classList.remove('closing');
-          if (!loginScreen.classList.contains('hidden')) usernameInput.focus();
+          if (!loginScreen.classList.contains('hidden')) loginBtn.focus();
         }, 260);
       });
     });
@@ -4121,6 +4281,7 @@
           },
           body: JSON.stringify({ action, note, note_id: noteId }),
         });
+        if (await endedByResponse(response, token)) throw new Error(SESSION_ENDED_MSG);
         if (!response.ok) {
           const errorData = await response.json().catch(() => null);
           throw new Error(
@@ -4383,6 +4544,12 @@
         },
         body: JSON.stringify(body),
       });
+
+      if (await endedByResponse(response, token)) {
+        const ended = new Error(SESSION_ENDED_MSG);
+        ended.code = 'SESSION_ENDED';
+        throw ended;
+      }
 
       const data = await response.json();
 
@@ -5091,6 +5258,11 @@
       const err = new Error('Could not reach the AI service. Check your connection and try again.');
       err.code = 'NETWORK';
       throw err;
+    }
+    if (await endedByResponse(res, token)) {
+      const ended = new Error(SESSION_ENDED_MSG);
+      ended.code = 'SESSION_ENDED';
+      throw ended;
     }
     try { data = await res.json(); } catch (e) {}
     if (!res.ok || !data.success) {
@@ -7039,7 +7211,9 @@ Marketing,alex99,</div>
   /* ---------- Analytics: history & growth (snapshots live in the backend, see list_snapshots / save_snapshot / delete_snapshot) ---------- */
   const HIST_URL = 'https://bukeabrzlgcwzwtzmwld.supabase.co/functions/v1/team-history';
   async function histApi(b) {
-    const r = await fetch(HIST_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + localStorage.getItem('authToken') }, body: JSON.stringify(b) });
+    const tk = localStorage.getItem('authToken');
+    const r = await fetch(HIST_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tk }, body: JSON.stringify(b) });
+    if (await endedByResponse(r, tk)) throw new Error(SESSION_ENDED_MSG);
     const j = await r.json().catch(() => ({}));
     if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status);
     return j;
@@ -8831,7 +9005,7 @@ Marketing,alex99,</div>
         clearSession();
         currentNoteId = null;
         hasUnsavedChanges = false;
-        showLogin();
+        Time12Pass.logout(location.origin + location.pathname);
       });
     };
 
@@ -8911,11 +9085,23 @@ Marketing,alex99,</div>
   });
 
   /* ---------- Boot ---------- */
-  (function boot() {
-    const session = getStoredSession();
-    if (session) {
-      enterApp(false);
+  (async function boot() {
+    const had = getStoredSession();
+    if (had) loginScreen.classList.add('hidden');   // returning user: no login flash while Time12 Pass is asked
+    let user = null, reachable = true;
+    try {
+      user = await Promise.race([
+        Time12Pass.getUser(),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 6000))
+      ]);
+    } catch (e) { reachable = false; }
+    if (user) {
+      applySession(user);
+      enterApp(!had || String(had.userId) !== String(user.userId));
+    } else if (!reachable && had) {
+      enterApp(false);                // Time12 Pass unreachable: stay signed in
     } else {
+      if (had) clearSession();        // signed out on Time12 Pass: drop the stale local copy
       showLogin();
     }
   })();
@@ -9042,7 +9228,6 @@ Marketing,alex99,</div>
     { id: 'bullet', g: 'Formatting', label: 'Bullet list', codes: ['KeyU'], shift: true, scopes: ['app'], run: fmtBtn('bullet') },
     { id: 'quote', g: 'Formatting', label: 'Quote', codes: ['KeyE'], shift: true, scopes: ['app'], run: fmtBtn('quote') },
 
-    { id: 'register', g: 'Login screen', label: 'Register (Login is Mod+Enter)', codes: ['Enter'], shift: true, scopes: ['login'], run: function () { click($('registerBtn')); } },
     { id: 'pickHigh', g: 'Device picker', label: 'Higher End Device', codes: ['Digit1'], scopes: ['picker'], run: function () { click(document.querySelector('.device-option[data-device="high"]')); } },
     { id: 'pickLow', g: 'Device picker', label: 'Lower End Device', codes: ['Digit2'], scopes: ['picker'], run: function () { click(document.querySelector('.device-option[data-device="low"]')); } }
   ];
@@ -9234,7 +9419,7 @@ Marketing,alex99,</div>
   }
   function decorate() {
     var byId = {}; A.forEach(function (a) { byId[a.id] = a; });
-    var map = { saveBtn: 'save', deleteBtn: 'delete', newNoteBtn: 'new', createTaskBtn: 'new', bulkDeleteBtn: 'bulk', themeToggle: 'theme', loginThemeToggle: 'theme', deviceToggle: 'device', loginDeviceToggle: 'device', shortcutsLink: 'help', logoutLink: 'signout', menuToggle: 'sidebar', dropdownAddGroup: 'group', dropdownAddAccount: 'account', loginBtn: 'confirm', registerBtn: 'register' };
+    var map = { saveBtn: 'save', deleteBtn: 'delete', newNoteBtn: 'new', createTaskBtn: 'new', bulkDeleteBtn: 'bulk', themeToggle: 'theme', loginThemeToggle: 'theme', deviceToggle: 'device', loginDeviceToggle: 'device', shortcutsLink: 'help', logoutLink: 'signout', menuToggle: 'sidebar', dropdownAddGroup: 'group', dropdownAddAccount: 'account', loginBtn: 'confirm' };
     Object.keys(map).forEach(function (id) { var a = byId[map[id]]; setTitle($(id), a.label.split(' (')[0], titleKeys(a)); });
     setTitle($('searchInput'), 'Search notes', titleKeys(byId.search));
     setTitle($('orgAddBtn'), 'Add group / account', titleKeys(byId.group) + ' · ' + titleKeys(byId.account));
@@ -10451,11 +10636,11 @@ Marketing,alex99,</div>
   var SPARK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l2.2 5.8L20 11l-5.8 2.2L12 19l-2.2-5.8L4 11l5.8-2.2z"/></svg>';
   var box, S = { sel: null, amt: 1, d: null };
   var esc = function (s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
-  function who() { try { return JSON.parse(decodeURIComponent(escape(atob(localStorage.getItem('authToken').split('.')[0])))).username || ''; } catch (e) { return ''; } }
+  function who() { try { return localStorage.getItem('username') || ''; } catch (e) { return ''; } }
   function call(u, b) {
     var t = localStorage.getItem('authToken'); if (!t) return Promise.reject(new Error('Sign in to see your rewards.'));
     return fetch(u, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + t }, body: JSON.stringify(b) })
-      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status); return j; }); });
+      .then(function (r) { if (r.status === 401 && window.t12SessionEnded) window.t12SessionEnded(t); return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status); return j; }); });
   }
   /* papers = tasks completed - tasks closed unfinished - papers an organization removed. Computed from the live task record, so it can't drift. */
   function load() {
@@ -10846,11 +11031,11 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
   'use strict';
   var D = document, PROF = 'https://bukeabrzlgcwzwtzmwld.supabase.co/functions/v1/profiles', SITE = 'https://time12.xin/dash';
   var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
-  function me() { try { return JSON.parse(decodeURIComponent(escape(atob(localStorage.getItem('authToken').split('.')[0])))).username || ''; } catch (e) { return ''; } }
+  function me() { try { return localStorage.getItem('username') || ''; } catch (e) { return ''; } }
   function api(b, auth) {
     var h = { 'Content-Type': 'application/json' }, t = localStorage.getItem('authToken'); if (auth !== false && t) h.Authorization = 'Bearer ' + t;
     return fetch(PROF, { method: 'POST', mode: 'cors', headers: h, body: JSON.stringify(b) })
-      .then(function (r) { return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status); return j; }); });
+      .then(function (r) { if (r.status === 401 && t && window.t12SessionEnded) window.t12SessionEnded(t); return r.json().catch(function () { return {}; }).then(function (j) { if (!r.ok || j.error) throw new Error(j.error || 'HTTP ' + r.status); return j; }); });
   }
   var link = function (u) { return SITE + '?u=' + encodeURIComponent(u); };
   var nm = function (u) { var i = String(u).indexOf('@'); return i > 0 ? u.slice(0, i) : u; };
@@ -11282,7 +11467,7 @@ html:not([data-theme="dark"]) .login-form-group input::placeholder, html[data-th
 .btn-auth-secondary:hover:not(:disabled) { background: var(--text) !important; color: var(--bg) !important; }
 .btn-auth::after { display: none !important; }
 .login-theme-toggle { border-radius: var(--radius) !important; background: transparent !important; border: 1px solid var(--text) !important; }
-.powered-by .uniclvrpass { font-family: var(--serif); }
+.powered-by strong { font-family: var(--serif); }
 .device-picker-title { font-family: var(--serif); font-weight: 700; letter-spacing: -0.02em; }
 .device-option { background: var(--bg) !important; border: 1px solid var(--text) !important; border-radius: var(--radius-lg) !important; }
 .device-option:hover, .device-option:focus-visible { background: var(--accent-soft) !important; transform: translate(-2px, -2px); }
