@@ -2343,10 +2343,16 @@
         <div class="tabs-container">
           <div class="tab-item active" data-tab="Notes">Notes</div>
           <div class="tab-item" data-tab="MyTasks">Tasks</div>
-          <div class="tab-item" data-tab="Org">Org</div>
+          <div class="tab-item" data-tab="Org">Organizations</div>
           <div class="tab-item" data-tab="Analytics">Analytics</div>
           <div class="tab-item" data-tab="Rewards">Rewards</div>
           <div class="tab-item" data-tab="Leaderboard">Leaderboard</div>
+          <div class="tab-more" id="tabMore">
+            <button type="button" class="tab-more-btn" id="tabMoreBtn" aria-haspopup="menu" aria-expanded="false"><span id="tabMoreLabel">More</span>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="tab-more-menu" id="tabMoreMenu" role="menu"></div>
+          </div>
         </div>
         
         <div class="tabs-dropdown" id="tabsDropdown">
@@ -2359,7 +2365,7 @@
           <div class="dropdown-menu">
             <div class="dropdown-item active" data-tab="Notes">Notes</div>
             <div class="dropdown-item" data-tab="MyTasks">Tasks</div>
-            <div class="dropdown-item" data-tab="Org">Org</div>
+            <div class="dropdown-item" data-tab="Org">Organizations</div>
             <div class="dropdown-item" data-tab="Analytics">Analytics</div>
             <div class="dropdown-item" data-tab="Rewards">Rewards</div>
             <div class="dropdown-item" data-tab="Leaderboard">Leaderboard</div>
@@ -4573,6 +4579,7 @@
 
     ownerUsername = session.username;
     orgNamespace = ownerUsername + "@";
+    try { layoutTabs(); } catch (e) {}
     
     // A simple way to check if it's a sub-account is if the username contains '@'
     isSubAccount = ownerUsername.includes('@');
@@ -4588,7 +4595,26 @@
     fetchAccounts();
     fetchOrgTasks();
     fetchUserTasks();
+    // A student waiting on their first paper: quietly re-check every 30s so the celebration lands even if the page stays open.
+    if (isSubAccount && window.T12First) {
+      window.T12First.watch(async () => {
+        const r = await orgApiCall({ action: 'get_user_tasks' });
+        if (!(r && r.success && Array.isArray(r.tasks))) return null;
+        userAssignedTasks = r.tasks; userTasksLoaded = true;
+        if (currentTab === 'MyTasks') renderUserTasksState();
+        return r.tasks;
+      });
+    }
   }
+
+  /* Small read-only window onto app state for the guided tour (what exists yet, what to open). */
+  window.T12App = {
+    groups: () => orgGroups || [],
+    accounts: () => orgAccounts || [],
+    ready: () => !!(orgLoaded.groups && orgLoaded.accounts),
+    isSub: () => isSubAccount,
+    switchTab: (t) => switchTab(t)
+  };
 
   /* ---------- Loading skeletons (orgs + tasks) ---------- */
   const skb = (w, h, extra) => '<div class="sk" style="width:' + w + ';height:' + h + 'px;' + (extra || '') + '"></div>';
@@ -4686,6 +4712,7 @@
         const changed = !userTasksLoaded || JSON.stringify(res.tasks) !== JSON.stringify(userAssignedTasks);
         userAssignedTasks = res.tasks;
         userTasksLoaded = true;
+        try { window.T12First && window.T12First.check(res.tasks); } catch (e) {}
         refreshAutomated();
         if (currentTab === 'MyTasks' && changed) renderUserTasksState();
       }
@@ -4715,7 +4742,7 @@
     let tasksHtml = '';
       const taskRows = orgTasks.map(t => {
         const dueDateObj = t.due_date ? new Date(t.due_date) : null;
-        const dueDate = dueDateObj ? dueDateObj.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'N/A';
+        const dueDate = dueDateObj ? dueDateObj.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'No due date';
         const isTaskOverdue = dueDateObj ? dueDateObj < new Date() : false;
         const groupName = t.groups ? t.groups.name : 'Unassigned';
         
@@ -5554,7 +5581,7 @@
           </div>
           <div class="dialog-input-group">
             <label>Due Date &amp; Time</label>
-            <input type="datetime-local" id="taskDueInput" class="dialog-input" value="${defaultDueValue}">
+            <div id="dueHost"></div>
           </div>
         </div>
 
@@ -5701,16 +5728,22 @@
       container.appendChild(linkDiv);
     });
 
+    const duePicker = window.T12Cal.mount(document.getElementById('dueHost'), { value: defaultDueValue });
+
     document.getElementById('cancelDialog').onclick = closeDialog;
     document.getElementById('confirmCreateTask').onclick = async () => {
       const isAuto = document.getElementById('taskTypeValue').value === 'automated';
       const title = document.getElementById('taskTitleInput').value.trim();
       const description = document.getElementById('taskDescInput').value.trim();
       const groupId = document.getElementById('taskGroupValue').value;
-      const dueDateRaw = document.getElementById('taskDueInput').value;
+      const dueDateRaw = duePicker.value();   // null when "No due date" is chosen
 
-      if (!title || !groupId || !dueDateRaw) {
-        toast('Title, Group, and Due Date are required.', 'error');
+      if (!title || !groupId) {
+        toast('Title and Group are required.', 'error');
+        return;
+      }
+      if (!duePicker.valid()) {
+        toast('That due date has already passed. Pick a later time, or choose No due date.', 'error');
         return;
       }
 
@@ -5722,7 +5755,8 @@
 
       // Convert the local datetime-local value into a full timestamptz ISO string
       // so the exact time (not just the day) is preserved server-side.
-      const dueDate = new Date(dueDateRaw).toISOString();
+      // No due date -> null (the task never goes overdue).
+      const dueDate = dueDateRaw ? new Date(dueDateRaw).toISOString() : null;
 
       // Automated tasks: the AI must confirm the text is a real WTCF BEFORE anything is created.
       let proof = null;
@@ -5870,9 +5904,11 @@
       try {
         setStatus('saving');
         await orgApiCall({ action: 'create_group', name, parentId });
-        toast('Group created successfully');
+        // A new top-level group is a new organization for students: the server also adds a "Joined Time12" task (no due date).
+        toast(parentId ? 'Group created successfully' : 'Group created. We added a "Joined Time12" task for your students.');
         closeDialog();
         fetchGroups();
+        if (!parentId) fetchOrgTasks();
       } catch(e) {
         toast(e.message, 'error');
         setStatus('ready');
@@ -5943,15 +5979,15 @@
 
       <div id="newTabContent" style="display:none;">
         <div class="dialog-input-group">
-          <label>Bulk Upload (CSV)</label>
+          <label>Bulk Upload (CSV or Excel)</label>
           <label class="csv-dropzone" id="csvDropzone">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="width: 24px; height: 24px; margin-bottom: 8px;">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
             <div>Click to browse or drag & drop</div>
-            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Format: <code>username,password</code> or just <code>username</code> (one per line)</div>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 6px;">Columns: <code>username</code> and optional <code>password</code> &middot; .csv, .xlsx or .xls</div>
             <div class="csv-filename" id="csvFilename"></div>
-            <input type="file" id="csvFileInput" accept=".csv" />
+            <input type="file" id="csvFileInput" accept=".csv,.xlsx,.xls" />
           </label>
         </div>
 
@@ -6033,35 +6069,59 @@
     const fileInput = document.getElementById('csvFileInput');
     const filenameEl = document.getElementById('csvFilename');
 
+    function importRows(rows) {
+      const skippedNames = [], longNames = [];
+      rows.forEach((r) => {
+        const username = String(r[0] == null ? '' : r[0]).replace(/^\uFEFF/, '').trim();
+        const password = String(r[1] == null ? '' : r[1]).trim();
+        if (!username || username.toLowerCase() === 'username') return; // blank line or header row
+        const prob = nameProblem(tagName(username));
+        if (prob === 'invalid') { skippedNames.push(username); return; }
+        if (prob === 'long') longNames.push(tagName(username));
+        addEmailTag(password ? `${username},${password}` : username, prob === 'long');
+      });
+      if (skippedNames.length) toast(`Skipped ${skippedNames.length} name${skippedNames.length === 1 ? '' : 's'} with spaces or symbols: ${nameList(skippedNames)}. Use letters and numbers only.`, 'error');
+      if (longNames.length) toast(`${longNames.length} name${longNames.length === 1 ? ' is' : 's are'} over ${NAME_MAX} characters: ${nameList(longNames)}. They work, but are harder to type.`, 'warn');
+    }
     fileInput.addEventListener('change', (e) => {
-      if (e.target.files.length > 0) {
-        const file = e.target.files[0];
-        filenameEl.textContent = file.name;
-        const reader = new FileReader();
+      const file = e.target.files[0];
+      if (!file) return;
+      filenameEl.textContent = file.name;
+      const ext = file.name.split('.').pop().toLowerCase();
+      const reader = new FileReader();
+      if (ext === 'xlsx' || ext === 'xls') {
+        if (typeof XLSX === 'undefined') { toast('Excel support failed to load; try a CSV file instead.', 'error'); return; }
         reader.onload = (ev) => {
-          const text = ev.target.result;
-          const lines = text.split(/\r?\n/);
-          lines.forEach(line => {
-            const trimmedLine = line.trim();
-            if (!trimmedLine) return;
-            const parts = trimmedLine.split(',');
-            const username = parts[0].trim();
-            const password = parts.length > 1 ? parts[1].trim() : '';
-            if (username) {
-              addEmailTag(password ? `${username},${password}` : username);
-            }
-          });
+          try {
+            const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+            importRows(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { header: 1, raw: false, defval: '' }));
+          } catch (err) { toast('Could not read that Excel file.', 'error'); }
         };
+        reader.readAsArrayBuffer(file);
+      } else {
+        reader.onload = (ev) => importRows(String(ev.target.result).split(/\r?\n/).map(l => l.split(',')));
         reader.readAsText(file);
       }
+      fileInput.value = '';
     });
 
     const emailTagContainer = document.getElementById('emailTagContainer');
     const emailTagInput = document.getElementById('emailTagInput');
 
-    function addEmailTag(value) {
+    const tagNoteEl = document.createElement('div'); tagNoteEl.className = 'name-note'; tagNoteEl.setAttribute('role', 'status');
+    emailTagContainer.insertAdjacentElement('afterend', tagNoteEl);
+    function tryAddTag(raw) {
+      const name = tagName(raw), prob = nameProblem(name);
+      if (prob === 'invalid') { setNameNote(tagNoteEl, 'err', '\u201C' + (name || raw) + '\u201D can\u2019t be used. Letters and numbers only, no spaces or symbols.'); return false; }
+      addEmailTag(raw, prob === 'long');
+      setNameNote(tagNoteEl, prob === 'long' ? 'warn' : '', prob === 'long' ? name.length + ' characters. ' + NAME_LONG_MSG : '');
+      return true;
+    }
+
+    function addEmailTag(value, isLong) {
       const tag = document.createElement('div');
-      tag.className = 'email-tag';
+      tag.className = 'email-tag' + (isLong ? ' long' : '');
+      if (isLong) tag.title = 'Over ' + NAME_MAX + ' characters';
       tag.innerHTML = `
         <span>${escapeHtml(value)}</span>
         <button class="tag-remove-btn">
@@ -6074,13 +6134,18 @@
       emailTagContainer.insertBefore(tag, emailTagInput);
     }
 
+    emailTagInput.addEventListener('input', () => {
+      if (/\s/.test(emailTagInput.value)) { emailTagInput.value = emailTagInput.value.replace(/\s+/g, ''); setNameNote(tagNoteEl, 'err', 'Spaces aren\u2019t allowed. Use letters and numbers only.'); }
+      else if (tagName(emailTagInput.value).length > NAME_MAX) setNameNote(tagNoteEl, 'warn', tagName(emailTagInput.value).length + ' characters. ' + NAME_LONG_MSG);
+      else if (tagNoteEl.classList.contains('warn') || tagNoteEl.classList.contains('err')) setNameNote(tagNoteEl, '', '');
+    });
     emailTagInput.addEventListener('keydown', (e) => {
+      if (e.key === ' ') { e.preventDefault(); setNameNote(tagNoteEl, 'err', 'Spaces aren\u2019t allowed. Use letters and numbers only.'); return; }
       if (e.key === 'Enter' || e.key === ',') {
         e.preventDefault();
         const val = emailTagInput.value.trim().replace(/,$/, '');
         if (val) {
-          addEmailTag(val);
-          emailTagInput.value = '';
+          if (tryAddTag(val)) emailTagInput.value = '';
         }
       } else if (e.key === 'Backspace' && emailTagInput.value === '') {
         const tags = emailTagContainer.querySelectorAll('.email-tag');
@@ -6154,15 +6219,17 @@
             useRandomPassword: useRandom
           });
           
-          if (res.errors && res.errors.length > 0) {
-            toast(`Created ${res.addedAccounts.length} accounts with ${res.errors.length} errors.`, 'warn');
-          } else {
-            toast(`Successfully added ${res.addedAccounts.length} members.`);
-          }
-          
+          const created = (res.addedAccounts || []).filter(a => a.password);
+          const errs = (res.errors || []).map(er => typeof er === 'string' ? er : `${er.username ? er.username + ': ' : ''}${er.error || ''}`);
+          fetchGroups();
+          fetchAccounts();
+          if (created.length) { showBulkImportResultsDialog(created, errs); return; } // keep the dialog: passwords are only shown once
+          if (errs.length) toast(`Added ${res.addedAccounts.length} members with ${errs.length} issue${errs.length === 1 ? '' : 's'}.`, 'warn');
+          else toast(`Successfully added ${res.addedAccounts.length} members.`);
           closeDialog();
+          return;
         }
-        
+
         fetchGroups();
         fetchAccounts();
       } catch(e) {
@@ -6210,7 +6277,7 @@
           <div style="font-size: 12px; color: var(--text-muted); line-height: 1.6; background: var(--surface-2); border-radius: var(--radius); padding: 10px 12px;">
             Three columns, one row per user: <code>group,username,password</code><br>
             &bull; <strong>group</strong>: required. If a group with this name doesn't exist yet, it's created automatically.<br>
-            &bull; <strong>username</strong>: required. Existing accounts are just added to the group; new usernames get a new account.<br>
+            &bull; <strong>username</strong>: required. Letters and numbers only (no spaces or symbols), ideally 15 characters or fewer. Existing accounts are just added to the group; new usernames get a new account.<br>
             &bull; <strong>password</strong>: optional &mdash; leave blank and a random password is generated (new accounts only).<br>
             Works with a <code>.csv</code> or an Excel <code>.xlsx</code>/<code>.xls</code> file. An optional header row is fine.
           </div>
@@ -6324,9 +6391,14 @@ Marketing,alex99,</div>
         return;
       }
       const s = summarizeBulkImportRows(currentBulkRows);
+      const badRows = currentBulkRows.filter(r => nameProblem(r.username) === 'invalid');
+      const longRows = currentBulkRows.filter(r => nameProblem(r.username) === 'long');
+      const warnHtml =
+        (badRows.length ? `<div class="name-note err">${badRows.length} row${badRows.length === 1 ? ' has a username' : 's have usernames'} with spaces or symbols and will be skipped: ${escapeHtml(nameList(badRows.map(r => r.username)))}. Use letters and numbers only.</div>` : '') +
+        (longRows.length ? `<div class="name-note warn">${longRows.length} username${longRows.length === 1 ? ' is' : 's are'} over ${NAME_MAX} characters: ${escapeHtml(nameList(longRows.map(r => r.username)))}. They will import, but are harder to type.</div>` : '');
       previewEl.innerHTML = `<strong>${s.totalRows}</strong> row(s) across <strong>${s.groupCount}</strong> group(s) &mdash; `
         + `${s.newGroups} new group${s.newGroups === 1 ? '' : 's'}, ${s.existingGroups} existing group${s.existingGroups === 1 ? '' : 's'}; `
-        + `${s.newUsers} new user${s.newUsers === 1 ? '' : 's'} to create, ${s.existingUsers} existing user${s.existingUsers === 1 ? '' : 's'} to add.`;
+        + `${s.newUsers} new user${s.newUsers === 1 ? '' : 's'} to create, ${s.existingUsers} existing user${s.existingUsers === 1 ? '' : 's'} to add.` + warnHtml;
     }
 
     fileInput.addEventListener('change', (e) => {
@@ -6444,6 +6516,7 @@ Marketing,alex99,</div>
     });
     aiPromptText.addEventListener('focus', () => aiPromptText.select());
 
+    attachNameGuard(document.getElementById('subUserInput'));
     document.getElementById('cancelDialog').onclick = closeDialog;
     confirmBtn.onclick = async () => {
       const isImportActive = importTabBtn.classList.contains('active');
@@ -6454,6 +6527,7 @@ Marketing,alex99,</div>
           toast('Invalid username. Use only letters and numbers (no dots or spaces).', 'error');
           return;
         }
+        if (subUsername.length > NAME_MAX) toast(subUsername.length + ' characters. ' + NAME_LONG_MSG, 'warn');
 
         const useRandom = randomBtn.classList.contains('active');
         const customPass = document.getElementById('customPassInput').value;
@@ -6477,6 +6551,10 @@ Marketing,alex99,</div>
 
       if (currentBulkRows.length === 0) {
         toast('Add at least one row first — upload a file or paste rows.', 'error');
+        return;
+      }
+      if (currentBulkRows.every(r => nameProblem(r.username) === 'invalid')) {
+        toast('None of those usernames can be used. Use letters and numbers only, with no spaces or symbols.', 'error');
         return;
       }
       const useRandom = bulkRandomBtn.classList.contains('active');
@@ -6523,6 +6601,27 @@ Marketing,alex99,</div>
     return (orgAccounts || []).find(a => (a.username || '').trim().toLowerCase() === target) || null;
   }
 
+  /* ---------- account names: letters and numbers only; warn (never block) above 15 characters ---------- */
+  const NAME_MAX = 15;
+  const NAME_OK = /^[a-zA-Z0-9]+$/;
+  const NAME_LONG_MSG = 'Names over ' + NAME_MAX + ' characters work, but they\u2019re harder to type and can get cut off.';
+  function nameProblem(name) { if (!name || !NAME_OK.test(name)) return 'invalid'; return name.length > NAME_MAX ? 'long' : null; }
+  function tagName(raw) { return String(raw || '').split(/[@,]/)[0].trim(); }     // 'ava', 'ava@acme' and 'ava,secret' are all the name 'ava'
+  function setNameNote(el, kind, msg) { el.className = 'name-note' + (kind ? ' ' + kind : ''); el.textContent = msg || ''; }
+  function nameList(arr) { const u = [...new Set(arr)]; return u.slice(0, 4).map(n => '\u201C' + n + '\u201D').join(', ') + (u.length > 4 ? ' and ' + (u.length - 4) + ' more' : ''); }
+  // Single-name field: spaces and symbols can't be typed or pasted in, and a long name gets a visible warning.
+  function attachNameGuard(input) {
+    const note = document.createElement('div'); note.className = 'name-note'; note.setAttribute('role', 'status');
+    input.insertAdjacentElement('afterend', note);
+    input.addEventListener('keydown', (e) => { if (e.key === ' ') { e.preventDefault(); setNameNote(note, 'err', 'Spaces aren\u2019t allowed. Use letters and numbers only.'); } });
+    input.addEventListener('input', () => {
+      const clean = input.value.replace(/[^a-zA-Z0-9]/g, '');
+      if (clean !== input.value) { input.value = clean; setNameNote(note, 'err', 'Letters and numbers only. Spaces and symbols were removed.'); }
+      else if (clean.length > NAME_MAX) setNameNote(note, 'warn', clean.length + ' characters. ' + NAME_LONG_MSG);
+      else setNameNote(note, '', '');
+    });
+  }
+
   function parseBulkImportRowsFromAoa(aoa) {
     const rows = [];
     (aoa || []).forEach(line => {
@@ -6562,6 +6661,12 @@ Marketing,alex99,</div>
 
   async function runBulkImport(rows, useRandom, fallbackPassword) {
     const errors = [];
+    // Names with spaces or symbols can't be accounts: skip those rows up front (before any group gets created for them).
+    const badNameRows = rows.filter(r => nameProblem(r.username) === 'invalid');
+    if (badNameRows.length) {
+      badNameRows.forEach(r => errors.push(`\u201C${r.username}\u201D skipped: use letters and numbers only (no spaces or symbols).`));
+      rows = rows.filter(r => nameProblem(r.username) !== 'invalid');
+    }
     const createdAccounts = []; // {username, password}
 
     // 1. Create any groups that don't exist yet (top-level).
@@ -6623,7 +6728,7 @@ Marketing,alex99,</div>
         });
         if (res.addedAccounts) createdAccounts.push(...res.addedAccounts.filter(a => a.password));
         if (res.errors && res.errors.length) {
-          res.errors.forEach(err => errors.push(typeof err === 'string' ? err : JSON.stringify(err)));
+          res.errors.forEach(err => errors.push(typeof err === 'string' ? err : (err && err.error ? `${err.username ? err.username + ': ' : ''}${err.error}` : JSON.stringify(err))));
         }
       } catch (e) {
         errors.push(`Creating accounts for a group: ${e.message}`);
@@ -6703,7 +6808,8 @@ Marketing,alex99,</div>
     dialogOverlay.classList.add('active');
 
     document.getElementById('downloadCredsCsvBtn').onclick = () => {
-      const csv = 'username,password\n' + createdAccounts.map(a => `${a.username},${a.password}`).join('\n');
+      const q = (v) => /[",\n\r]/.test(String(v)) ? '"' + String(v).replace(/"/g, '""') + '"' : String(v);
+      const csv = 'username,password\r\n' + createdAccounts.map(a => `${q(a.username)},${q(a.password)}`).join('\r\n');
       const blob = new Blob([csv], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -8134,7 +8240,8 @@ Marketing,alex99,</div>
     document.documentElement.setAttribute('data-tab', target);
     tabItems.forEach(t => t.classList.toggle("active", t.dataset.tab === target));
     dropdownItems.forEach(d => d.classList.toggle("active", d.dataset.tab === target));
-    if (dropdownLabel) dropdownLabel.textContent = ({ MyTasks: 'Tasks' })[target] || target;
+    if (dropdownLabel) dropdownLabel.textContent = ({ MyTasks: 'Tasks', Org: 'Organizations' })[target] || target;
+    try { updateMoreMenu(target); } catch (e) {}
 
     // Hide all tab content
     notesTabContent.style.display = 'none';
@@ -8194,6 +8301,44 @@ Marketing,alex99,</div>
   tabItems.forEach(tab => {  
     tab.addEventListener("click", () => switchTab(tab.dataset.tab));  
   });
+
+  /* ---------- Role-aware tab bar: four main tabs, the other two live under "More" ----------
+     Teachers (plain accounts):  Notes, Tasks, Organizations, Analytics   | More: Rewards, Leaderboard
+     Students (name@org):        Notes, Tasks, Organizations, Leaderboard | More: Analytics, Rewards
+     Below the compact-menu breakpoint the single dropdown still lists all six. */
+  const TAB_LABELS = { Notes: 'Notes', MyTasks: 'Tasks', Org: 'Organizations', Analytics: 'Analytics', Rewards: 'Rewards', Leaderboard: 'Leaderboard' };
+  const tabMore = document.getElementById('tabMore');
+  const tabMoreBtn = document.getElementById('tabMoreBtn');
+  const tabMoreMenu = document.getElementById('tabMoreMenu');
+  let moreTabs = [];
+  function layoutTabs() {
+    let u = '';
+    try { u = localStorage.getItem('username') || ''; } catch {}
+    const student = u.includes('@');
+    const main = student ? ['Notes', 'MyTasks', 'Org', 'Leaderboard'] : ['Notes', 'MyTasks', 'Org', 'Analytics'];
+    moreTabs = student ? ['Analytics', 'Rewards'] : ['Rewards', 'Leaderboard'];
+    document.documentElement.setAttribute('data-role', student ? 'student' : 'teacher');
+    tabItems.forEach(t => t.classList.toggle('in-more', !main.includes(t.dataset.tab)));
+    if (!tabMoreMenu) return;
+    tabMoreMenu.innerHTML = moreTabs.map(k => `<div class="tab-more-item" role="menuitem" tabindex="0" data-tab="${k}">${TAB_LABELS[k]}</div>`).join('');
+    updateMoreMenu(currentTab);
+  }
+  function updateMoreMenu(target) {
+    if (!tabMoreBtn) return;
+    const inMore = moreTabs.includes(target);
+    tabMoreBtn.classList.toggle('active', inMore);
+    document.getElementById('tabMoreLabel').textContent = inMore ? TAB_LABELS[target] : 'More';
+    tabMoreMenu.querySelectorAll('.tab-more-item').forEach(i => i.classList.toggle('active', i.dataset.tab === target));
+  }
+  function closeMore() { if (tabMore) { tabMore.classList.remove('open'); tabMoreBtn.setAttribute('aria-expanded', 'false'); } }
+  if (tabMoreBtn) {
+    tabMoreBtn.addEventListener('click', (e) => { e.stopPropagation(); const o = tabMore.classList.toggle('open'); tabMoreBtn.setAttribute('aria-expanded', String(o)); });
+    tabMoreMenu.addEventListener('click', (e) => { const it = e.target.closest('.tab-more-item'); if (!it) return; switchTab(it.dataset.tab); closeMore(); });
+    tabMoreMenu.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { const it = e.target.closest('.tab-more-item'); if (it) { e.preventDefault(); switchTab(it.dataset.tab); closeMore(); } } });
+    document.addEventListener('click', (e) => { if (!tabMore.contains(e.target)) closeMore(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMore(); });
+  }
+  layoutTabs();
 
   if (dropdownToggle) {
     dropdownToggle.addEventListener("click", (e) => {
@@ -8794,7 +8939,7 @@ Marketing,alex99,</div>
     { id: 'delete', label: 'Delete current note', icon: 'trash', kbd: K('Mod+Shift+D'), run: () => currentNoteId && showDeleteConfirmation(currentNoteId) },
     { id: 'tab1', label: 'Go to Notes', icon: 'note', kbd: K('Mod+1'), run: T('tab1') },
     { id: 'tab2', label: 'Go to Tasks', icon: 'note', kbd: K('Mod+2'), run: T('tab2') },
-    { id: 'tab3', label: 'Go to Org', icon: 'note', kbd: K('Mod+3'), run: T('tab3') },
+    { id: 'tab3', label: 'Go to Organizations', icon: 'note', kbd: K('Mod+3'), run: T('tab3') },
     { id: 'tab4', label: 'Go to Analytics', icon: 'note', kbd: K('Mod+4'), run: T('tab4') },
     { id: 'tab5', label: 'Go to Rewards', icon: 'spark', kbd: K('Mod+5'), run: T('tab5') },
     { id: 'group', label: 'Org: add group', icon: 'plus', kbd: K('Mod+G'), run: T('group') },
@@ -9098,6 +9243,7 @@ Marketing,alex99,</div>
     if (user) {
       applySession(user);
       enterApp(!had || String(had.userId) !== String(user.userId));
+      try { window.Time12Tour && Time12Tour.afterAuth('boot', user.username); } catch (e) {}
     } else if (!reachable && had) {
       enterApp(false);                // Time12 Pass unreachable: stay signed in
     } else {
@@ -9204,7 +9350,7 @@ Marketing,alex99,</div>
 
     { id: 'tab1', g: 'Go to', label: 'Notes tab', codes: ['Digit1'], scopes: ['app'], run: go('Notes') },
     { id: 'tab2', g: 'Go to', label: 'Tasks tab', codes: ['Digit2'], scopes: ['app'], run: go('MyTasks') },
-    { id: 'tab3', g: 'Go to', label: 'Org tab', codes: ['Digit3'], scopes: ['app'], run: go('Org') },
+    { id: 'tab3', g: 'Go to', label: 'Organizations tab', codes: ['Digit3'], scopes: ['app'], run: go('Org') },
     { id: 'tab4', g: 'Go to', label: 'Analytics tab', codes: ['Digit4'], scopes: ['app'], run: go('Analytics') },
     { id: 'tab5', g: 'Go to', label: 'Rewards tab', codes: ['Digit5'], scopes: ['app'], run: go('Rewards') },
     { id: 'search', g: 'Go to', label: 'Search notes', codes: ['KeyF'], shift: true, scopes: ['app'], run: focusSearch },
@@ -9779,9 +9925,9 @@ Marketing,alex99,</div>
 <script id="t12t-js">
 /* ======================= Time12 Tour =======================
    Offered (never forced), once, when there's no t12tour_<username> cookie yet and:
-     - an @ account (user@org: student/employee) logs in or registers  -> member guide
-     - a normal account registers                                       -> owner guide
-   A normal account logging in never triggers it. Cookie is saved the moment it's offered.
+     - an @ account (user@org: student)            -> student guide: look-only demos of handing in work and earning papers
+     - a normal account (teacher) with no groups   -> teacher guide: builds the first organization for real, hands-on
+   Teachers who already have a group are never nagged. Cookie is saved the moment it's offered.
    Replay: Shortcuts -> Replay tour, or Time12Tour.start(). */
 (function () {
   'use strict';
@@ -9814,7 +9960,7 @@ Marketing,alex99,</div>
     if (cs.display === 'none' || cs.visibility === 'hidden') return false;
     return r.right > 0 && r.bottom > 0 && r.left < innerWidth && r.top < innerHeight;
   }
-  function pick(sels) { for (var i = 0; i < (sels || []).length; i++) { var el = D.querySelector(sels[i]); if (el && vis(el)) return el; } return null; }
+  function pick(sels) { for (var i = 0; i < (sels || []).length; i++) { var q = sels[i], el = typeof q === 'function' ? q() : D.querySelector(q); if (el && vis(el)) return el; } return null; }
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function setTab(name) { var t = D.querySelector('.tab-item[data-tab="' + name + '"]'); if (t) t.click(); }
   function who() {
@@ -9835,12 +9981,29 @@ Marketing,alex99,</div>
         '<circle class="m" cx="160" cy="56" r="34"/><path class="a ill-tick" pathLength="1" d="M143 57l12 12 22-26"/>' + sp + '</svg>';
     },
     tabs: function () {
-      var L = ['Notes', 'Tasks', 'Org', 'Analytics'], s = '';
+      var sub = T.w && T.w.sub, L = ['Notes', 'Tasks', 'Organizations', sub ? 'Leaderboard' : 'Analytics', 'More'], Wd = [46, 46, 84, 70, 40], s = '', x = 9;
       L.forEach(function (t, i) {
-        var x = 21 + i * 72;
-        s += '<rect class="m ill-pill" style="animation-delay:' + (i * .1) + 's" x="' + x + '" y="41" width="62" height="30" rx="15"/><text class="lbl" x="' + (x + 31) + '" y="60">' + t + '</text>';
+        s += '<rect class="m ill-pill" style="animation-delay:' + (i * .1) + 's" x="' + x + '" y="41" width="' + Wd[i] + '" height="30" rx="15"/><text class="lbl" style="font-size:10px" x="' + (x + Wd[i] / 2) + '" y="60">' + t + '</text>';
+        x += Wd[i] + 7;
       });
-      return V + s + '<rect class="ill-hl" x="21" y="41" width="62" height="30" rx="15"/></svg>';
+      return V + s + '<rect class="ill-hl" x="9" y="41" width="46" height="30" rx="15"/></svg>';
+    },
+    orgadd: function () {
+      return V + '<circle class="ill-ring" cx="160" cy="56" r="32"/><rect class="af ill-pop" x="64" y="38" width="192" height="36" rx="18"/><text class="wh ill-pop" x="160" y="61">Add your first group</text></svg>';
+    },
+    orgname: function () {
+      return V + '<rect class="m" x="62" y="10" width="196" height="92" rx="12"/><rect class="lnf" x="78" y="22" width="64" height="7" rx="3.5"/>' +
+        '<rect class="m" x="78" y="38" width="164" height="20" rx="6" style="fill:var(--bg)"/><rect class="lnf ill-type" x="86" y="45" width="104" height="6" rx="3"/>' +
+        '<rect class="af ill-pop" x="170" y="70" width="72" height="22" rx="11"/><text class="wh ill-pop" x="206" y="85">Create</text></svg>';
+    },
+    orgaccounts: function () {
+      var s = '';
+      ['ava@you', 'sam@you', 'li@you'].forEach(function (t, i) { s += '<g class="ill-node" style="animation-delay:' + (i * .25) + 's"><rect class="m" x="84" y="' + (14 + i * 30) + '" width="152" height="24" rx="12"/><circle class="af" cx="100" cy="' + (26 + i * 30) + '" r="6"/><text class="sm" style="text-anchor:start" x="114" y="' + (30 + i * 30) + '">' + t + '</text></g>'; });
+      return V + s + '</svg>';
+    },
+    paper: function () {
+      return V + '<path class="m ill-pop" d="M126 8h40l24 24v72H126z"/><path class="ill-pop" fill="none" stroke="var(--border)" stroke-width="1.5" d="M166 8v24h24"/><rect class="lnf" x="138" y="44" width="40" height="6" rx="3"/><rect class="lnf" x="138" y="56" width="30" height="6" rx="3"/>' +
+        '<circle class="af ill-pop" style="animation-delay:.3s" cx="174" cy="82" r="15"/><path class="ill-draw" style="animation-delay:.6s" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" pathLength="1" d="M166 82l6 6 10-12"/></svg>';
     },
     notes: function () {
       return V + '<rect class="m" x="62" y="9" width="196" height="94" rx="10"/>' +
@@ -9915,39 +10078,100 @@ Marketing,alex99,</div>
     },
     invite: function () {
       var s = '';
-      ['Notes', 'Tasks', 'Org'].forEach(function (t, i) { var x = 52 + i * 80; s += '<rect class="m" x="' + x + '" y="22" width="70" height="26" rx="13"/><text class="lbl" x="' + (x + 35) + '" y="39">' + t + '</text>'; });
+      ['Notes', 'Tasks', 'More'].forEach(function (t, i) { var x = 52 + i * 80; s += '<rect class="m" x="' + x + '" y="22" width="70" height="26" rx="13"/><text class="lbl" x="' + (x + 35) + '" y="39">' + t + '</text>'; });
       return '<svg viewBox="0 0 320 84" aria-hidden="true">' + s +
         '<circle class="ill-rip" cx="212" cy="35" r="22"/><g class="ill-cur"><path d="M0 0v18l4.8-4.2 3.4 7.6 3.2-1.4-3.4-7.5H15z" fill="var(--text)" stroke="var(--bg)" stroke-width="1.4" stroke-linejoin="round"/></g></svg>';
     }
   };
 
+  /* ---------- demo panels (students): fake, look-only copies of the real screens. inert + pointer-events:none, so they cannot be clicked ---------- */
+  var CUR = '<svg class="dm-cur" viewBox="0 0 16 22" aria-hidden="true"><path d="M0 0v18l4.8-4.2 3.4 7.6 3.2-1.4-3.4-7.5H15z" fill="var(--text)" stroke="var(--bg)" stroke-width="1.4" stroke-linejoin="round"/></svg>';
+  function dmRow(t, sub, pill, cls) { return '<div class="dm-row"><b>' + t + '</b><i>' + sub + '</i><em class="' + cls + '">' + pill + '</em></div>'; }
+  var DEMO = {
+    list: function () {
+      return '<div class="dm dm-list"><span class="dm-tag">Demo</span><div class="dm-h">Tasks</div>' +
+        dmRow('Joined Time12', 'No due date', 'To do', '') + dmRow('Practice essay', 'Due Fri, 4:00 PM', 'To do', 'warn') + dmRow('Read chapter 2', 'Due Mon', 'Accepted', 'ok') + CUR + '</div>';
+    },
+    submit: function () {
+      return '<div class="dm dm-sub"><span class="dm-tag">Demo</span><div class="dm-h">Joined Time12 <i>No due date</i></div>' +
+        '<div class="dm-box"><span class="dm-type">Hi! I\u2019ve joined Time12.</span></div>' +
+        '<div class="dm-act"><span class="dm-btn">Submit task</span><span class="dm-wait">Waiting for review</span></div>' + CUR + '</div>';
+    },
+    review: function () {
+      return '<div class="dm dm-rev"><span class="dm-tag">Demo</span>' +
+        '<div class="dm-ok"><div class="dm-big">\u2713 Accepted</div><div class="dm-sm">Nice work. Your teacher accepted it.</div><span class="dm-plus">+1 paper</span></div>' +
+        '<div class="dm-no"><div class="dm-big warn">Sent back</div><div class="dm-sm">\u201CAdd one example, then resubmit.\u201D</div><span class="dm-btn">Resubmit</span></div></div>';
+    },
+    paper: function () {
+      return '<div class="dm dm-pap"><span class="dm-tag">Demo</span><svg viewBox="0 0 96 120" aria-hidden="true"><path class="pg" d="M10 6h50l26 26v82H10z"/><path class="pf" d="M60 6v26h26z"/>' +
+        '<rect class="pl" x="22" y="44" width="52" height="6" rx="3"/><rect class="pl" x="22" y="58" width="40" height="6" rx="3"/><circle class="pr" cx="60" cy="88" r="20"/><path class="pt" pathLength="1" d="M50 88l8 8 14-17"/></svg>' +
+        '<span class="dm-plus big">+1</span><div class="dm-sm">Your first one gets a little celebration.</div></div>';
+    }
+  };
+
   /* ---------- steps ---------- */
+  function app() { return window.T12App || null; }
+  function hasGroups() { try { return !!(app() && app().groups().length); } catch (e) { return false; } }
+  function hasAccounts() { try { return !!(app() && app().accounts().length); } catch (e) { return false; } }
+  function groupDialog() { var o = D.getElementById('dialogOverlay'); return o && o.classList.contains('active') ? D.getElementById('dialogBox') : null; }
+  function tabFind(t) { return ['.tab-item[data-tab="' + t + '"]', '#dropdownToggle']; }
+  var MORE = ['#tabMoreBtn', '#dropdownToggle'];
+
   function makeSteps(w) {
-    var S = [];
+    var S = [], menu = function (el, wide, narrow) { return el && el.id === 'dropdownToggle' ? narrow : wide; };
     S.push({ id: 'welcome', center: true, ill: 'welcome', title: 'Welcome, ' + (w.name || 'friend'),
-      text: w.sub ? 'You\u2019re signed in to the ' + w.org + ' organization. Here\u2019s a quick look around \u2014 skip any time.' : 'Your account is ready. Here\u2019s a quick look around \u2014 skip any time.', next: 'Let\u2019s go' });
-    S.push({ id: 'tabs', tab: 'Notes', find: ['.tabs-container', '#dropdownToggle'], ill: 'tabs', title: 'Five spaces, one tap apart',
-      text: 'Notes, Tasks, Org, Analytics and Rewards live up here. Tap any of them to jump straight in.' });
+      text: w.sub ? 'You\u2019re signed in to the ' + w.org + ' organization. Here\u2019s a quick look at how to hand in work and earn papers. Skip any time.'
+                  : 'Let\u2019s get your classroom ready. By the end you\u2019ll have your first organization set up. Skip any time.', next: 'Let\u2019s go' });
+    S.push({ id: 'tabs', tab: 'Notes', find: ['.tabs-container', '#dropdownToggle'], ill: 'tabs', title: w.sub ? 'Four spaces, one tap apart' : 'Your four spaces',
+      text: function (el) {
+        return menu(el,
+          w.sub ? 'Notes, Tasks, Organizations and Leaderboard are always up here. Analytics and Rewards are tucked under More.'
+                : 'Notes, Tasks, Organizations and Analytics are always up here. Rewards and Leaderboard are tucked under More.',
+          'Tap this menu to jump between Notes, Tasks, Organizations, Analytics, Rewards and Leaderboard.');
+      } });
     S.push({ id: 'notes', tab: 'Notes', find: ['#titleInput', '#notesTabContent .editor-inner'], ill: 'notes', title: 'Write it down',
       text: 'Give it a title, then write freely below. Hit Save and it follows you to every device.' });
-    S.push({ id: 'find', tab: 'Notes', find: ['.sidebar-search', '#newNoteBtn'], optional: true, ill: 'find', title: 'Find or add in a flash',
-      text: 'Search every note from here, and use + for a fresh one.' });
-    S.push({ id: 'sync', tab: 'Notes', find: ['.sidebar-footer .sync-status'], optional: true, ill: 'sync', title: 'Always in sync',
-      text: 'Changes are kept on your device and synced in the background. This dot tells you when you\u2019re up to date.' });
+
     if (w.sub) {
-      S.push({ id: 'tasks', tab: 'MyTasks', find: ['.tab-item[data-tab="MyTasks"]', '#dropdownToggle'], ill: 'tasks', title: 'Your tasks live here',
-        text: 'Work from your organization lands on this tab. Open one, see what\u2019s due and hand it in. Automated tasks are marked by AI, with feedback on how to do better.' });
-      S.push({ id: 'org', tab: 'Org', find: ['.tab-item[data-tab="Org"]', '#dropdownToggle'], ill: 'org', title: 'Your organization',
+      /* ---- students: look-only demos of handing in work ---- */
+      S.push({ id: 's-tasks', tab: 'MyTasks', find: tabFind('MyTasks'), demo: 'list', title: 'Your tasks live here',
+        text: 'Work from your teachers lands on this tab. The picture above is a demo, so nothing in it is clickable. Your real tasks are right behind it.' });
+      S.push({ id: 's-submit', tab: 'MyTasks', center: true, demo: 'submit', title: 'Handing in is quick',
+        text: 'Open a task, type your answer or attach a file, then press Submit task. It goes straight to your teacher for review.' });
+      S.push({ id: 's-review', tab: 'MyTasks', center: true, demo: 'review', title: 'Then it\u2019s marked',
+        text: 'Your teacher accepts it, or sends it back with a note so you can fix it and resubmit. Automated tasks are marked by AI with feedback straight away.' });
+      S.push({ id: 'org', tab: 'Org', find: tabFind('Org'), ill: 'org', title: 'Your organization',
         text: 'Your groups and the people in them. Your @ account (you@' + (w.org || 'org') + ') is what links you to your organization.' });
-      S.push({ id: 'an', tab: 'Analytics', find: ['.tab-item[data-tab="Analytics"]', '#dropdownToggle'], ill: 'analytics', title: 'Watch it add up',
-        text: 'Your progress and activity at a glance.' });
+      S.push({ id: 's-papers', tab: 'Notes', find: MORE, demo: 'paper', title: 'Accepted work earns papers',
+        text: function (el) { return 'Every accepted task earns a paper, and your very first one comes with a celebration. ' + menu(el, 'Rewards and Analytics are under More.', 'Rewards and Analytics are in this menu.'); } });
+      S.push({ id: 'board', tab: 'Leaderboard', find: tabFind('Leaderboard'), ill: 'analytics', title: 'See who\u2019s on a roll',
+        text: 'The Leaderboard ranks everyone by papers. Tap a name to see what they\u2019ve earned.' });
     } else {
-      S.push({ id: 'tasks', tab: 'MyTasks', find: ['#createTaskBtn', '.tab-item[data-tab="MyTasks"]', '#dropdownToggle'], ill: 'taskadd', title: 'Create tasks',
-        text: 'Assign work to any group. Choose Standard, or Automated: add a \u201CWhat to Check For\u201D marking scheme and AI marks each submission with feedback.' });
-      S.push({ id: 'org', tab: 'Org', find: ['#orgAddBtn', '.tab-item[data-tab="Org"]', '#dropdownToggle'], ill: 'org', title: 'Build your organization',
-        text: 'Add a group, then add accounts. Accounts look like name@yourorg \u2014 that @ is what ties people to your organization.' });
-      S.push({ id: 'an', tab: 'Analytics', find: ['.tab-item[data-tab="Analytics"]', '#dropdownToggle'], ill: 'analytics', title: 'Watch it add up',
+      /* ---- teachers: build the first organization for real, then the rest ---- */
+      if (!hasGroups()) {
+        S.push({ id: 'org-intro', tab: 'Org', find: tabFind('Org'), ill: 'org', title: 'Now, your first organization',
+          text: 'This is where your classes live: groups, student accounts and the work you set them. Let\u2019s build the first one together. It takes about a minute.', next: 'Let\u2019s build it' });
+        S.push({ id: 'org-add', tab: 'Org', live: true, find: ['#emptyOrgAddGroupBtn', '#orgAddBtn'], ill: 'orgadd', title: 'Add your first group',
+          text: 'A group is one class, year or team. Press \u201CAdd your first group\u201D to begin.',
+          until: function () { return !!groupDialog() || hasGroups(); } });
+        S.push({ id: 'org-name', live: true, find: [groupDialog], ill: 'orgname', title: 'Give it a name',
+          text: 'Something your students will recognise, like \u201CYear 9 Maths\u201D. Type it, then press Create.',
+          until: function () { return hasGroups(); }, retreat: function () { return !groupDialog() && !hasGroups(); } });
+        S.push({ id: 'org-made', tab: 'Org', find: ['.group-card', '.group-node', '#groupsContainer', '#orgMainContent'], ill: 'paper', title: 'Your organization is live',
+          text: 'We also added a task called \u201CJoined Time12\u201D, with no due date. Students hand it in as their very first task, and when you accept it they earn their first paper.', next: 'Add students' });
+        S.push({ id: 'org-accounts', tab: 'Org', live: true, find: [groupDialog, '#orgAddBtn'], ill: 'orgaccounts', title: 'Add your students',
+          text: 'Press Add, then Add Account. Accounts look like name@' + (w.name || 'you') + ', and Time12 gives each one a password to hand out. You can add more any time.',
+          until: function () { return hasAccounts(); }, next: 'Do this later' });
+      } else {
+        S.push({ id: 'org-have', tab: 'Org', find: ['#orgAddBtn', '.tab-item[data-tab="Org"]', '#dropdownToggle'], ill: 'org', title: 'Your organization',
+          text: 'Groups and student accounts live here. Use Add to make a group or an account. Every new group also gets a \u201CJoined Time12\u201D task with no due date, so students have something to hand in right away.' });
+      }
+      S.push({ id: 'tasks', tab: 'MyTasks', find: ['#createTaskBtn', '.tab-item[data-tab="MyTasks"]', '#dropdownToggle'], ill: 'taskadd', title: 'Set work',
+        text: 'Assign tasks to any group. Pick Standard, or Automated so AI marks every submission with feedback. Choose a date and time, or No due date for open-ended work. \u201CJoined Time12\u201D is already here.' });
+      S.push({ id: 'an', tab: 'Analytics', find: tabFind('Analytics'), ill: 'analytics', title: 'Watch it add up',
         text: 'Submissions and progress across your groups at a glance.' });
+      S.push({ id: 'more', tab: 'Notes', find: MORE, ill: 'paper', title: 'Rewards and Leaderboard',
+        text: function (el) { return menu(el, 'Open More for both. ', 'Both are in this menu. ') + 'Students earn a paper each time you accept their work. Rewards tracks them and Leaderboard shows who\u2019s on a roll.'; } });
     }
     S.push({ id: 'keys', tab: 'Notes', find: ['#shortcutsLink', '#themeToggle'], ill: 'keys', title: 'Move faster',
       text: function (el) {
@@ -10059,13 +10283,16 @@ Marketing,alex99,</div>
 
   function fillCard(st, el, idx) {
     var total = T.steps.length;
-    $('t12tIll').innerHTML = ILL[st.ill] ? ILL[st.ill]() : '';
-    $('t12tCount').textContent = (idx + 1) + ' / ' + total;
+    var ill = $('t12tIll');
+    if (st.demo && DEMO[st.demo]) { ill.className = 't12t-ill demo'; ill.setAttribute('aria-hidden', 'true'); ill.setAttribute('inert', ''); ill.innerHTML = DEMO[st.demo](); }   // look-only: cannot be clicked or focused
+    else { ill.className = 't12t-ill'; ill.removeAttribute('aria-hidden'); ill.removeAttribute('inert'); ill.innerHTML = ILL[st.ill] ? ILL[st.ill]() : ''; }
+    $('t12tCount').textContent = (idx + 1) + ' / ' + total + (st.live ? '  \u00B7  Your turn' : st.demo ? '  \u00B7  Demo' : '');
     $('t12tTitle').textContent = st.title;
     $('t12tText').textContent = typeof st.text === 'function' ? st.text(el) : st.text;
     $('t12tBar').style.width = Math.round(((idx + 1) / total) * 100) + '%';
     var last = idx === total - 1;
-    $('t12tNext').innerHTML = (st.next || (last ? 'Finish' : 'Next')) + ' ' + ARROW;
+    $('t12tNext').innerHTML = (st.next || (st.live ? 'Skip this step' : last ? 'Finish' : 'Next')) + ' ' + ARROW;
+    $('t12tNext').classList.toggle('primary', !st.live);       // hands-on steps nudge toward the real button, not Next
     $('t12tBack').hidden = idx === 0;
     $('t12tSkip').style.visibility = last ? 'hidden' : 'visible';
     card.classList.remove('swap'); void card.offsetWidth; card.classList.add('swap');
@@ -10077,7 +10304,8 @@ Marketing,alex99,</div>
     if (i < 0) i = 0;
     if (i >= T.steps.length) return finish(true);
     var st = T.steps[i], tok = ++T.token, prevTab = T.tab;
-    T.i = i;
+    T.i = i; T.adv = false; T.rt = 0;
+    if (root) root.classList.toggle('live', !!st.live);      // live: clicks reach the real app, so people can do the step
     if (st.tab && st.tab !== prevTab) setTab(st.tab);
     T.tab = st.tab || prevTab;
     clearTimeout(T.t);
@@ -10086,13 +10314,12 @@ Marketing,alex99,</div>
       var el = null;
       if (!st.center) {
         el = pick(st.find);
-        if (!el && st.optional) return go(i + dir, dir);
         if (el) { var r = el.getBoundingClientRect(); if (r.top < 0 || r.bottom > innerHeight) { try { el.scrollIntoView({ block: 'center' }); } catch (e) {} } }
       }
       T.el = el; T.sig = '';
       fillCard(st, el, i);
       layout(true);
-      try { $('t12tNext').focus({ preventScroll: true }); } catch (e) {}
+      if (!st.live) { try { $('t12tNext').focus({ preventScroll: true }); } catch (e) {} }
     }, st.tab && st.tab !== prevTab ? 340 : 40);
   }
 
@@ -10102,7 +10329,14 @@ Marketing,alex99,</div>
       if (!T.active) return;
       if (!appVisible()) return finish(false, true);
       var st = T.steps[T.i];
-      if (st && !st.center) { var f = pick(st.find); if (f) T.el = f; }
+      if (st && st.until && !T.adv) {
+        try {
+          if (st.until()) { T.adv = true; var tk = T.token; setTimeout(function () { if (tk === T.token && T.active) go(T.i + 1, 1); }, 900); }
+          else if (st.retreat && st.retreat()) { if (++T.rt >= 4) { T.adv = true; go(T.i - 1, -1); } }   // dialog closed without finishing: back one step
+          else T.rt = 0;
+        } catch (e) {}
+      }
+      if (st && !st.center) { var f = pick(st.find); if (f) T.el = f; else if (st.live && T.el && !D.body.contains(T.el)) T.el = null; }
       if (!T.el) return;
       var r = T.el.getBoundingClientRect(), sig = [r.left, r.top, r.width, r.height].map(Math.round).join();
       if (sig !== T.sig) { var first = T.sig === ''; T.sig = sig; if (!first) layout(false); }
@@ -10164,8 +10398,9 @@ Marketing,alex99,</div>
       '<div class="t12t-ifoot"><button type="button" class="t12t-btn primary" data-go>Show me around ' + ARROW + '</button><button type="button" class="t12t-btn" data-no>Not now</button></div>';
     inv.querySelector('.t12t-istage').innerHTML = ILL.invite();
     inv.querySelector('h3').textContent = 'Welcome, ' + (w.name || 'friend') + '!';
-    inv.querySelector('p').textContent = (w.sub ? 'You\u2019re in the ' + w.org + ' organization. ' : (action === 'register' ? 'Your account is ready. ' : '')) +
-      'Want a 60-second guided tour? Arrows, highlights, a little motion. Totally optional.';
+    inv.querySelector('p').textContent = w.sub
+      ? 'You\u2019re in the ' + w.org + ' organization. Want a quick look at how to hand in work and earn papers?'
+      : 'Ready to set up your first organization? A short guided tour walks you through it, step by step.';
     D.body.appendChild(inv);
     inv.querySelector('[data-go]').onclick = function () { start(); };
     inv.querySelector('[data-no]').onclick = function () { dismissInvite(); };
@@ -10188,11 +10423,18 @@ Marketing,alex99,</div>
       var u = username || who().u;
       if (!u) return;
       var at = u.indexOf('@') > -1;
-      if (!(at || action === 'register')) return;   // normal account logging in: never
       if (seen(u)) return;                          // cookie says it was already offered
-      mark(u);                                      // save the cookie right away
       var w = { u: u, sub: at, name: at ? u.split('@')[0] : u, org: at ? u.split('@').slice(1).join('@') : '' };
-      whenReady(function () { showInvite(w, action); });
+      if (at) { mark(u); whenReady(function () { showInvite(w, action); }); return; }
+      /* Teachers (plain accounts): offered once, and only while they have no organization yet, so nobody with a set-up class is nagged. */
+      whenReady(function () {
+        var n = 0, iv = setInterval(function () {
+          if (++n > 40) return clearInterval(iv);                      // data never loaded: stay quiet
+          if (!(app() && app().ready())) return;
+          clearInterval(iv); mark(u);
+          if (!hasGroups()) showInvite(w, action);
+        }, 300);
+      });
     },
     start: start,
     stop: function () { finish(false); dismissInvite(true); },
@@ -11862,5 +12104,399 @@ input[type="checkbox"]:checked { transform: none !important; background: var(--t
   fit();
 })();
 </script>
+<style id="t12fp-css">
+/* ===== First paper: the celebration a student gets the first time work is accepted ===== */
+#t12paper { position: fixed; inset: 0; z-index: 2147483000; display: grid; place-items: center; font-family: var(--sans); padding: 14px; }
+#t12paper .fp-dim { position: absolute; inset: 0; background: rgba(14, 10, 6, .64); animation: fpFade .45s ease both; }
+#t12paper.out .fp-dim { animation: fpFadeOut .3s ease forwards; }
+#t12paper.out .fp-card { animation: fpCardOut .3s ease forwards; }
+#t12paper .fp-card { position: relative; width: min(390px, 100%); background: var(--bg); border: 1px solid var(--text); border-radius: var(--radius); box-shadow: 6px 6px 0 var(--text); text-align: center; overflow: hidden; animation: fpCard .65s cubic-bezier(.2, 1.25, .3, 1) .08s both; }
+#t12paper .fp-stage { position: relative; height: 176px; display: grid; place-items: center; background: radial-gradient(110% 120% at 50% 0%, var(--accent-soft), transparent 70%), var(--surface); border-bottom: 1px solid var(--border); overflow: hidden; }
+#t12paper .fp-rays { position: absolute; left: 50%; top: 50%; width: 420px; height: 420px; margin: -210px 0 0 -210px; opacity: .55; background: repeating-conic-gradient(from 0deg, rgba(253, 126, 20, .22) 0 9deg, transparent 9deg 24deg); -webkit-mask: radial-gradient(circle, #000 8%, transparent 62%); mask: radial-gradient(circle, #000 8%, transparent 62%); animation: fpSpin 18s linear infinite, fpFade 1s ease .5s both; }
+#t12paper .fp-sheet { position: relative; width: 96px; height: 120px; filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .22)); animation: fpDrop .95s cubic-bezier(.2, 1.3, .3, 1) .25s both, fpBob 3.2s ease-in-out 1.3s infinite; }
+#t12paper .fp-sheet svg { width: 100%; height: 100%; display: block; overflow: visible; }
+#t12paper .fp-page { fill: var(--bg); stroke: var(--text); stroke-width: 2.5; }
+#t12paper .fp-fold { fill: var(--surface-2); stroke: var(--text); stroke-width: 2.5; stroke-linejoin: round; }
+#t12paper .fp-ln { fill: var(--border); }
+#t12paper .fp-ring { fill: var(--accent); stroke: var(--text); stroke-width: 2.5; transform-origin: 60px 78px; animation: fpPop .5s cubic-bezier(.2, 1.6, .4, 1) 1s both; }
+#t12paper .fp-tick { fill: none; stroke: #fff; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 0; animation: fpTick .45s ease-out 1.25s both; }
+#t12paper .fp-plus { position: absolute; right: calc(50% - 98px); top: 26px; padding: 4px 11px; border-radius: 999px; background: var(--text); color: var(--bg); font: 700 16px var(--sans); animation: fpPlus 1.5s cubic-bezier(.2, 1.4, .4, 1) 1.2s both; }
+#t12paper .fp-mascot { position: absolute; left: calc(50% - 150px); bottom: 8px; width: 54px; height: auto; animation: fpMascot .7s cubic-bezier(.2, 1.5, .4, 1) 1.5s both; }
+#t12paper .fp-conf { position: absolute; left: 50%; top: 52%; width: 0; height: 0; pointer-events: none; }
+#t12paper .fp-conf i { position: absolute; left: 0; top: 0; width: 8px; height: 12px; border-radius: 2px; background: var(--c); opacity: 0; animation: fpConf 1.9s cubic-bezier(.15, .7, .3, 1) var(--d) both; }
+#t12paper .fp-spk { position: absolute; width: 14px; height: 14px; background: var(--accent); clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%); opacity: 0; animation: fpTwinkle 1.8s ease-in-out var(--d) infinite; }
+#t12paper .fp-body { padding: 18px 24px 22px; animation: fpUp .5s ease 1.55s both; }
+#t12paper .fp-kicker { font: 700 11px var(--sans); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); margin: 0 0 4px; }
+#t12paper h2 { font: 400 30px/1.1 var(--serif); margin: 0 0 8px; color: var(--text); }
+#t12paper p { font: 400 14.5px/1.5 var(--sans); margin: 0; color: var(--text-soft); }
+#t12paper .fp-acts { display: flex; gap: 8px; margin-top: 18px; }
+#t12paper .fp-acts button { flex: 1; min-height: 42px; border-radius: var(--radius); font: 600 14px var(--sans); cursor: pointer; border: 1px solid var(--text); background: transparent; color: var(--text); transition: transform .12s; }
+#t12paper .fp-acts button:active { transform: scale(.97); }
+#t12paper .fp-acts .go { background: var(--accent); color: var(--on-accent, #fff); }
+#t12paper .fp-acts button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@keyframes fpFade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fpFadeOut { to { opacity: 0; } }
+@keyframes fpCard { from { opacity: 0; transform: translateY(30px) scale(.9); } to { opacity: 1; transform: none; } }
+@keyframes fpCardOut { to { opacity: 0; transform: translateY(14px) scale(.97); } }
+@keyframes fpSpin { to { transform: rotate(360deg); } }
+@keyframes fpDrop { 0% { opacity: 0; transform: translateY(-150px) rotate(-18deg) scale(.7); } 55% { opacity: 1; transform: translateY(10px) rotate(4deg) scale(1.04); } 78% { transform: translateY(-5px) rotate(-2deg); } 100% { opacity: 1; transform: none; } }
+@keyframes fpBob { 0%, 100% { transform: translateY(0) rotate(0); } 50% { transform: translateY(-6px) rotate(1.2deg); } }
+@keyframes fpPop { from { transform: scale(0); } to { transform: scale(1); } }
+@keyframes fpTick { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+@keyframes fpPlus { 0% { opacity: 0; transform: translateY(18px) scale(.4); } 30% { opacity: 1; transform: translateY(0) scale(1.15); } 45% { transform: scale(1); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes fpMascot { from { opacity: 0; transform: translateY(40px) rotate(-12deg); } to { opacity: 1; transform: none; } }
+@keyframes fpConf { 0% { opacity: 1; transform: translate(0, 0) rotate(0) scale(.3); } 55% { opacity: 1; transform: translate(var(--dx), var(--dy)) rotate(var(--r)) scale(1); } 100% { opacity: 0; transform: translate(calc(var(--dx) * 1.12), calc(var(--dy) + 110px)) rotate(calc(var(--r) * 2)) scale(1); } }
+@keyframes fpTwinkle { 0%, 100% { opacity: 0; transform: scale(.3) rotate(0); } 50% { opacity: .95; transform: scale(1) rotate(45deg); } }
+@keyframes fpUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce), (hover: none) and (max-width: 0px) { #t12paper *, #t12paper *::before { animation: none !important; } }
+html[data-perf="low"] #t12paper *, html[data-perf="low"] #t12paper *::before { animation: none !important; }
+html[data-perf="low"] #t12paper .fp-conf, html[data-perf="low"] #t12paper .fp-rays { display: none; }
+</style>
+<script id="t12fp-js">
+/* Time12 "first paper" celebration. Papers are earned when work is accepted. The first time a student sees one, they get this.
+   State per account in localStorage (t12paper1_<username>): "wait" = nothing accepted yet, "1" = celebrated (or already had papers
+   before this existed, so nobody is celebrated for old work). Preview any time: T12First.celebrate() in the console. */
+(function () {
+  'use strict';
+  var KEY = 't12paper1_', iv = null, showing = false;
+  function user() { try { return (localStorage.getItem('username') || '').toLowerCase(); } catch (e) { return ''; } }
+  function get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function stop() { if (iv) { clearInterval(iv); iv = null; } }
+
+  function celebrate() {
+    if (showing || document.getElementById('t12paper')) return;
+    if (document.getElementById('t12tRoot')) { setTimeout(celebrate, 2500); return; }      // never on top of a running tour: wait for it to end
+    var inv = document.getElementById('t12tInvite'); if (inv) inv.remove();                // the invite can wait, the first paper can't
+    showing = true;
+    var cols = ['var(--accent)', 'var(--success)', 'var(--warn)', 'var(--text)', '#FFB066'], conf = '', spk = '', i;
+    for (i = 0; i < 38; i++) {
+      var a = (i / 38) * Math.PI * 2 + (i % 3) * .21, d = 70 + (i * 37 % 90);
+      conf += '<i style="--dx:' + Math.round(Math.cos(a) * d * 1.35) + 'px;--dy:' + Math.round(Math.sin(a) * d * .8 - 30) + 'px;--r:' + (i * 53 % 360) + 'deg;--c:' + cols[i % cols.length] + ';--d:' + (1 + (i % 6) * .035).toFixed(2) + 's"></i>';
+    }
+    [[16, 22], [84, 18], [10, 70], [90, 66], [30, 10], [70, 84]].forEach(function (p, k) { spk += '<span class="fp-spk" style="left:' + p[0] + '%;top:' + p[1] + '%;--d:' + (1.4 + k * .25).toFixed(2) + 's"></span>'; });
+    var el = document.createElement('div');
+    el.id = 't12paper'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-label', 'You earned your first paper');
+    el.innerHTML =
+      '<div class="fp-dim"></div><div class="fp-card">' +
+        '<div class="fp-stage"><div class="fp-rays"></div>' + spk +
+          '<div class="fp-sheet"><svg viewBox="0 0 96 120" aria-hidden="true"><path class="fp-page" d="M10 6h50l26 26v82H10z"/><path class="fp-fold" d="M60 6v26h26z"/>' +
+            '<rect class="fp-ln" x="22" y="44" width="52" height="6" rx="3"/><rect class="fp-ln" x="22" y="58" width="40" height="6" rx="3"/><rect class="fp-ln" x="22" y="72" width="46" height="6" rx="3"/>' +
+            '<circle class="fp-ring" cx="60" cy="88" r="20"/><path class="fp-tick" pathLength="1" d="M50 88l8 8 14-17"/></svg></div>' +
+          '<div class="fp-plus">+1</div><img class="fp-mascot" src="papery.png" alt="" onerror="this.remove()">' +
+          '<div class="fp-conf" aria-hidden="true">' + conf + '</div></div>' +
+        '<div class="fp-body"><p class="fp-kicker">Paper earned</p><h2>Your first paper!</h2>' +
+          '<p>Your work was accepted, and that earns a paper. Every accepted task adds another, so keep them coming.</p>' +
+          '<div class="fp-acts"><button type="button" class="go" data-go>See my Rewards</button><button type="button" data-x>Keep going</button></div></div>' +
+      '</div>';
+    var prev = document.activeElement;
+    document.body.appendChild(el);
+    function close() {
+      if (!el.parentNode) return;
+      document.removeEventListener('keydown', onKey, true);
+      el.classList.add('out'); showing = false;
+      setTimeout(function () { el.remove(); try { prev && prev.focus && prev.focus({ preventScroll: true }); } catch (e) {} }, 300);
+    }
+    function onKey(e) { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); close(); } else if (e.key === 'Tab') { var b = el.querySelectorAll('button'); if (!b.length) return; if (e.shiftKey && document.activeElement === b[0]) { e.preventDefault(); b[b.length - 1].focus(); } else if (!e.shiftKey && document.activeElement === b[b.length - 1]) { e.preventDefault(); b[0].focus(); } } }
+    document.addEventListener('keydown', onKey, true);
+    el.querySelector('.fp-dim').onclick = close;
+    el.querySelector('[data-x]').onclick = close;
+    el.querySelector('[data-go]').onclick = function () { close(); try { window.T12App && T12App.switchTab('Rewards'); } catch (e) {} };
+    setTimeout(function () { try { el.querySelector('[data-go]').focus({ preventScroll: true }); } catch (e) {} }, 1700);
+  }
+
+  function check(tasks) {
+    var u = user(); if (u.indexOf('@') < 0 || !Array.isArray(tasks)) return;
+    var done = 0; tasks.forEach(function (t) { if (t && t.status === 'completed') done++; });
+    var k = KEY + u, st = get(k);
+    if (st === '1') return;
+    if (st !== 'wait') { set(k, done > 0 ? '1' : 'wait'); return; }   // first look at this account: never celebrate old work
+    if (done > 0) { set(k, '1'); stop(); setTimeout(celebrate, 700); }
+  }
+
+  /* Quiet 30s check while the student is still waiting for their first paper, so it lands even if the page stays open. */
+  function watch(fetcher) {
+    stop(); var u = user(); if (u.indexOf('@') < 0 || get(KEY + u) === '1') return;
+    iv = setInterval(function () {
+      if (document.hidden) return;
+      if (get(KEY + u) === '1') { stop(); return; }
+      Promise.resolve().then(fetcher).then(function (t) { if (t) check(t); }).catch(function () {});
+    }, 30000);
+  }
+
+  window.T12First = { check: check, watch: watch, celebrate: celebrate, reset: function () { try { localStorage.removeItem(KEY + user()); } catch (e) {} } };
+})();
+</script>
+<style id="t12cal-css">
+/* ===== Time12 calendar: our own due-date picker (no native date input) ===== */
+.t12cal { display: block; min-width: 0; max-width: 100%; font-family: var(--sans); color: var(--text); }
+#dueHost { min-width: 0; max-width: 100%; }
+.t12cal-mode { display: flex; gap: 6px; margin-bottom: 10px; }
+.t12cal-mode button { flex: 1; min-height: 36px; border: 1px solid var(--text); background: transparent; color: var(--text); font: 600 13px var(--sans); border-radius: var(--radius); cursor: pointer; transition: background .15s, color .15s; }
+.t12cal-mode button.on { background: var(--text); color: var(--bg); }
+.t12cal-body[hidden] { display: none; }
+.t12cal-sum { width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 42px; padding: 0 12px; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: var(--radius); font: 500 14px var(--sans); cursor: pointer; text-align: left; }
+.t12cal-sum:hover, .t12cal.open .t12cal-sum { border-color: var(--accent); }
+.t12cal-sum svg { width: 15px; height: 15px; flex: none; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; color: var(--text-muted); transition: transform .2s; }
+.t12cal.open .t12cal-sum svg { transform: rotate(180deg); }
+.t12cal-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 0; }
+.t12cal-chip { min-height: 30px; padding: 0 11px; border: 1px solid var(--border); background: var(--surface); color: var(--text-soft); border-radius: 999px; font: 500 12.5px var(--sans); cursor: pointer; transition: border-color .15s, color .15s, background .15s; }
+.t12cal-chip:hover { border-color: var(--accent); color: var(--accent); }
+.t12cal-chip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.t12cal-panel { margin-top: 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg); padding: 10px; display: none; }
+.t12cal.open .t12cal-panel { display: block; animation: t12calIn .22s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes t12calIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.t12cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.t12cal-title { font: 600 14px var(--sans); }
+.t12cal-nav { width: 32px; height: 32px; border: 1px solid var(--border); background: transparent; color: var(--text); border-radius: var(--radius); cursor: pointer; display: grid; place-items: center; }
+.t12cal-nav:hover { border-color: var(--accent); color: var(--accent); }
+.t12cal-nav svg { width: 14px; height: 14px; stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.t12cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; }
+.t12cal-dow { text-align: center; font: 600 11px var(--sans); color: var(--text-muted); padding: 4px 0; text-transform: uppercase; }
+.t12cal-day { aspect-ratio: 1; min-width: 0; min-height: 34px; padding: 0; border: 1px solid transparent; background: transparent; color: var(--text); border-radius: var(--radius); font: 500 13px var(--sans); cursor: pointer; transition: background .12s, border-color .12s; }
+.t12cal-day:hover:not(:disabled):not(.sel) { background: var(--surface-2); border-color: var(--border); }
+.t12cal-day.today { border-color: var(--text); font-weight: 700; }
+.t12cal-day.sel { background: var(--accent); border-color: var(--accent); color: var(--on-accent, #fff); font-weight: 700; }
+.t12cal-day:disabled { color: var(--text-muted); opacity: .38; cursor: not-allowed; }
+.t12cal-day.pad { visibility: hidden; }
+.t12cal-day:focus-visible, .t12cal-nav:focus-visible, .t12cal-chip:focus-visible, .t12cal-sum:focus-visible, .t12cal-mode button:focus-visible, .t12cal-step button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.t12cal-time { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+.t12cal-time > b { font: 600 12px var(--sans); color: var(--text-muted); text-transform: uppercase; letter-spacing: .06em; margin-right: 2px; }
+.t12cal-step { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.t12cal-step button { width: 26px; height: 34px; border: 0; background: var(--surface); color: var(--text); cursor: pointer; font: 600 15px var(--sans); }
+.t12cal-step button:hover { background: var(--surface-2); color: var(--accent); }
+.t12cal-step input { width: 34px; height: 34px; border: 0; border-left: 1px solid var(--border); border-right: 1px solid var(--border); text-align: center; background: var(--bg); color: var(--text); font: 600 14px var(--sans); border-radius: 0; padding: 0; }
+.t12cal-colon { font-weight: 700; color: var(--text-muted); }
+.t12cal-ampm { display: inline-flex; border: 1px solid var(--text); border-radius: var(--radius); overflow: hidden; }
+.t12cal-ampm button { min-width: 38px; height: 34px; border: 0; background: transparent; color: var(--text); font: 600 12.5px var(--sans); cursor: pointer; }
+.t12cal-ampm button.on { background: var(--text); color: var(--bg); }
+.t12cal-note { margin-top: 8px; font: 500 12.5px var(--sans); color: var(--danger, #c0392b); min-height: 0; }
+.t12cal-note:empty { display: none; }
+.t12cal-none { padding: 12px; border: 1px dashed var(--border); border-radius: var(--radius); color: var(--text-soft); font: 400 13.5px/1.45 var(--sans); }
+/* phones: a later 44px column-gap rule was widening the create-task dialog to ~480px and cutting it off */
+@media (max-width: 640px) { .dlg-grid { column-gap: 0 !important; } }
+@media (prefers-reduced-motion: reduce) { .t12cal.open .t12cal-panel { animation: none; } }
+html[data-perf="low"] .t12cal.open .t12cal-panel { animation: none; }
+</style>
+<script id="t12cal-js">
+/* Time12 calendar. T12Cal.mount(host, { value: 'YYYY-MM-DDTHH:MM' | '', none: false, onChange }) -> { value(), isNone(), valid(), setNone(b) }
+   value() is a local 'YYYY-MM-DDTHH:MM' string, or null when "No due date" is chosen. */
+(function () {
+  'use strict';
+  var CHEV = '<svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>';
+  var LEFT = '<svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>', RIGHT = '<svg viewBox="0 0 24 24"><polyline points="9 6 15 12 9 18"/></svg>';
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+  function fmtLocal(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function parse(v) { var m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(v || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]) : null; }
+  function sod(d) { return new Date(d.getFullYear(), d.getMonth(), d.getDate()); }
+  function addDays(d, n) { return new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); }
+  function sameDay(a, b) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate(); }
+  function weekStart() { try { var l = new Intl.Locale(navigator.language), wi = l.weekInfo || (l.getWeekInfo && l.getWeekInfo()); if (wi && wi.firstDay) return wi.firstDay % 7; } catch (e) {} return 1; }
+  function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+
+  function mount(host, opts) {
+    opts = opts || {};
+    var now = new Date();
+    var cur = parse(opts.value) || new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59);
+    var none = !!opts.none, view = new Date(cur.getFullYear(), cur.getMonth(), 1), open = false, ws = weekStart();
+    host.innerHTML = '';
+    var root = document.createElement('div'); root.className = 't12cal'; host.appendChild(root);
+
+    function h12() { var h = cur.getHours() % 12; return h === 0 ? 12 : h; }
+    function setTime(h, m, pm) { cur = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate(), (h % 12) + (pm ? 12 : 0), m); }
+    function emit() { if (opts.onChange) try { opts.onChange(api.value()); } catch (e) {} }
+    function sumText() { return cur.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) + ' \u00B7 ' + cur.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }); }
+
+    function chipsHtml() {
+      var t = sod(now), d = sod(cur), c = [['Today', t], ['Tomorrow', addDays(t, 1)], ['In a week', addDays(t, 7)]];
+      return c.map(function (x, i) { return '<button type="button" class="t12cal-chip' + (sameDay(x[1], d) ? ' on' : '') + '" data-d="' + i + '">' + x[0] + '</button>'; }).join('');
+    }
+    function timeChips() {
+      var hm = cur.getHours() * 60 + cur.getMinutes();
+      return [['9:00 AM', 540], ['12:00 PM', 720], ['3:00 PM', 900], ['11:59 PM', 1439]].map(function (x) { return '<button type="button" class="t12cal-chip' + (hm === x[1] ? ' on' : '') + '" data-t="' + x[1] + '">' + x[0] + '</button>'; }).join('');
+    }
+    function gridHtml() {
+      var y = view.getFullYear(), m = view.getMonth(), first = new Date(y, m, 1), off = (first.getDay() - ws + 7) % 7, dim = new Date(y, m + 1, 0).getDate(), today = sod(now), h = '';
+      for (var i = 0; i < 7; i++) h += '<div class="t12cal-dow">' + esc(new Date(2023, 0, 1 + ((ws + i) % 7)).toLocaleDateString(undefined, { weekday: 'narrow' })) + '</div>';
+      for (i = 0; i < off; i++) h += '<button type="button" class="t12cal-day pad" tabindex="-1" disabled aria-hidden="true"></button>';
+      for (var d = 1; d <= dim; d++) {
+        var dt = new Date(y, m, d), past = dt < today, sel = sameDay(dt, cur);
+        h += '<button type="button" class="t12cal-day' + (sel ? ' sel' : '') + (sameDay(dt, today) ? ' today' : '') + '" data-y="' + y + '" data-m="' + m + '" data-n="' + d + '"' + (past ? ' disabled' : '') + ' aria-label="' + esc(dt.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })) + '"' + (sel ? ' aria-pressed="true"' : '') + '>' + d + '</button>';
+      }
+      return h;
+    }
+
+    function render(keepFocus) {
+      var title = view.toLocaleDateString(undefined, { month: 'long', year: 'numeric' }), pm = cur.getHours() >= 12;
+      root.className = 't12cal' + (open && !none ? ' open' : '');
+      root.innerHTML =
+        '<div class="t12cal-mode" role="group" aria-label="Due date"><button type="button" data-mode="set" class="' + (none ? '' : 'on') + '">Set a due date</button><button type="button" data-mode="none" class="' + (none ? 'on' : '') + '">No due date</button></div>' +
+        '<div class="t12cal-none" ' + (none ? '' : 'hidden') + '>Students can hand this in any time. It never goes overdue.</div>' +
+        '<div class="t12cal-body" ' + (none ? 'hidden' : '') + '>' +
+          '<button type="button" class="t12cal-sum" aria-expanded="' + (open ? 'true' : 'false') + '"><span>' + esc(sumText()) + '</span>' + CHEV + '</button>' +
+          '<div class="t12cal-chips" data-grp="day">' + chipsHtml() + '</div>' +
+          '<div class="t12cal-panel">' +
+            '<div class="t12cal-head"><button type="button" class="t12cal-nav" data-nav="-1" aria-label="Previous month">' + LEFT + '</button><div class="t12cal-title" aria-live="polite">' + esc(title) + '</div><button type="button" class="t12cal-nav" data-nav="1" aria-label="Next month">' + RIGHT + '</button></div>' +
+            '<div class="t12cal-grid" role="grid">' + gridHtml() + '</div>' +
+            '<div class="t12cal-time"><b>Time</b>' +
+              '<span class="t12cal-step"><button type="button" data-h="-1" aria-label="Hour down">\u2212</button><input data-f="h" inputmode="numeric" maxlength="2" value="' + h12() + '" aria-label="Hour"><button type="button" data-h="1" aria-label="Hour up">+</button></span>' +
+              '<span class="t12cal-colon">:</span>' +
+              '<span class="t12cal-step"><button type="button" data-m="-5" aria-label="Minutes down">\u2212</button><input data-f="m" inputmode="numeric" maxlength="2" value="' + pad(cur.getMinutes()) + '" aria-label="Minutes"><button type="button" data-m="5" aria-label="Minutes up">+</button></span>' +
+              '<span class="t12cal-ampm"><button type="button" data-ap="am" class="' + (pm ? '' : 'on') + '">AM</button><button type="button" data-ap="pm" class="' + (pm ? 'on' : '') + '">PM</button></span>' +
+            '</div>' +
+            '<div class="t12cal-chips" data-grp="time">' + timeChips() + '</div>' +
+          '</div>' +
+          '<div class="t12cal-note" role="alert"></div>' +
+        '</div>';
+      if (keepFocus) { var f = root.querySelector('[data-y="' + keepFocus[0] + '"][data-m="' + keepFocus[1] + '"][data-n="' + keepFocus[2] + '"]'); if (f && !f.disabled) f.focus(); }
+      note();
+    }
+    function note() {
+      var n = root.querySelector('.t12cal-note'); if (!n) return;
+      n.textContent = (!none && cur < new Date()) ? 'That time has already passed. Pick a later one.' : '';
+    }
+    function pickDate(y, m, d) { cur = new Date(y, m, d, cur.getHours(), cur.getMinutes()); view = new Date(y, m, 1); }
+
+    root.addEventListener('click', function (e) {
+      var t = e.target.closest('button'); if (!t || !root.contains(t)) return;
+      if (t.dataset.mode) { none = t.dataset.mode === 'none'; if (none) open = false; render(); emit(); return; }
+      if (t.classList.contains('t12cal-sum')) { open = !open; render(); return; }
+      if (t.dataset.nav) { view = new Date(view.getFullYear(), view.getMonth() + (+t.dataset.nav), 1); render(); return; }
+      if (t.dataset.n) { pickDate(+t.dataset.y, +t.dataset.m, +t.dataset.n); render([+t.dataset.y, +t.dataset.m, +t.dataset.n]); emit(); return; }
+      if (t.dataset.d != null && t.parentNode.dataset.grp === 'day') { var base = addDays(sod(now), [0, 1, 7][+t.dataset.d]); pickDate(base.getFullYear(), base.getMonth(), base.getDate()); render(); emit(); return; }
+      if (t.dataset.t != null) { var v = +t.dataset.t; cur = new Date(cur.getFullYear(), cur.getMonth(), cur.getDate(), Math.floor(v / 60), v % 60); render(); emit(); return; }
+      if (t.dataset.h) { var hh = (h12() - 1 + (+t.dataset.h) + 12) % 12 + 1; setTime(hh, cur.getMinutes(), cur.getHours() >= 12); render(); emit(); return; }
+      if (t.dataset.m && t.dataset.m.indexOf('n') < 0 && (t.dataset.m === '5' || t.dataset.m === '-5')) { var mm = (cur.getMinutes() + (+t.dataset.m) + 60) % 60; setTime(h12(), mm, cur.getHours() >= 12); render(); emit(); return; }
+      if (t.dataset.ap) { setTime(h12(), cur.getMinutes(), t.dataset.ap === 'pm'); render(); emit(); return; }
+    });
+    root.addEventListener('change', function (e) {
+      var f = e.target.dataset && e.target.dataset.f; if (!f) return;
+      var n = parseInt(e.target.value, 10), pm = cur.getHours() >= 12;
+      if (f === 'h') setTime(isNaN(n) ? h12() : Math.min(12, Math.max(1, n)), cur.getMinutes(), pm);
+      else setTime(h12(), isNaN(n) ? cur.getMinutes() : Math.min(59, Math.max(0, n)), pm);
+      render(); emit();
+    });
+    root.addEventListener('keydown', function (e) {
+      var t = e.target; if (!t.classList || !t.classList.contains('t12cal-day') || !t.dataset.n) return;
+      var step = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -7, ArrowDown: 7 }[e.key]; if (!step) return;
+      e.preventDefault();
+      var nd = addDays(new Date(+t.dataset.y, +t.dataset.m, +t.dataset.n), step); if (nd < sod(now)) return;
+      view = new Date(nd.getFullYear(), nd.getMonth(), 1); pickDate(nd.getFullYear(), nd.getMonth(), nd.getDate());
+      render([nd.getFullYear(), nd.getMonth(), nd.getDate()]); emit();
+    });
+
+    var api = {
+      value: function () { return none ? null : fmtLocal(cur); },
+      isNone: function () { return none; },
+      valid: function () { return none || cur >= new Date(); },
+      setNone: function (b) { none = !!b; if (none) open = false; render(); emit(); }
+    };
+    render();
+    host.__cal = api;
+    return api;
+  }
+  window.T12Cal = { mount: mount };
+})();
+</script>
+<style id="t12tour2-css">
+/* ===== Tour v2: live (hands-on) steps + student demo panels ===== */
+#t12tRoot.live .t12t-shade { pointer-events: none; }
+.t12t-ill.demo { height: auto; display: block; padding: 12px; }
+.t12t-btn:not(.primary).nudge { }
+.dm { position: relative; min-height: 132px; border: 1px solid var(--text); border-radius: 8px; background: var(--bg); padding: 12px 12px 10px; color: var(--text); font: 500 13px var(--sans); overflow: hidden; user-select: none; pointer-events: none; text-align: left; }
+.dm-tag { position: absolute; top: 7px; right: 8px; font: 700 9px var(--sans); letter-spacing: .12em; text-transform: uppercase; color: var(--text-muted); background: var(--surface-2); padding: 2px 6px; border-radius: 4px; }
+.dm-h { font: 600 14px var(--sans); margin: 0 54px 8px 0; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.dm-h i, .dm-row i { font: 400 11.5px var(--sans); font-style: normal; color: var(--text-muted); }
+.dm-row { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 5px; background: var(--bg); }
+.dm-row b { font: 600 12.5px var(--sans); }
+.dm-row i { margin-left: auto; }
+.dm em { font: 600 10px var(--sans); font-style: normal; padding: 2px 7px; border-radius: 999px; background: var(--surface-2); color: var(--text-soft); white-space: nowrap; }
+.dm em.warn { background: rgba(253, 126, 20, .16); color: var(--accent); }
+.dm em.ok { background: rgba(46, 160, 67, .16); color: var(--success); }
+.dm .dm-cur { position: absolute; left: 0; top: 0; width: 15px; height: 21px; opacity: 0; z-index: 3; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .35)); }
+.dm-box { border: 1px solid var(--border); border-radius: 6px; padding: 9px 10px; min-height: 36px; background: var(--surface); font: 400 12.5px var(--sans); }
+.dm-type { display: inline-block; overflow: hidden; white-space: nowrap; vertical-align: bottom; max-width: 100%; }
+.dm-act { position: relative; height: 32px; margin-top: 9px; }
+.dm-btn { position: absolute; left: 0; top: 0; padding: 0 14px; line-height: 30px; border-radius: 6px; background: var(--accent); color: var(--on-accent, #fff); font: 700 12px var(--sans); opacity: 0; }
+.dm-wait { position: absolute; left: 0; top: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(253, 126, 20, .16); color: var(--accent); font: 700 11.5px var(--sans); }
+.dm-rev { text-align: center; display: grid; place-items: center; }
+.dm-rev > div { grid-area: 1 / 1; }
+.dm-no { opacity: 0; }
+.dm-big { font: 400 24px/1.1 var(--serif); color: var(--success); margin-bottom: 4px; }
+.dm-big.warn { color: var(--accent); }
+.dm-sm { font: 400 12.5px/1.4 var(--sans); color: var(--text-soft); }
+.dm-plus { display: inline-block; margin-top: 8px; padding: 3px 11px; border-radius: 999px; background: var(--text); color: var(--bg); font: 700 12px var(--sans); }
+.dm-plus.big { font-size: 18px; padding: 4px 13px; margin: 0 0 6px; }
+.dm-rev .dm-btn { position: static; display: inline-block; margin-top: 9px; opacity: 1; background: var(--text); color: var(--bg); }
+.dm-pap { text-align: center; display: grid; place-items: center; align-content: center; }
+.dm-pap svg { width: 56px; height: 70px; overflow: visible; margin-bottom: 4px; }
+.dm-pap .pg { fill: var(--bg); stroke: var(--text); stroke-width: 3; } .dm-pap .pf { fill: var(--surface-2); stroke: var(--text); stroke-width: 3; stroke-linejoin: round; } .dm-pap .pl { fill: var(--border); }
+.dm-pap .pr { fill: var(--accent); stroke: var(--text); stroke-width: 3; transform-origin: 60px 88px; } .dm-pap .pt { fill: none; stroke: #fff; stroke-width: 6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; }
+/* motion: each demo is one looping story. Base state above = the finished picture, so reduced motion still reads. */
+.dm-list .dm-cur { animation: dmCurList 7s ease-in-out infinite; }
+.dm-list .dm-row:nth-of-type(1) { animation: dmHl 7s ease-in-out infinite; }
+.dm-sub .dm-cur { animation: dmCurSub 8s ease-in-out infinite; }
+.dm-sub .dm-type { animation: dmType 8s steps(22, end) infinite; }
+.dm-sub .dm-btn { animation: dmBtn 8s ease-in-out infinite; }
+.dm-sub .dm-wait { animation: dmWait 8s ease-in-out infinite; }
+.dm-rev .dm-ok { animation: dmOk 8s ease-in-out infinite; }
+.dm-rev .dm-no { animation: dmNo 8s ease-in-out infinite; }
+.dm-rev .dm-plus { animation: dmPlus 8s ease-in-out infinite; }
+.dm-pap .pr { animation: dmPop 4s cubic-bezier(.2, 1.5, .4, 1) infinite; } .dm-pap .pt { animation: dmTick 4s ease-out infinite; } .dm-pap .dm-plus { animation: dmPlus2 4s ease-out infinite; }
+@keyframes dmCurList { 0%, 8% { opacity: 0; transform: translate(250px, 120px); } 18% { opacity: 1; transform: translate(250px, 120px); } 38% { opacity: 1; transform: translate(150px, 62px); } 52% { opacity: 1; transform: translate(150px, 62px) scale(.9); } 58% { transform: translate(150px, 62px); } 80% { opacity: 1; } 92%, 100% { opacity: 0; transform: translate(150px, 62px); } }
+@keyframes dmHl { 0%, 36% { background: var(--bg); border-color: var(--border); } 44%, 80% { background: var(--accent-soft); border-color: var(--accent); } 92%, 100% { background: var(--bg); border-color: var(--border); } }
+@keyframes dmCurSub { 0% { opacity: 0; transform: translate(250px, 120px); } 6% { opacity: 1; transform: translate(250px, 120px); } 16% { opacity: 1; transform: translate(70px, 70px); } 40% { opacity: 1; transform: translate(110px, 72px); } 54% { opacity: 1; transform: translate(40px, 112px); } 58% { opacity: 1; transform: translate(40px, 112px) scale(.88); } 62% { opacity: 1; transform: translate(40px, 112px); } 74% { opacity: 0; transform: translate(130px, 118px); } 100% { opacity: 0; transform: translate(250px, 120px); } }
+@keyframes dmType { 0%, 14% { max-width: 0; } 40%, 97% { max-width: 100%; } 100% { max-width: 0; } }
+@keyframes dmBtn { 0%, 54% { opacity: 1; transform: none; } 58% { opacity: 1; transform: scale(.93); } 62%, 99% { opacity: 0; transform: scale(.93); } 100% { opacity: 1; transform: none; } }
+@keyframes dmWait { 0%, 60% { opacity: 0; transform: translateY(5px); } 68%, 94% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+@keyframes dmOk { 0%, 42% { opacity: 1; transform: none; } 48%, 94% { opacity: 0; transform: translateY(-6px); } 100% { opacity: 1; transform: none; } }
+@keyframes dmNo { 0%, 46% { opacity: 0; transform: translateY(6px); } 54%, 92% { opacity: 1; transform: none; } 98%, 100% { opacity: 0; } }
+@keyframes dmPlus { 0%, 4% { transform: scale(0); } 12% { transform: scale(1.2); } 18%, 100% { transform: scale(1); } }
+@keyframes dmPop { 0%, 6% { transform: scale(0); } 24%, 100% { transform: scale(1); } }
+@keyframes dmTick { 0%, 20% { stroke-dashoffset: 1; } 42%, 100% { stroke-dashoffset: 0; } }
+@keyframes dmPlus2 { 0%, 24% { opacity: 0; transform: translateY(10px) scale(.5); } 40% { opacity: 1; transform: scale(1.15); } 50%, 100% { opacity: 1; transform: none; } }
+html[data-perf="low"] .dm *, html[data-perf="low"] .dm { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .dm *, .dm { animation: none !important; } }
+</style>
+<style id="t12nav-css">
+/* ===== Account names: inline warnings ===== */
+.name-note { margin-top: 6px; font: 500 12.5px/1.4 var(--sans); color: var(--text-muted); }
+.name-note:empty { display: none; }
+.name-note.err { color: var(--danger, #c0392b); }
+.name-note.warn { color: var(--warn, #b7791f); }
+.email-tag.long { border-color: var(--warn, #b7791f); }
+/* ===== Tab bar: "More" menu + dropdown that never clips a name ===== */
+.tabs-container .tab-item.in-more { display: none !important; }
+.tabs-container { overflow: visible !important; }
+.tab-more { position: relative; display: flex; align-items: stretch; }
+.tab-more-btn {
+  display: flex; align-items: center; gap: 6px; padding: 0; background: transparent; border: 0; border-bottom: 2px solid transparent;
+  margin-bottom: -1px; border-radius: 0; color: var(--text-muted); font: 500 14px/1.25 var(--sans); cursor: pointer; white-space: nowrap; transition: color .2s ease, border-color .2s ease;
+}
+.tab-more-btn svg { width: 13px; height: 13px; transition: transform .2s ease; }
+.tab-more.open .tab-more-btn svg { transform: rotate(180deg); }
+.tab-more-btn:hover { color: var(--text); border-bottom-color: var(--border); }
+.tab-more-btn.active { color: var(--text); font-weight: 700; border-bottom-color: var(--text); }
+.tab-more-menu {
+  position: absolute; top: calc(100% + 12px); right: 0; min-width: 100%; width: max-content; max-width: calc(100vw - 24px);
+  background: var(--bg); border: 1px solid var(--text); border-radius: var(--radius); z-index: 30; display: none; flex-direction: column; overflow: hidden;
+  box-shadow: 4px 4px 0 var(--text);
+}
+.tab-more.open .tab-more-menu { display: flex; }
+.tab-more-item { padding: 12px 18px; color: var(--text); font-size: 14.5px; font-weight: 500; white-space: nowrap; cursor: pointer; border-bottom: 1px solid var(--border); text-align: left; }
+.tab-more-item:last-child { border-bottom: 0; }
+.tab-more-item:hover, .tab-more-item:focus-visible { background: var(--surface-2); outline: none; }
+.tab-more-item.active { background: var(--text); color: var(--bg); font-weight: 600; }
+
+/* The compact tab menu used to be as wide as its toggle, which squeezed to ~90px on mid-size windows and cut longer names
+   (Leaderboard, Organizations). The list now sizes to its longest name and stays centred under the toggle. */
+.tabs-dropdown .dropdown-toggle { min-width: 0; }
+.tabs-dropdown .dropdown-toggle span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tabs-dropdown .dropdown-menu {
+  left: 50% !important; right: auto !important; transform: translateX(-50%);
+  width: max-content !important; min-width: max(100%, 190px) !important; max-width: calc(100vw - 24px);
+}
+.tabs-dropdown .dropdown-item { white-space: nowrap; }
+</style>
 </body>
 </html>
