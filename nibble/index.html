@@ -185,7 +185,7 @@ body{font:16px/1.45 var(--font);color:var(--ink);background:var(--paper) url("da
 button,input{font:inherit;color:inherit}
 :focus-visible{outline:3px dashed var(--purple);outline-offset:3px}
 .boot #login{visibility:hidden}
-.btn,.box,.addroom input,#rooms button[aria-current=true],.av,.card{filter:url(#pencil)}
+.btn,.box,.addroom input,#nav button[aria-current=true],.av,.card{filter:url(#pencil)}
 .btn{background:var(--pink-f);border:3px solid var(--pink);border-radius:var(--wob1);padding:10px 20px;font-weight:700;cursor:pointer;box-shadow:3px 3px 0 var(--pink);transition:transform .08s}
 .btn:hover:not(:disabled){transform:rotate(-1.5deg) scale(1.03)}
 .btn:active:not(:disabled){transform:translate(2px,2px);box-shadow:1px 1px 0 var(--pink)}
@@ -212,10 +212,10 @@ aside{display:flex;flex-direction:column;min-height:0;border-right:3px dashed va
 aside .top{padding:18px 18px 6px;font-size:1.9rem;font-weight:700;color:var(--pink);text-shadow:2px 2px 0 var(--yellow);transform:rotate(-2deg)}
 .org{margin:0 18px;font-weight:700;color:var(--muted);font-size:.9rem}
 aside h2{font-size:.9rem;color:var(--muted);margin:12px 18px 6px}
-#rooms{list-style:none;margin:0;padding:0 10px;flex:1;min-width:0;overflow-y:auto;overflow-x:hidden}
-#rooms button{width:100%;text-align:left;background:none;border:3px solid transparent;border-radius:var(--wob2);padding:4px 10px;cursor:pointer;font-weight:700;transition:background .15s,border-color .15s,transform .15s}
-#rooms button:hover{background:var(--blue-f);transform:translateX(3px)}
-#rooms button[aria-current=true]{background:var(--yellow-f);border-color:var(--yellow);transform:none}
+#nav{list-style:none;margin:0;padding:0 10px;flex:1;min-width:0;overflow-y:auto;overflow-x:hidden}
+#nav button{width:100%;text-align:left;background:none;border:3px solid transparent;border-radius:var(--wob2);padding:4px 10px;cursor:pointer;font-weight:700;transition:background .15s,border-color .15s,transform .15s}
+#nav button:hover{background:var(--blue-f);transform:translateX(3px)}
+#nav button[aria-current=true]{background:var(--yellow-f);border-color:var(--yellow);transform:none}
 .addroom{padding:10px 12px}
 .addroom input{width:100%;padding:7px 12px;background:#fff;border:3px solid var(--orange);border-radius:var(--wob2);font-size:.9rem}
 .addroom input:focus{background:var(--yellow-f)}
@@ -262,11 +262,11 @@ form.send .btn{padding:7px 18px;background:var(--green-f);border-color:var(--gre
   aside{flex-direction:row;align-items:center;gap:8px;border-right:0;border-bottom:3px dashed var(--orange);padding:6px 10px}
   aside .top{padding:0;font-size:1.3rem}
   .org,aside h2,.me span{display:none}
-  #rooms{display:flex;gap:6px;padding:4px 2px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
-  #rooms::-webkit-scrollbar{display:none}
-  #rooms li{flex:none}
-  #rooms button{width:auto;white-space:nowrap}
-  #rooms button:hover{transform:none}
+  #nav{display:flex;gap:6px;padding:4px 2px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+  #nav::-webkit-scrollbar{display:none}
+  #nav li{flex:none}
+  #nav button{width:auto;white-space:nowrap}
+  #nav button:hover{transform:none}
   .addroom{padding:0;width:104px;flex:none}
   .addroom input{font-size:16px;padding:5px 10px}
   .me{padding:0;border:0;flex:none}
@@ -274,6 +274,72 @@ form.send .btn{padding:7px 18px;background:var(--green-f);border-color:var(--gre
   .row,form.send{padding-left:14px;padding-right:14px}
   form.send{padding-bottom:max(14px,env(safe-area-inset-bottom))}
   form.send input{font-size:16px}
+}
+
+/* ---- v2: rooms / groups / private messages + AI settings ---- */
+#nav ul{list-style:none;margin:0;padding:0}
+#nav h2{margin:12px 8px 4px}
+#nav button{display:flex;align-items:center;gap:8px}
+#nav .ico{width:22px;text-align:center;flex:none;color:var(--muted)}
+#nav .mav{--h:280;width:22px;height:22px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-size:.7rem;background:hsl(var(--h) 90% 85%);border:2px solid hsl(var(--h) 75% 62%);color:hsl(var(--h) 55% 30%)}
+#nav .lbl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#nav .dot{width:9px;height:9px;border-radius:50%;background:var(--pink);flex:none}
+#nav .bot{font-size:.8rem;flex:none}
+#nav button.dm[aria-current=true]{background:var(--blue-f);border-color:var(--blue)}
+#nav button.group[aria-current=true]{background:var(--purple-f);border-color:var(--purple)}
+.newwrap{padding:8px 12px}
+.btn.sm{padding:4px 14px;font-size:.9rem}
+.btn.danger{background:#ffe0ea;border-color:var(--err);box-shadow:3px 3px 0 var(--err)}
+#settingsBtn{color:var(--ink);text-decoration:none;font-size:1.1rem}
+
+.bar[data-kind=dm]{border-bottom-color:var(--blue)}
+.bar[data-kind=group]{border-bottom-color:var(--purple)}
+#stage[data-kind=dm]{background:rgba(216,237,255,.35)}
+#stage[data-kind=group]{background:rgba(232,223,253,.35)}
+.ttl{flex:1;min-width:0}
+.ttl h1{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ttl .sub{font-size:.8rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chip{font-size:.8rem;font-weight:700;background:var(--purple-f);border:2px solid var(--purple);border-radius:12px;padding:2px 10px;cursor:help;white-space:nowrap}
+.chip[hidden]{display:none}
+.ai-tag{font-size:.72rem;font-weight:700;background:var(--purple-f);color:var(--purple);border:2px solid var(--purple);border-radius:8px;padding:0 6px;cursor:help}
+
+dialog{width:min(680px,94vw);max-height:88dvh;overflow:auto;padding:22px;border:3px solid var(--purple);border-radius:var(--wob1);box-shadow:5px 5px 0 var(--purple-f);color:var(--ink);background:#fff}
+dialog::backdrop{background:rgba(59,51,85,.4)}
+dialog h2{margin:0;font-size:1.5rem}
+.dhead{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px}
+.dhead .acts{display:flex;gap:4px}
+.x{background:none;border:0;font-size:1.3rem;cursor:pointer;padding:2px 8px}
+.tabs{display:flex;gap:8px;margin:8px 0 12px;flex-wrap:wrap}
+.tabs button{background:none;border:3px solid var(--orange);border-radius:var(--wob2);padding:3px 14px;font-weight:700;cursor:pointer}
+.tabs button[aria-selected=true]{background:var(--yellow-f)}
+dialog input[type=text],dialog select{padding:7px 12px;border:3px solid var(--orange);border-radius:var(--wob2);background:#fff;font-size:1rem;max-width:100%}
+dialog input[type=text]{width:100%;margin:6px 0}
+dialog input[readonly]{background:var(--yellow-f)}
+.plist{list-style:none;margin:6px 0 10px;padding:0;max-height:200px;overflow:auto}
+.plist button{width:100%;text-align:left;background:none;border:0;padding:6px 8px;cursor:pointer;border-radius:8px}
+.plist button:hover{background:var(--blue-f)}
+.hint{color:var(--muted);font-size:.85rem;margin:4px 0}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.chips button{background:var(--purple-f);border:2px solid var(--purple);border-radius:12px;padding:1px 10px;cursor:pointer}
+section.set{border-top:3px dashed var(--blue);padding:12px 0}
+section.set h3{margin:0 0 4px}
+.gcard{border:3px solid var(--purple-f);border-radius:14px;padding:10px 12px;margin:10px 0}
+.code{font:700 1.5rem/1 ui-monospace,Menlo,monospace;letter-spacing:.1em;background:var(--yellow-f);padding:4px 10px;border-radius:8px;display:inline-block;margin:6px 0}
+.pick{margin:8px 0;max-height:180px;overflow:auto;border:2px dashed var(--orange);border-radius:10px;padding:4px 8px}
+.prow{display:flex;gap:12px;align-items:center;padding:3px 0}
+.prow .pl{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.chk{display:inline-flex;gap:6px;align-items:center;font-size:.9rem;cursor:pointer}
+.row-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.urlbox{display:flex;gap:8px;align-items:center}
+.quote{margin:6px 0;padding:6px 10px;background:var(--yellow-f);border-radius:10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.log{font-size:.8rem;color:var(--muted);margin:2px 0;overflow-wrap:anywhere}
+@media (max-width:760px){
+  #nav ul{display:contents}
+  #nav h2{display:none}
+  .newwrap{padding:0;flex:none}
+  .ttl .sub{display:none}
+  .chip{display:none}
+  .prow{flex-wrap:wrap}
 }
 </style>
 </head>
@@ -284,7 +350,7 @@ form.send .btn{padding:7px 18px;background:var(--green-f);border-color:var(--gre
   <div class="login-side">
     <div class="mark">Nibble</div>
     <p>Chat with your people.</p>
-    <small>Chats stay inside your organization.</small>
+    <small>Rooms stay inside your organization. Private messages stay between the people in them.</small>
   </div>
   <div class="login-main">
     <div class="card">
@@ -303,13 +369,12 @@ form.send .btn{padding:7px 18px;background:var(--green-f);border-color:var(--gre
   <aside>
     <div class="top">Nibble</div>
     <div class="org" id="orgName"></div>
-    <h2>Rooms</h2>
-    <ul id="rooms"></ul>
-    <form class="addroom" id="addRoom"><input id="newRoom" maxlength="40" placeholder="Add a room" aria-label="Add a room"></form>
-    <div class="me"><span id="meName"></span><button id="logout" type="button">Sign out</button></div>
+    <nav id="nav" aria-label="Conversations"></nav>
+    <div class="newwrap"><button class="btn sm" id="newBtn" type="button">＋ New</button></div>
+    <div class="me"><span id="meName"></span><button id="settingsBtn" type="button" title="Settings &amp; AI access">⚙</button><button id="logout" type="button">Sign out</button></div>
   </aside>
   <main>
-    <div class="bar"><h1 id="roomTitle"></h1><span class="conn" id="conn">Connecting…</span></div>
+    <div class="bar" id="bar"><div class="ttl"><h1 id="roomTitle"></h1><div class="sub" id="roomSub"></div></div><span class="chip" id="aiChip" hidden></span><span class="conn" id="conn">Connecting…</span></div>
     <div id="stage" aria-live="polite"><button class="btn" id="jump" type="button">Newer messages ↓</button></div>
     <form class="send" id="send">
       <div class="box">
@@ -320,187 +385,395 @@ form.send .btn{padding:7px 18px;background:var(--green-f);border-color:var(--gre
   </main>
 </div>
 
+
+<dialog id="newDlg">
+  <div class="dhead"><h2>Start something</h2><button class="x" type="button" data-close aria-label="Close">✕</button></div>
+  <div class="tabs" role="tablist">
+    <button type="button" id="tab-dm" role="tab">🔒 Message</button>
+    <button type="button" id="tab-group" role="tab">👥 Group</button>
+    <button type="button" id="tab-room" role="tab"># Room</button>
+  </div>
+  <div id="pane-dm">
+    <p class="hint" id="dmHint"></p>
+    <input type="text" id="dmQ" placeholder="Find someone…" autocomplete="off" aria-label="Find someone">
+    <ul class="plist" id="dmRes"></ul>
+  </div>
+  <div id="pane-group" hidden>
+    <input type="text" id="grpName" maxlength="40" placeholder="Group name" autocomplete="off" aria-label="Group name">
+    <div class="chips" id="chips"></div>
+    <input type="text" id="grpQ" placeholder="Add people…" autocomplete="off" aria-label="Add people">
+    <ul class="plist" id="grpRes"></ul>
+    <button class="btn sm" id="grpGo" type="button">Create group</button>
+  </div>
+  <div id="pane-room" hidden>
+    <p class="hint">Rooms are open to everyone in your org.</p>
+    <input type="text" id="roomName" maxlength="40" placeholder="room-name" autocomplete="off" aria-label="Room name">
+    <button class="btn sm" id="roomGo" type="button">Create room</button>
+  </div>
+  <p class="msg-line error" id="newMsg"></p>
+</dialog>
+
+<dialog id="settings">
+  <div class="dhead"><h2>Settings</h2><div class="acts"><button class="x" type="button" id="setRefresh" aria-label="Refresh" title="Refresh">↻</button><button class="x" type="button" data-close aria-label="Close">✕</button></div></div>
+  <p class="msg-line" id="setMsg" role="status"></p>
+  <div id="setBody"></div>
+</dialog>
+
 <script>
-const CHAT_URL = 'https://vbdmenslbebogqbfdlmz.supabase.co/functions/v1/chat';
+const BASE = 'https://bukeabrzlgcwzwtzmwld.supabase.co/functions/v1/nibble', MCP_URL = BASE + '/mcp';
 const $ = id => document.getElementById(id);
+const el = (t, c, x) => { const e = document.createElement(t); if (c) e.className = c; if (x != null) e.textContent = x; return e; };
+const when = d => d ? new Date(d).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' }) : 'never';
 
 /* ---- chat API: the server verifies the Time12 Pass token and decides your org ---- */
-class AuthError extends Error{}
-async function api(body){
-  const t=Time12Pass.token(); if(!t) throw new AuthError('Not signed in');
-  const r=await fetch(CHAT_URL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+t},body:JSON.stringify(body)});
-  const d=await r.json().catch(()=>({}));
-  if(r.status===401) throw new AuthError(d.error||'Your session has expired. Sign in again.');
-  if(!r.ok) throw new Error(d.error||'Something went wrong.');
+class AuthError extends Error {}
+async function api(body) {
+  const t = Time12Pass.token(); if (!t) throw new AuthError('Not signed in');
+  const r = await fetch(BASE, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + t }, body: JSON.stringify(body) });
+  const d = await r.json().catch(() => ({}));
+  if (r.status === 401) throw new AuthError(d.error || 'Your session has expired. Sign in again.');
+  if (!r.ok) throw new Error(d.error || 'Something went wrong.');
   return d;
 }
 
 /* ---- sign in (Time12 Pass popup) ---- */
-function loginMsg(t,k){ $('loginMsg').textContent=t; $('loginMsg').className='msg-line '+(k||''); }
-$('signIn').addEventListener('click',()=>{
-  const p=Time12Pass.signIn(); // must start synchronously inside the click
-  $('signIn').disabled=true; loginMsg('Finish signing in in the Time12 Pass window…');
-  p.then(u=>{ loginMsg(''); enterApp(u); })
-   .catch(err=>{ const quiet=/cancelled|closed/.test(err.message); loginMsg(quiet?'':err.message,'error'); })
-   .finally(()=>{ $('signIn').disabled=false; });
+function loginMsg(t, k) { $('loginMsg').textContent = t; $('loginMsg').className = 'msg-line ' + (k || ''); }
+$('signIn').addEventListener('click', () => {
+  const p = Time12Pass.signIn(); // must start synchronously inside the click
+  $('signIn').disabled = true; loginMsg('Finish signing in in the Time12 Pass window…');
+  p.then(u => { loginMsg(''); enterApp(u); })
+   .catch(err => { const quiet = /cancelled|closed/.test(err.message); loginMsg(quiet ? '' : err.message, 'error'); })
+   .finally(() => { $('signIn').disabled = false; });
 });
 
 /* ---- app state ---- */
-let me=null, org='', room='', panes=new Map(), timer=null, openToken=0, rooms=['general'];
+let me = null, org = '', room = '', convos = [], order = [], panes = new Map(), timer = null, navTimer = null, openToken = 0, seen = {}, seenFresh = false;
 const shown = u => u.split('@')[0];
-const roomKey = () => 'rooms:'+org, lastKey = () => 'room:'+org;
-const nearEnd = el => el.scrollHeight-el.scrollTop-el.clientHeight<100;
-function localRooms(){ try{ const r=JSON.parse(localStorage.getItem(roomKey())||'[]'); if(Array.isArray(r)) return r; }catch(e){} return []; }
-function saveRooms(r){ try{ localStorage.setItem(roomKey(),JSON.stringify(r)); }catch(e){} }
-function mergeRooms(extra){ rooms=[...new Set(['general',...localRooms(),...extra])]; saveRooms(rooms); }
-function setConn(k,t){ $('conn').className='conn '+k; $('conn').textContent=t; }
+const nearEnd = el => el.scrollHeight - el.scrollTop - el.clientHeight < 100;
+const byId = id => convos.find(c => c.id === id);
+const peer = c => c.members.find(m => m !== me.username) || c.members[0] || '?';
+const label = c => c.kind === 'dm' ? shown(peer(c)) : c.kind === 'group' ? c.name : '# ' + c.name;
+const hue = s => { let h = 0; for (const ch of s) h = (h * 31 + ch.charCodeAt(0)) % 360; return h; };
+function setConn(k, t) { $('conn').className = 'conn ' + k; $('conn').textContent = t; }
+const seenKey = () => 'seen:' + me.username;
+function seenLoad() { try { const s = localStorage.getItem(seenKey()); seen = s ? JSON.parse(s) : {}; seenFresh = !s; } catch (e) { seen = {}; seenFresh = true; } }
+function seenSave() { try { localStorage.setItem(seenKey(), JSON.stringify(seen)); } catch (e) {} }
+function markSeen(id, n) { if (n > (seen[id] || 0)) { seen[id] = n; seenSave(); } }
 
-async function enterApp(user){
-  me=user; document.body.classList.remove('boot');
-  panes.forEach(p=>p.el.remove()); panes.clear(); room='';
-  $('login').style.display='none'; $('app').style.display='grid';
-  $('meName').textContent=shown(me.username); setConn('','Connecting…');
-  try{
-    const info=await api({action:'me'});
-    org=info.org; $('orgName').textContent=org;
-    mergeRooms([]); drawRooms();
-    api({action:'rooms'}).then(r=>{ mergeRooms(r.rooms||[]); drawRooms(); }).catch(()=>{});
-    let last=''; try{ last=localStorage.getItem(lastKey())||''; }catch(e){}
-    openRoom(rooms.includes(last)?last:rooms[0]);
-  }catch(err){ handleErr(err); }
+async function enterApp(user) {
+  me = user; me.username = me.username.toLowerCase(); document.body.classList.remove('boot');
+  panes.forEach(p => p.el.remove()); panes.clear(); room = ''; convos = [];
+  $('login').style.display = 'none'; $('app').style.display = 'grid';
+  $('meName').textContent = shown(me.username); setConn('', 'Connecting…');
+  try {
+    seenLoad();
+    const info = await api({ action: 'me' });
+    org = info.org; me.top = info.top; $('orgName').textContent = org;
+    await refreshConvos();
+    let last = ''; try { last = localStorage.getItem('room:' + me.username) || ''; } catch (e) {}
+    const first = byId(last) || convos.find(c => c.name === 'general') || convos[0];
+    if (first) openRoom(first.id);
+    clearInterval(navTimer);
+    navTimer = setInterval(() => { if (!document.hidden && me) refreshConvos().catch(handleErr); }, 8000);
+  } catch (err) { handleErr(err); }
 }
-function showLogin(msg){
-  stopPoll(); openToken++; document.body.classList.remove('boot');
-  $('app').style.display='none'; $('login').style.display='';
-  loginMsg(msg||'',msg?'error':'');
-  setTimeout(()=>$('signIn').focus(),50);
+function showLogin(msg) {
+  stopPoll(); clearInterval(navTimer); openToken++; document.body.classList.remove('boot');
+  $('app').style.display = 'none'; $('login').style.display = '';
+  loginMsg(msg || '', msg ? 'error' : '');
+  setTimeout(() => $('signIn').focus(), 50);
 }
-function handleErr(err){
-  if(err instanceof AuthError){ me=null; showLogin(err.message); }
-  else setConn('bad','Offline');
+function handleErr(err) {
+  if (err instanceof AuthError) { me = null; showLogin(err.message); }
+  else setConn('bad', 'Offline');
 }
-$('logout').onclick=()=>{ stopPoll(); Time12Pass.logout(); };
+$('logout').onclick = () => { stopPoll(); clearInterval(navTimer); Time12Pass.logout(); };
 
-/* ---- rooms ---- */
-function drawRooms(){
-  const ul=$('rooms'); ul.textContent='';
-  rooms.forEach(r=>{
-    const li=document.createElement('li'), b=document.createElement('button');
-    b.textContent='# '+r; b.type='button'; b.dataset.room=r;
-    if(r===room) b.setAttribute('aria-current','true');
-    b.onclick=()=>openRoom(r);
-    li.appendChild(b); ul.appendChild(li);
+/* ---- conversations: rooms, groups, private messages ---- */
+async function refreshConvos() {
+  const r = await api({ action: 'convos' });
+  convos = r.convos;
+  if (seenFresh) { convos.forEach(c => { seen[c.id] = c.last; }); seenFresh = false; seenSave(); }
+  $('settingsBtn').textContent = '⚙' + (r.pending ? ' ' + r.pending : '');
+  $('settingsBtn').title = r.pending ? r.pending + ' AI item(s) waiting for you' : 'Settings & AI access';
+  drawNav(); headerFor();
+}
+function drawNav() {
+  const nav = $('nav'); nav.textContent = ''; order = [];
+  [['room', 'Rooms'], ['group', 'Groups'], ['dm', 'Direct messages']].forEach(([k, h]) => {
+    const list = convos.filter(c => c.kind === k).sort((a, b) => (a.name === 'general' ? -1 : b.name === 'general' ? 1 : 0) || label(a).localeCompare(label(b)));
+    if (!list.length) return;
+    nav.appendChild(el('h2', '', h));
+    const ul = el('ul');
+    list.forEach(c => {
+      order.push(c.id);
+      const li = el('li'), b = el('button', k); b.type = 'button'; b.dataset.id = c.id;
+      if (c.id === room) b.setAttribute('aria-current', 'true');
+      if (k === 'dm') { const a = el('span', 'mav', shown(peer(c)).charAt(0).toUpperCase()); a.style.setProperty('--h', hue(peer(c))); b.appendChild(a); }
+      else b.appendChild(el('span', 'ico', k === 'group' ? '👥' : '#'));
+      b.appendChild(el('span', 'lbl', k === 'room' ? c.name : label(c)));
+      if (c.ai.length) { const bot = el('span', 'bot', '🤖'); bot.title = 'An AI assistant can read this chat (shared by ' + c.ai.map(shown).join(', ') + ')'; b.appendChild(bot); }
+      if (c.id !== room && c.last > (seen[c.id] || 0)) b.appendChild(el('span', 'dot'));
+      b.onclick = () => openRoom(c.id);
+      li.appendChild(b); ul.appendChild(li);
+    });
+    nav.appendChild(ul);
   });
+  const cur = nav.querySelector('[aria-current]'); if (cur) cur.scrollIntoView({ block: 'nearest', inline: 'center' });
 }
-function markRoom(){
-  document.querySelectorAll('#rooms button').forEach(b=>{
-    if(b.dataset.room===room){ b.setAttribute('aria-current','true'); b.scrollIntoView({block:'nearest',inline:'center',behavior:'smooth'}); }
-    else b.removeAttribute('aria-current');
-  });
+function headerFor() {
+  const c = byId(room); if (!c) return;
+  $('roomTitle').textContent = c.kind === 'dm' ? shown(peer(c)) : label(c);
+  $('bar').dataset.kind = c.kind; $('stage').dataset.kind = c.kind;
+  $('roomSub').textContent = c.kind === 'dm' ? '🔒 Private · only you and ' + shown(peer(c)) + ' can see this'
+    : c.kind === 'group' ? '👥 Group · ' + c.members.map(shown).join(', ') : 'Room · everyone in ' + org + ' can see this';
+  const chip = $('aiChip'); chip.hidden = !c.ai.length;
+  if (c.ai.length) { chip.textContent = '🤖 AI can read this'; chip.title = 'Shared with an AI assistant by: ' + c.ai.map(shown).join(', '); }
+  $('text').placeholder = c.kind === 'dm' ? 'Message ' + shown(peer(c)) : c.kind === 'group' ? 'Message the group' : 'Message # ' + c.name;
 }
-$('addRoom').addEventListener('submit',e=>{
+document.addEventListener('keydown', e => {
+  if (!me || !e.altKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
   e.preventDefault();
-  const n=$('newRoom').value.trim().toLowerCase().replace(/[^a-z0-9_ -]/g,'').replace(/\s+/g,'-').slice(0,40);
-  if(!n) return;
-  mergeRooms([n]); drawRooms(); $('newRoom').value=''; openRoom(n);
-});
-document.addEventListener('keydown',e=>{
-  if(!me||!e.altKey||(e.key!=='ArrowUp'&&e.key!=='ArrowDown')) return;
-  e.preventDefault();
-  const next=rooms[rooms.indexOf(room)+(e.key==='ArrowDown'?1:-1)];
-  if(next) openRoom(next);
+  const next = order[order.indexOf(room) + (e.key === 'ArrowDown' ? 1 : -1)];
+  if (next) openRoom(next);
 });
 
-/* every room keeps its own pane, so switching is instant and scroll position survives */
-function pane(r){
-  let p=panes.get(r);
-  if(!p){
-    const el=document.createElement('div'); el.className='pane'; el.inert=true;
-    p={el,seen:new Set(),last:null,lastId:0,loaded:false};
-    el.addEventListener('scroll',()=>{ if(r===room&&nearEnd(el)) $('jump').classList.remove('show'); },{passive:true});
-    $('stage').appendChild(el); panes.set(r,p);
+/* every conversation keeps its own pane, so switching is instant and scroll position survives */
+function pane(r) {
+  let p = panes.get(r);
+  if (!p) {
+    const e = document.createElement('div'); e.className = 'pane'; e.inert = true;
+    p = { el: e, seen: new Set(), last: null, lastId: 0, loaded: false };
+    e.addEventListener('scroll', () => { if (r === room && nearEnd(e)) $('jump').classList.remove('show'); }, { passive: true });
+    $('stage').appendChild(e); panes.set(r, p);
   }
   return p;
 }
-function note(p,t){ const e=document.createElement('p'); e.className='empty'; e.textContent=t; p.el.replaceChildren(e); }
+function note(p, t) { const e = document.createElement('p'); e.className = 'empty'; e.textContent = t; p.el.replaceChildren(e); }
 
-function render(m,p){
-  if(p.seen.has(m.id)) return; p.seen.add(m.id); if(m.id>p.lastId) p.lastId=m.id;
-  const el=p.el, em=el.querySelector('.empty'); if(em) em.remove();
-  const t=new Date(m.created_at), name=shown(m.username);
-  const cont=p.last&&p.last.user===m.username&&(t-p.last.time)<5*60*1000;
-  const row=document.createElement('div'); row.className='row '+(cont?'cont':'head')+(p.loaded?' new':'');
-  let h=0; for(const c of m.username) h=(h*31+c.charCodeAt(0))%360; row.style.setProperty('--h',h);
-  const av=document.createElement('div'); av.className='av'; av.textContent=name.charAt(0).toUpperCase();
-  const body=document.createElement('div');
-  if(!cont){
-    const meta=document.createElement('div'); meta.className='meta';
-    const n=document.createElement('b'); n.textContent=name;
-    const tm=document.createElement('time'); tm.textContent=t.toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
-    meta.append(n,tm); body.appendChild(meta);
+function render(m, p) {
+  if (p.seen.has(m.id)) return; p.seen.add(m.id); if (m.id > p.lastId) p.lastId = m.id;
+  const e = p.el, em = e.querySelector('.empty'); if (em) em.remove();
+  const t = new Date(m.created_at), name = shown(m.username), ai = m.via_ai || '';
+  const cont = p.last && p.last.user === m.username && p.last.ai === ai && (t - p.last.time) < 5 * 60 * 1000;
+  const row = el('div', 'row ' + (cont ? 'cont' : 'head') + (p.loaded ? ' new' : ''));
+  row.style.setProperty('--h', hue(m.username));
+  const av = el('div', 'av', name.charAt(0).toUpperCase());
+  const body = document.createElement('div');
+  if (!cont) {
+    const meta = el('div', 'meta'), n = el('b', '', name);
+    meta.appendChild(n);
+    if (ai) { const tag = el('span', 'ai-tag', '🤖 ' + ai); tag.title = 'Posted by an AI assistant for ' + name; meta.appendChild(tag); }
+    meta.appendChild(el('time', '', t.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })));
+    body.appendChild(meta);
   }
-  const tx=document.createElement('div'); tx.className='text'; tx.textContent=m.body; body.appendChild(tx);
-  row.append(av,body);
-  const near=nearEnd(el), mine=m.username===me.username;
-  el.appendChild(row); p.last={user:m.username,time:t};
-  if(near||mine) el.scrollTop=el.scrollHeight;
-  else if(p.loaded&&p===panes.get(room)) $('jump').classList.add('show');
+  body.appendChild(el('div', 'text', m.body));
+  row.append(av, body);
+  const near = nearEnd(e), mine = m.username === me.username;
+  e.appendChild(row); p.last = { user: m.username, time: t, ai };
+  if (near || mine) e.scrollTop = e.scrollHeight;
+  else if (p.loaded && p === panes.get(room)) $('jump').classList.add('show');
+  if (p === panes.get(room)) markSeen(room, m.id);
 }
-$('jump').onclick=()=>{ const p=panes.get(room); if(p) p.el.scrollTo({top:p.el.scrollHeight,behavior:'smooth'}); $('jump').classList.remove('show'); };
+$('jump').onclick = () => { const p = panes.get(room); if (p) p.el.scrollTo({ top: p.el.scrollHeight, behavior: 'smooth' }); $('jump').classList.remove('show'); };
 
-function stopPoll(){ if(timer){ clearInterval(timer); timer=null; } }
-async function poll(tok){
-  const p=panes.get(room);
-  if(document.hidden||tok!==openToken||!p) return;
-  try{
-    const d=await api({action:'history',room,afterId:p.lastId});
-    if(tok!==openToken) return;
-    (d.messages||[]).forEach(m=>render(m,p)); setConn('live','Live');
-  }catch(err){ handleErr(err); }
+function stopPoll() { if (timer) { clearInterval(timer); timer = null; } }
+async function poll(tok) {
+  const p = panes.get(room);
+  if (document.hidden || tok !== openToken || !p) return;
+  try {
+    const d = await api({ action: 'history', conversation_id: room, afterId: p.lastId });
+    if (tok !== openToken) return;
+    (d.messages || []).forEach(m => render(m, p)); setConn('live', 'Live');
+    if (d.messages && d.messages.length) drawNav();
+  } catch (err) { handleErr(err); }
 }
 
-async function openRoom(r){
-  const p=pane(r);
-  if(r===room&&p.loaded) return;
-  stopPoll(); const tok=++openToken; room=r;
-  try{ localStorage.setItem(lastKey(),r); }catch(e){}
-  panes.forEach(q=>{ const on=q===p; q.el.classList.toggle('on',on); q.el.inert=!on; });
-  markRoom(); $('roomTitle').textContent='# '+r; $('jump').classList.remove('show');
-  if(!p.loaded) p.el.innerHTML='<i class="sk"></i><i class="sk b"></i><i class="sk"></i>';
-  setConn('','Connecting…');
-  try{
-    // a room we've already opened only asks for what's new
-    const d=await api(p.loaded?{action:'history',room:r,afterId:p.lastId}:{action:'history',room:r});
-    if(tok!==openToken) return;
-    const first=!p.loaded;
-    if(first){ p.el.textContent=''; if(!d.messages.length) note(p,'Nobody in # '+r+' yet. Go first!'); }
-    d.messages.forEach(m=>render(m,p));
-    if(first){ p.loaded=true; p.el.scrollTop=p.el.scrollHeight; }
-    setConn('live','Live');
-    timer=setInterval(()=>poll(tok),2500);
-  }catch(err){
-    if(tok!==openToken) return;
+async function openRoom(r) {
+  const c = byId(r); if (!c) return;
+  const p = pane(r);
+  if (r === room && p.loaded) return;
+  stopPoll(); const tok = ++openToken; room = r;
+  try { localStorage.setItem('room:' + me.username, r); } catch (e) {}
+  panes.forEach(q => { const on = q === p; q.el.classList.toggle('on', on); q.el.inert = !on; });
+  headerFor(); drawNav(); $('jump').classList.remove('show');
+  if (!p.loaded) p.el.innerHTML = '<i class="sk"></i><i class="sk b"></i><i class="sk"></i>';
+  setConn('', 'Connecting…');
+  try {
+    const d = await api(p.loaded ? { action: 'history', conversation_id: r, afterId: p.lastId } : { action: 'history', conversation_id: r });
+    if (tok !== openToken) return;
+    const first = !p.loaded;
+    if (first) { p.el.textContent = ''; if (!d.messages.length) note(p, c.kind === 'dm' ? 'Say hi to ' + shown(peer(c)) + '!' : 'Nobody in ' + label(c) + ' yet. Go first!'); }
+    d.messages.forEach(m => render(m, p));
+    if (first) { p.loaded = true; p.el.scrollTop = p.el.scrollHeight; }
+    markSeen(r, Math.max(p.lastId, c.last)); drawNav();
+    setConn('live', 'Live');
+    timer = setInterval(() => poll(tok), 2500);
+  } catch (err) {
+    if (tok !== openToken) return;
     handleErr(err);
-    if(!p.loaded&&!(err instanceof AuthError)) note(p,'Messages could not be loaded. Tap the room to try again.');
+    if (!p.loaded && !(err instanceof AuthError)) note(p, 'Messages could not be loaded. Tap the chat to try again.');
   }
-  if(tok===openToken&&matchMedia('(hover:hover)').matches) $('text').focus();
+  if (tok === openToken && matchMedia('(hover:hover)').matches) $('text').focus();
 }
-document.addEventListener('visibilitychange',()=>{ if(!document.hidden&&me) poll(openToken); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden && me) { poll(openToken); refreshConvos().catch(handleErr); } });
 
-$('send').addEventListener('submit',async e=>{
+$('send').addEventListener('submit', async e => {
   e.preventDefault();
-  const body=$('text').value.trim(), r=room; if(!body||!me||!r) return;
-  $('sendBtn').disabled=true;
-  try{
-    const d=await api({action:'send',room:r,body});
-    render(d.message,pane(r)); $('text').value='';
-  }catch(err){ if(err instanceof AuthError) handleErr(err); else setConn('bad',err.message||'Message not sent'); }
-  finally{ $('sendBtn').disabled=false; $('text').focus(); }
+  const body = $('text').value.trim(), r = room; if (!body || !me || !r) return;
+  $('sendBtn').disabled = true;
+  try {
+    const d = await api({ action: 'send', conversation_id: r, body });
+    render(d.message, pane(r)); $('text').value = '';
+  } catch (err) { if (err instanceof AuthError) handleErr(err); else setConn('bad', err.message || 'Message not sent'); }
+  finally { $('sendBtn').disabled = false; $('text').focus(); }
 });
 
-(async()=>{
-  try{ const u=await Time12Pass.getUser(); if(u) enterApp(u); else showLogin(); }
-  catch(e){ showLogin('Could not reach Time12 Pass. Check your connection.'); }
+/* ---- dialogs ---- */
+document.querySelectorAll('[data-close]').forEach(b => { b.onclick = () => b.closest('dialog').close(); });
+
+/* new: message / group / room */
+let picks = [], st = null;
+const newErr = e => { if (e instanceof AuthError) { $('newDlg').close(); handleErr(e); } else { $('newMsg').textContent = e.message; } };
+function setTab(t) {
+  ['dm', 'group', 'room'].forEach(k => { $('tab-' + k).setAttribute('aria-selected', String(k === t)); $('pane-' + k).hidden = k !== t; });
+  $('newMsg').textContent = '';
+  $('dmHint').textContent = me.top ? 'You can message people in your org, and other top-level accounts.' : 'You can message people in your org.';
+  if (t !== 'room') search(t);
+}
+['dm', 'group', 'room'].forEach(k => { $('tab-' + k).onclick = () => setTab(k); });
+$('newBtn').onclick = () => { picks = []; drawChips(); setTab('dm'); $('newDlg').showModal(); };
+function search(kind) {
+  clearTimeout(st);
+  st = setTimeout(async () => {
+    const q = $(kind === 'dm' ? 'dmQ' : 'grpQ').value.trim().toLowerCase(), ul = $(kind === 'dm' ? 'dmRes' : 'grpRes');
+    try {
+      const r = await api({ action: 'people', q }); ul.textContent = '';
+      if (!r.people.length) { ul.appendChild(el('li', 'hint', 'No one found. People show up here after they open Nibble once.')); return; }
+      r.people.forEach(n => {
+        const li = el('li'), b = el('button', '', n); b.type = 'button';
+        b.onclick = () => kind === 'dm' ? startDm(n) : addPick(n);
+        li.appendChild(b); ul.appendChild(li);
+      });
+    } catch (e) { newErr(e); }
+  }, 180);
+}
+$('dmQ').oninput = () => search('dm'); $('grpQ').oninput = () => search('group');
+async function startDm(n) {
+  try { const r = await api({ action: 'open_dm', username: n }); await refreshConvos(); $('newDlg').close(); openRoom(r.id); }
+  catch (e) { newErr(e); }
+}
+function addPick(n) { if (!picks.includes(n)) picks.push(n); drawChips(); }
+function drawChips() {
+  const box = $('chips'); box.textContent = '';
+  picks.forEach(n => { const b = el('button', '', n + ' ✕'); b.type = 'button'; b.onclick = () => { picks = picks.filter(x => x !== n); drawChips(); }; box.appendChild(b); });
+}
+$('grpGo').onclick = async () => {
+  try { const r = await api({ action: 'create_group', name: $('grpName').value, usernames: picks }); await refreshConvos(); $('newDlg').close(); $('grpName').value = ''; openRoom(r.id); }
+  catch (e) { newErr(e); }
+};
+$('roomGo').onclick = async () => {
+  try { const r = await api({ action: 'create_room', name: $('roomName').value }); await refreshConvos(); $('newDlg').close(); $('roomName').value = ''; openRoom(r.id); }
+  catch (e) { newErr(e); }
+};
+
+/* settings: AI access */
+const flash = (t, k) => { $('setMsg').textContent = t; $('setMsg').className = 'msg-line ' + (k || ''); };
+const chk = (text, on) => { const l = el('label', 'chk'), i = document.createElement('input'); i.type = 'checkbox'; i.checked = !!on; l.append(i, ' ' + text); return { l, i }; };
+function daysSel(v) { const s = document.createElement('select'); [[1, '1 day'], [7, '7 days'], [30, '30 days'], [90, '90 days']].forEach(([n, t]) => s.appendChild(new Option(t, n))); s.value = v || 30; return s; }
+function picker(cur) {
+  const sel = new Map((cur || []).map(x => [x.id, x])), rows = [], box = el('div', 'pick');
+  convos.forEach(c => {
+    const row = el('div', 'prow'), cx = sel.get(c.id);
+    row.appendChild(el('span', 'pl', (c.kind === 'dm' ? '🔒 ' : c.kind === 'group' ? '👥 ' : '') + label(c)));
+    const r = chk('Read', cx && cx.can_read), w = chk('Reply', cx && cx.can_reply);
+    w.i.onchange = () => { if (w.i.checked) r.i.checked = true; };
+    r.i.onchange = () => { if (!r.i.checked) w.i.checked = false; };
+    row.append(r.l, w.l); box.appendChild(row); rows.push([c.id, r.i, w.i]);
+  });
+  box.value = () => rows.filter(x => x[1].checked).map(x => ({ id: x[0], can_read: true, can_reply: x[2].checked }));
+  return box;
+}
+async function act(payload, ok) {
+  try { await api(payload); await loadSettings(); flash(ok || '', 'ok'); refreshConvos().catch(() => {}); }
+  catch (e) { if (e instanceof AuthError) { $('settings').close(); return handleErr(e); } flash(e.message, 'error'); }
+}
+async function loadSettings() {
+  try { renderSettings(await api({ action: 'settings_get' })); }
+  catch (e) { if (e instanceof AuthError) { $('settings').close(); return handleErr(e); } $('setBody').textContent = e.message; }
+}
+function openSettings() { flash(''); $('setBody').textContent = 'Loading…'; $('settings').showModal(); refreshConvos().catch(() => {}).then(loadSettings); }
+$('settingsBtn').onclick = openSettings; $('setRefresh').onclick = () => { flash(''); loadSettings(); };
+const btn = (t, c, f) => { const b = el('button', 'btn sm ' + (c || ''), t); b.type = 'button'; b.onclick = f; return b; };
+function tokenBox(tok) {
+  const wrap = el('div', 'urlbox'), i = document.createElement('input'); i.type = 'text'; i.readOnly = true; i.value = tok;
+  wrap.append(i, btn('Copy', '', e => { navigator.clipboard.writeText(tok); e.target.textContent = 'Copied'; })); return wrap;
+}
+function renderSettings(d) {
+  const root = $('setBody'); root.textContent = '';
+  const sec = (t, sub) => { const s = el('section', 'set'); s.appendChild(el('h3', '', t)); if (sub) s.appendChild(el('p', 'hint', sub)); root.appendChild(s); return s; };
+
+  let s = sec('AI access', 'Let an AI app (like Claude) connect to Nibble. It sees nothing until you approve a connection and pick the exact chats. Its replies need your OK unless you say otherwise. People in a chat you share will see a 🤖 badge on it.');
+  const master = chk('Allow AI connections on my account', d.ai_enabled); s.appendChild(master.l);
+  master.i.onchange = () => act({ action: 'settings_set', ai_enabled: master.i.checked });
+  if (!d.ai_enabled) return;
+
+  const pend = d.grants.filter(g => g.state === 'pending');
+  if (pend.length) {
+    s = sec('Requests waiting for you', 'Only approve if the code matches what your AI app shows.');
+    pend.forEach(g => {
+      const card = el('div', 'gcard'); card.append(el('b', '', g.name + ' wants access'), document.createElement('br'), el('span', 'code', g.code || ''), el('p', 'hint', 'Pick the chats it may use. It sees nothing else:'));
+      const pk = picker([]), ds = daysSel(30), au = chk('Post its replies without asking me', false), row = el('div', 'row-actions');
+      row.append(el('span', 'hint', 'Access lasts:'), ds, au.l,
+        btn('Approve', '', () => { const v = pk.value(); if (!v.length) return flash('Pick at least one chat first.', 'error'); act({ action: 'grant_approve', id: g.id, conversations: v, days: +ds.value, auto_send: au.i.checked }, 'Approved.'); }),
+        btn('Deny', 'danger', () => act({ action: 'grant_revoke', id: g.id }, 'Denied.')));
+      card.append(pk, row); s.appendChild(card);
+    });
+  }
+
+  if (d.outbox.length) {
+    s = sec('Replies waiting for your approval');
+    d.outbox.forEach(o => {
+      const c = byId(o.conversation_id), card = el('div', 'gcard');
+      card.append(el('p', 'hint', o.ai_name + ' wants to post in ' + (c ? label(c) : 'a chat') + ':'), el('blockquote', 'quote', o.body),
+        el('div', 'row-actions'));
+      card.lastChild.append(btn('Approve & post', '', () => act({ action: 'outbox_decide', id: o.id, approve: true }, 'Posted.')), btn('Reject', 'danger', () => act({ action: 'outbox_decide', id: o.id, approve: false }, 'Rejected.')));
+      s.appendChild(card);
+    });
+  }
+
+  s = sec('Connect an AI app', 'Add this URL as a custom MCP connector in your AI app. It will ask for your Nibble username, and a request with a matching code appears here for you to approve.');
+  const ub = el('div', 'urlbox'), ui = document.createElement('input'); ui.type = 'text'; ui.readOnly = true; ui.value = MCP_URL;
+  ub.append(ui, btn('Copy', '', e => { navigator.clipboard.writeText(MCP_URL); e.target.textContent = 'Copied'; })); s.appendChild(ub);
+
+  const live = d.grants.filter(g => g.state === 'active');
+  s = sec('Connected AI apps', live.length ? '' : 'None yet.');
+  live.forEach(g => {
+    const card = el('div', 'gcard'); card.append(el('b', '', g.name), el('p', 'hint', 'Expires ' + when(g.expires_at) + ' · last used ' + when(g.last_used)));
+    const pk = picker(g.convos), ds = daysSel(30), au = chk('Post its replies without asking me', g.auto_send), row = el('div', 'row-actions');
+    row.append(el('span', 'hint', 'Access lasts (from now):'), ds, au.l,
+      btn('Save changes', '', () => act({ action: 'grant_approve', id: g.id, conversations: pk.value(), days: +ds.value, auto_send: au.i.checked }, 'Saved.')),
+      btn('Revoke', 'danger', () => act({ action: 'grant_revoke', id: g.id }, 'Revoked.')));
+    card.append(pk, row); s.appendChild(card);
+  });
+
+  s = sec('Create a token manually', 'For AI apps where you paste a token instead of using a request code.');
+  const nm = document.createElement('input'); nm.type = 'text'; nm.maxLength = 40; nm.placeholder = 'Name (e.g. Claude desktop)';
+  const pk = picker([]), ds = daysSel(30), au = chk('Post its replies without asking me', false), out = el('div');
+  s.append(nm, pk, el('div', 'row-actions'), out);
+  s.querySelector('.row-actions').append(el('span', 'hint', 'Lasts:'), ds, au.l, btn('Create token', '', async () => {
+    const v = pk.value(); if (!v.length) return flash('Pick at least one chat first.', 'error');
+    try { const r = await api({ action: 'grant_create', name: nm.value, conversations: v, days: +ds.value, auto_send: au.i.checked }); out.textContent = ''; out.append(el('p', 'hint', 'Copy this token now. It is shown once:'), tokenBox(r.token)); flash('Token created.', 'ok'); refreshConvos().catch(() => {}); }
+    catch (e) { if (e instanceof AuthError) { $('settings').close(); return handleErr(e); } flash(e.message, 'error'); }
+  }));
+
+  s = sec('What AI apps did lately', d.audit.length ? '' : 'Nothing yet.');
+  d.audit.forEach(a => { const c = byId(a.conversation_id); s.appendChild(el('p', 'log', when(a.created_at) + ' · ' + a.ai_name + ' · ' + a.tool + (c ? ' · ' + label(c) : '') + (a.detail ? ' · ' + a.detail : ''))); });
+}
+
+(async () => {
+  try { const u = await Time12Pass.getUser(); if (u) enterApp(u); else showLogin(); }
+  catch (e) { showLogin('Could not reach Time12 Pass. Check your connection.'); }
 })();
 </script>
 </body>
