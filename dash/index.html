@@ -4845,10 +4845,7 @@
     }
   }
 
-  function orgTasksHtml() {
-    if (!(orgTasks && orgTasks.length)) return '';
-    let tasksHtml = '';
-      const taskRows = orgTasks.map(t => {
+  function orgTaskHtml(t) {
         const dueDateObj = t.due_date ? new Date(t.due_date) : null;
         const dueDate = dueDateObj ? dueDateObj.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'No due date';
         const isTaskOverdue = dueDateObj ? dueDateObj < new Date() : false;
@@ -4955,11 +4952,8 @@
             ${memberStatusHtml}
           </article>
         `;
-      }).join('');
-
-      tasksHtml = `<div class="tdc-list">${taskRows}</div>`;
-    return tasksHtml;
   }
+  function orgTasksHtml() { return (orgTasks || []).map(orgTaskHtml).join(''); }
 
   function renderOrgState() {
     const hasGroups = orgGroups && orgGroups.length > 0;
@@ -7692,23 +7686,86 @@ Marketing,alex99,</div>
       ${work}${reason}${historyHtml(vs)}${aiResultTeacherHtml(t.id, sub.user_id)}
       <div class="rq-actions">${actions}</div></article>`;
   }
+  /* Admin tasks: needs-checking is open, everything else is a fold (like the member view) */
+  const adminUI = { fold: {}, card: {} };
+  function adminBuckets() {
+    const now = new Date(), b = { progress: [], overdue: [], done: [], info: {} };
+    (orgTasks || []).forEach(t => {
+      const subs = t.submissions || [], n = (t.groupMembers || []).length;
+      const pend = subs.filter(s => s.status === 'pending').length;
+      const comp = subs.filter(s => s.status === 'completed').length;
+      const due = t.due_date ? new Date(t.due_date) : null;
+      const x = { t, n, pend, comp, late: !!(due && due < now), done: n > 0 && comp >= n, due: due ? due.getTime() : Infinity };
+      b.info[String(t.id)] = x;
+      if (!pend) (x.done ? b.done : x.late ? b.overdue : b.progress).push(x);
+    });
+    b.progress.sort((a, c) => a.due - c.due);
+    b.overdue.sort((a, c) => c.due - a.due);
+    b.done.sort((a, c) => c.due - a.due);
+    return b;
+  }
+  function adminCardHtml(x, openDefault, body) {
+    const { t, n, pend, comp, late, done } = x, id = 'a-' + t.id;
+    const open = adminUI.card[id] !== undefined ? adminUI.card[id] : openDefault;
+    const due = t.due_date ? new Date(t.due_date).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : 'No due date';
+    const state = pend ? 'pending' : done ? 'completed' : late ? 'overdue' : 'not_started';
+    const label = pend ? pend + ' to check' : done ? 'All done' : late ? 'Overdue' : 'In progress';
+    return `<article class="task-card adm-card is-${state}${open ? ' open' : ''}" data-task-card="${escapeHtml(id)}">
+      <button type="button" class="tc-head" data-tc-toggle aria-expanded="${open}" aria-controls="tcb-${escapeHtml(id)}">
+        <span class="tc-main"><span class="task-card-title">${escapeHtml(t.title)}${autoBadgeHtml(t.id)}</span>
+          <span class="tc-meta"><span class="tc-meta-item">${TK_ICON.group}${escapeHtml(t.groups ? t.groups.name : 'Unassigned')}</span>
+          <span class="tc-meta-item${late && !done ? ' is-overdue' : ''}">${TK_ICON.cal}${escapeHtml(due)}</span>
+          <span class="tc-meta-item">${comp}/${n} done</span></span></span>
+        <span class="task-status-badge ${state}">${label}</span><span class="tc-chev">${TK_ICON.chev}</span>
+      </button>
+      <div class="tc-body" id="tcb-${escapeHtml(id)}"><div class="tc-inner"><div class="tc-content adm-body">${body}</div></div></div>
+    </article>`;
+  }
+  function adminFoldHtml(key, title, hint, cls, list) {
+    if (!list.length) return '';
+    const open = !!adminUI.fold[key];
+    return `<section class="tk-fold${open ? ' open' : ''}">
+      <button type="button" class="tk-fold-head" data-tk-fold="${key}" aria-expanded="${open}" aria-controls="adf-${key}">
+        <span>${title}</span><span class="tk-count ${cls}">${list.length}</span><span class="tk-fold-hint">${hint}</span><span class="tk-fold-chev">${TK_ICON.chev}</span>
+      </button>
+      <div class="tk-fold-body" id="adf-${key}"><div class="tk-fold-inner"><div class="tk-fold-list">${list.map(x => adminCardHtml(x, false, orgTaskHtml(x.t))).join('')}</div></div></div>
+    </section>`;
+  }
   function renderReviewQueue() {
     const el = document.getElementById('reviewQueue');
     if (!el) return;
     if (!canReview()) { el.innerHTML = ''; return; }
     if (!orgLoaded.tasks) { el.innerHTML = '<section class="rq-wrap"><div class="sk" style="height:88px"></div></section>'; return; }
-    const items = reviewItems();
-    const table = orgTasksHtml();
+    const items = reviewItems(), b = adminBuckets();
+    const byTask = new Map();
+    items.forEach(it => { const k = String(it.t.id); if (!byTask.has(k)) byTask.set(k, []); byTask.get(k).push(it); });
+    const reviewHtml = [...byTask].map(([k, arr]) => adminCardHtml(b.info[k], true,
+      `<div class="rq-list">${arr.map(reviewCardHtml).join('')}</div>
+       <details class="ai-details"><summary>Member progress &amp; task details</summary>${orgTaskHtml(b.info[k].t)}</details>`)).join('');
+    const others = b.progress.length + b.overdue.length + b.done.length;
+    const folds = adminFoldHtml('progress', 'In progress', 'Set by you, still being worked on', '', b.progress)
+      + adminFoldHtml('overdue', 'Overdue', 'Deadline passed, not everyone finished', 'danger', b.overdue)
+      + adminFoldHtml('done', 'Completed', 'Everyone finished and was checked', 'good', b.done);
     el.innerHTML = `<section class="rq-wrap">
       <div class="rq-head"><div><span class="rq-eyebrow">Organizers only</span><h2 class="rq-title">Admin</h2>
-        <p class="rq-sub">Everything you manage for your members: work to review, and progress on every task you have set. This is separate from your own tasks above.</p></div></div>
-      <h3 class="rq-h3">Review queue <span class="tk-count">${items.length}</span></h3>
-      ${items.length ? `<div class="rq-list">${items.map(reviewCardHtml).join('')}</div>` : '<div class="tk-empty">Nothing is waiting on you. New submissions show up here.</div>'}
-      <h3 class="rq-h3">Task details &amp; member progress <span class="tk-count">${(orgTasks || []).length}</span></h3>
-      ${table || '<div class="tk-empty">You have not set any tasks yet.</div>'}</section>`;
+        <p class="rq-sub">Work waiting for you to check is open below. Everything else is tucked into folders. This is separate from your own tasks above.</p></div></div>
+      <h3 class="rq-h3">To review <span class="tk-count">${items.length}</span></h3>
+      ${items.length ? `<div class="rq-list">${reviewHtml}</div>` : '<div class="tk-empty">Nothing is waiting on you. New submissions show up here.</div>'}
+      ${(orgTasks || []).length ? '' : '<h3 class="rq-h3">Tasks you set <span class="tk-count">0</span></h3><div class="tk-empty">You have not set any tasks yet.</div>'}
+      ${others ? `<h3 class="rq-h3">${items.length ? 'Other tasks' : 'Tasks you set'} <span class="tk-count">${others}</span></h3><div class="adm-folds">${folds}</div>` : ''}</section>`;
     if (!el.dataset.w) {
       el.dataset.w = '1';
       el.addEventListener('click', e => {
+        const fh = e.target.closest('[data-tk-fold]');
+        if (fh) {
+          const w = fh.closest('.tk-fold'), o = !w.classList.contains('open');
+          w.classList.toggle('open', o); fh.setAttribute('aria-expanded', String(o)); adminUI.fold[fh.dataset.tkFold] = o; return;
+        }
+        const ch = e.target.closest('[data-tc-toggle]');
+        if (ch) {
+          const c = ch.closest('.task-card'), o = !c.classList.contains('open');
+          c.classList.toggle('open', o); ch.setAttribute('aria-expanded', String(o)); adminUI.card[c.dataset.taskCard] = o; return;
+        }
         const ta = e.target.closest('[data-task-action]');
         if (ta) {
           const k = ta.dataset.taskAction, tid = ta.dataset.taskId, uid = ta.dataset.userId;
@@ -7739,8 +7796,8 @@ Marketing,alex99,</div>
           <div class="empty-state-title">All caught up!</div>
           <div class="empty-state-text">You have no tasks assigned right now.</div>
         </div>
-        <div id="indexEntry"></div>
         <div id="reviewQueue"></div>
+        <div id="indexEntry"></div>
       `;
       Geo.hydrate(myTasksMainContentEl);
       if (window.T12Index) window.T12Index.mount();
@@ -7760,8 +7817,8 @@ Marketing,alex99,</div>
         <div class="graph-card" style="margin-bottom:0;"><div class="sk" style="width:170px;height:24px;"></div><div class="sk" style="height:140px;margin-top:34px;"></div></div>
       </div>
       <div id="userTaskList"></div>
-      <div id="indexEntry"></div>
       <div id="reviewQueue"></div>
+      <div id="indexEntry"></div>
     `;
 
     fetchUserGraphData();
@@ -10807,7 +10864,7 @@ Marketing,alex99,</div>
   var RELEASES = [{
     id: 'haze', name: 'Haze', ico: 'nf-haze', tag: 'Latest',
     major: [
-      { art: 'tasks', t: 'Index: quick tasks for yourself',
+      { art: 'tasks', t: 'Scratchpad: quick tasks for yourself',
         s: 'A button at the end of the Tasks tab opens a window where you give yourself quick tasks. Only you can add or see them.',
         b: ['Type a line and press Enter: it is due by the end of tomorrow', 'Click it, press Confirm, and it is scratched out and submitted', 'Miss the deadline and it fails, then it disappears after two days', 'Your streak grows once a day however many you submit, and one failure sets it back to 0', 'It never touches your papers'] },
       { art: 'dialogs', t: 'A flat, pure-white look',
@@ -10833,7 +10890,7 @@ Marketing,alex99,</div>
         b: ['Your organization sets how many papers one game costs, from the new Chess card in the Org tab', 'You can only play once every assignment is handed in', 'Win on Hard to earn a king, and a second king if you moved your king the most', 'Otherwise the piece you moved the most becomes a one-time achievement on your Rewards page', 'Undo still works, but a game with Undo can’t earn rewards'] }
     ],
     minor: [
-      { art: 'tasks', t: 'Index works offline',
+      { art: 'tasks', t: 'Scratchpad works offline',
         s: 'Items save on your device first, so nothing waits on the network.',
         b: ['Saved the moment you press Enter, even with no connection', 'They sync to your account once you are back online', 'A pill shows Online or Offline, and each item shows whether it has synced yet'] },
       { art: 'dock', t: 'Chess asks before it charges',
@@ -11406,6 +11463,10 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
 /* ---- Admin section sub-headings ---- */
 .rq-h3{display:flex;align-items:center;gap:10px;margin:32px 0 14px;font:600 15px var(--sans);color:var(--text)}
 .rq-wrap .table-wrapper{margin-bottom:0!important}
+.adm-folds{display:flex;flex-direction:column;gap:12px}.adm-folds .tk-fold{margin:0}
+.rq-wrap>.rq-list{gap:10px}
+.adm-body .tdc{padding:0;border:0;background:none;border-radius:0}.adm-body .tdc-heading{display:none}.adm-body .tdc-top{justify-content:flex-end}
+.adm-body .ai-details{margin-top:0}.adm-body .rq-card{background:var(--surface)}
 
 /* ---- Chess achievements + result lines (server chess) ---- */
 .rw-ico.noimg img,.rw-ico-s.noimg img{display:none}
@@ -11697,7 +11758,7 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
     if (el) {
       var o = openItems().length, c = streak();
       el.innerHTML = '<button type="button" class="ix-entry" data-ix-open><span class="ix-entry-ico"><i class="ix-gem"></i></span>' +
-        '<span class="ix-entry-text"><b>Index</b><span>Quick tasks for yourself. Works offline.</span></span>' +
+        '<span class="ix-entry-text"><b>Scratchpad</b><span>Quick tasks for yourself. Works offline.</span></span>' +
         '<span class="ix-entry-meta">' + (dirtyItems().length ? '<i class="ix-dot" title="Waiting to sync"></i>' : '') + (o ? '<i class="ix-pill">' + o + ' open</i>' : '') + '<i class="ix-pill hot"><b>' + c + '</b> streak</i></span>' + CHEV + '</button>';
     }
     if (!started && tok()) { started = true; setTimeout(syncNow, 800); }
@@ -11707,11 +11768,11 @@ html.pf-lock,html.pf-lock body{overflow:hidden}
   function build() {
     if (ov) return;
     ov = D.createElement('div'); ov.className = 'dialog-overlay'; ov.id = 'ixOverlay'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true'); ov.setAttribute('aria-labelledby', 'ixTitle');
-    ov.innerHTML = '<div class="dialog-box ix-box"><div class="ix-top"><div><div class="ix-h" id="ixTitle">Index</div>' +
+    ov.innerHTML = '<div class="dialog-box ix-box"><div class="ix-top"><div><div class="ix-h" id="ixTitle">Scratchpad</div>' +
       '<div class="ix-sub">Tasks you give only to yourself. Type, press Enter, and finish it by the end of tomorrow. One streak a day.</div></div>' +
       '<button type="button" class="ix-x" data-ix="close" aria-label="Close">&times;</button></div>' +
       '<div class="ix-statrow"><span class="ix-streak" title="Counts once per day, however many you submit. Failing one sets it back to 0. It never affects papers."><b id="ixStreakN">0</b> streak<i id="ixBest"></i></span><button type="button" class="ix-net wait" id="ixSync" data-ix="retry" title="Tap to sync now"><i class="ix-nd"></i><span id="ixSyncT"></span></button></div>' +
-      '<input type="text" class="ix-input" id="ixInput" placeholder="What will you get done? Press Enter" maxlength="140" autocomplete="off" spellcheck="false" aria-label="Add an index task">' +
+      '<input type="text" class="ix-input" id="ixInput" placeholder="What will you get done? Press Enter" maxlength="140" autocomplete="off" spellcheck="false" aria-label="Add a scratchpad task">' +
       '<div class="ix-msg" id="ixMsg" role="status" aria-live="polite"></div><div class="ix-list" id="ixList"></div></div>';
     D.body.appendChild(ov);
     inp = D.getElementById('ixInput'); list = D.getElementById('ixList'); msg = D.getElementById('ixMsg'); sN = D.getElementById('ixStreakN'); bestEl = D.getElementById('ixBest'); syncEl = D.getElementById('ixSync'); syncT = D.getElementById('ixSyncT');
