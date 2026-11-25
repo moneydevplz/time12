@@ -1585,6 +1585,57 @@
   }
   .shortcuts-close:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
 
+
+  /* ============ Settings panel (Tutorial / Shortcuts / AI connect) ============ */
+  #settingsOverlay .shortcuts-box { max-width: 680px !important; padding: 28px 28px 24px; }
+  .t12s-title { font-family: var(--serif); font-size: 28px; margin-bottom: 16px; }
+  .t12s-tabs { display: flex; gap: 4px; padding: 4px; margin-bottom: 20px; overflow-x: auto; background: var(--liquid-chip-bg); border: 1px solid var(--app-glass-border); border-radius: 12px; }
+  .t12s-tab { flex: 1; white-space: nowrap; padding: 8px 12px; border: 0; background: none; border-radius: 9px; font: 500 13px var(--sans); color: var(--text-soft); cursor: pointer; transition: var(--t); }
+  .t12s-tab:hover { color: var(--text); }
+  .t12s-tab.active { background: var(--accent-soft); color: var(--accent); }
+  .t12s-pane[hidden] { display: none; }
+  .t12s-h { font-size: 14px; font-weight: 600; margin: 18px 0 4px; color: var(--text); }
+  .t12s-h:first-child { margin-top: 0; }
+  .t12s-p { font-size: 13px; line-height: 1.55; color: var(--text-soft); margin: 0 0 12px; }
+  .t12s-row { display: flex; gap: 8px; align-items: center; }
+  .t12s-input { flex: 1; min-width: 0; padding: 9px 12px; background: var(--liquid-chip-bg); border: 1px solid var(--app-glass-border); border-radius: var(--radius); font: 13px var(--sans); color: var(--text); }
+  .t12s-input:focus { outline: none; border-color: var(--accent); }
+  .t12s-input.mono { font: 12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+  .t12s-btn, .t12s-ghost { padding: 9px 16px; border-radius: var(--radius); cursor: pointer; font: 500 13px var(--sans); transition: var(--t); white-space: nowrap; }
+  .t12s-btn { background: var(--accent); color: #fff; border: 1px solid var(--accent); }
+  .t12s-btn:hover { filter: brightness(1.08); }
+  .t12s-btn:disabled { opacity: .6; cursor: default; }
+  .t12s-ghost { background: var(--liquid-chip-bg); color: var(--text); border: 1px solid var(--app-glass-border); }
+  .t12s-ghost:hover { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+  .t12s-ghost.danger:hover { color: #c2410c; border-color: #c2410c; background: transparent; }
+  .t12s-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+  .t12s-chip { padding: 6px 11px; border-radius: 999px; border: 1px solid var(--app-glass-border); background: var(--liquid-chip-bg); color: var(--text-soft); font: 12px var(--sans); cursor: pointer; text-align: left; transition: var(--t); }
+  .t12s-chip:hover { color: var(--accent); border-color: var(--accent); }
+  .t12s-scopes { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0 12px; }
+  .t12s-scope { position: relative; display: flex; gap: 10px; align-items: flex-start; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; }
+  .t12s-scope input { position: absolute; opacity: 0; pointer-events: none; }
+  .t12s-sw { flex: none; width: 34px; height: 20px; margin-top: 1px; border-radius: 20px; background: var(--border); position: relative; transition: var(--t); }
+  .t12s-sw::after { content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: var(--t); }
+  .t12s-scope input:checked + .t12s-sw { background: var(--accent); }
+  .t12s-scope input:checked + .t12s-sw::after { transform: translateX(14px); }
+  .t12s-scope input:focus-visible + .t12s-sw { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .t12s-scope input:disabled + .t12s-sw { opacity: .55; }
+  .t12s-scope b { display: block; font-size: 12.5px; font-weight: 600; color: var(--text); }
+  .t12s-scope i { display: block; font-style: normal; font-size: 11.5px; color: var(--text-muted); margin-top: 1px; }
+  .t12s-note { font-size: 12px; color: var(--text-muted); margin: 8px 0 0; min-height: 1em; }
+  .t12s-note.warn { color: #c2410c; }
+  .t12s-reveal { margin-top: 12px; padding: 14px; border: 1px solid var(--accent); background: var(--accent-soft); border-radius: var(--radius); }
+  .t12s-reveal .t12s-row + .t12s-row { margin-top: 8px; }
+  .t12s-keys { margin-top: 6px; }
+  .t12s-key { display: flex; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .t12s-key-main { flex: 1; min-width: 0; }
+  .t12s-key-name { font-size: 13px; font-weight: 600; }
+  .t12s-key-meta { font-size: 11.5px; color: var(--text-muted); margin-top: 2px; }
+  .t12s-empty { font-size: 13px; color: var(--text-muted); padding: 10px 0; }
+  .t12s-more { margin-top: 14px; font-size: 12.5px; color: var(--text-soft); line-height: 1.55; }
+  .t12s-more summary { cursor: pointer; color: var(--accent); font-weight: 500; }
+  @media (max-width: 560px) { #settingsOverlay .shortcuts-box { padding: 22px 18px 18px; } .t12s-scopes { grid-template-columns: 1fr; } .t12s-row { flex-wrap: wrap; } }
+
   /* Toast */
   .toast-container {
     position: fixed; bottom: 90px; left: calc(50% + 150px);
@@ -2209,8 +2260,6 @@
     .dialog-input, .tag-input-container input, .palette-input, .login-form-group input { font-size: 16px; }
     .custom-select-toggle, .custom-select-option { font-size: 15px; }
   }
-  /* No keyboard on touch devices, so the shortcuts link is just noise there. */
-  @media (hover: none) and (pointer: coarse) { #shortcutsLink { display: none; } }
 </style>
 </head>
 <body>
@@ -2313,7 +2362,7 @@
           <span class="footer-stat-dot" id="syncDot"></span>
           <span id="syncLabel">Synced</span>
         </div>
-        <a class="footer-link" id="shortcutsLink">Shortcuts</a>
+        <a class="footer-link" id="shortcutsLink" title="Settings: tutorial, shortcuts, AI connect">Settings</a>
       </div>
       <div class="footer-row">
         <div class="footer-user">
@@ -2531,6 +2580,65 @@
       <div class="shortcut"><span class="shortcut-label">Toggle theme</span><div class="shortcut-keys"><span class="key">Ctrl</span><span class="key">J</span></div></div>
     </div>
     <button class="shortcuts-close" id="shortcutsClose">Got it</button>
+  </div>
+</div>
+
+<!-- Settings overlay: Tutorial / Shortcuts / AI connect (MCP) -->
+<div class="shortcuts-overlay" id="settingsOverlay">
+  <div class="shortcuts-box" role="dialog" aria-modal="true" aria-label="Settings">
+    <div class="t12s-title">Settings</div>
+    <div class="t12s-tabs" role="tablist">
+      <button type="button" class="t12s-tab active" data-tab="tutorial" role="tab">Tutorial</button>
+      <button type="button" class="t12s-tab" data-tab="shortcuts" role="tab">Shortcuts</button>
+      <button type="button" class="t12s-tab" data-tab="mcp" role="tab">AI connect (MCP)</button>
+    </div>
+
+    <div class="t12s-pane" data-pane="tutorial">
+      <div class="t12s-h">Replay the tutorial</div>
+      <p class="t12s-p">A short guided tour of Time12, with spotlights and a hands-on first organization if you’re a teacher. Run it as many times as you like.</p>
+      <button type="button" class="t12s-btn" id="t12sReplay">Replay tutorial</button>
+    </div>
+
+    <div class="t12s-pane" data-pane="shortcuts" hidden>
+      <div class="t12s-h">Keyboard shortcuts</div>
+      <p class="t12s-p">Everything is Ctrl (Windows) or Cmd (Mac) plus a key, so normal typing is never hijacked. Press Ctrl+/ anywhere to open the sheet.</p>
+      <button type="button" class="t12s-btn" id="t12sOpenKeys">Open shortcut sheet</button>
+    </div>
+
+    <div class="t12s-pane" data-pane="mcp" hidden>
+      <div class="t12s-h">Use Time12 from any AI</div>
+      <p class="t12s-p">Connect Claude, ChatGPT or any app that supports MCP, then just ask it. Click a prompt to copy it.</p>
+      <div class="t12s-chips" id="t12sPrompts"></div>
+
+      <div class="t12s-h">Server URL</div>
+      <div class="t12s-row">
+        <input class="t12s-input mono" id="t12sUrl" readonly aria-label="MCP server URL">
+        <button type="button" class="t12s-ghost" id="t12sCopyUrl">Copy</button>
+      </div>
+
+      <div class="t12s-h">Create an access key</div>
+      <p class="t12s-p">Each key only does what you switch on here. Revoke it any time and the AI loses access instantly.</p>
+      <input class="t12s-input" id="t12sName" maxlength="40" placeholder="Name it, e.g. Claude on my laptop" aria-label="Key name" autocomplete="off">
+      <div class="t12s-scopes">
+        <label class="t12s-scope"><input type="checkbox" value="read" checked disabled><span class="t12s-sw"></span><span><b>Read tasks &amp; organizations</b><i>Always on</i></span></label>
+        <label class="t12s-scope"><input type="checkbox" value="analytics" checked><span class="t12s-sw"></span><span><b>Read analytics</b><i>Rank and compare students</i></span></label>
+        <label class="t12s-scope"><input type="checkbox" value="tasks"><span class="t12s-sw"></span><span><b>Create &amp; edit tasks</b><i>Off by default</i></span></label>
+        <label class="t12s-scope"><input type="checkbox" value="files"><span class="t12s-sw"></span><span><b>Attach files to tasks</b><i>Off by default</i></span></label>
+      </div>
+      <button type="button" class="t12s-btn" id="t12sCreate">Create key</button>
+      <div class="t12s-reveal" id="t12sReveal" hidden></div>
+      <div class="t12s-note" id="t12sStatus" aria-live="polite"></div>
+
+      <div class="t12s-h">Your keys</div>
+      <div class="t12s-keys" id="t12sKeys"></div>
+
+      <details class="t12s-more">
+        <summary>How do I add it to my AI?</summary>
+        <p class="t12s-p" style="margin-top:8px">In Claude, ChatGPT or another MCP-capable app, add a custom connector (remote MCP server) and paste the connection URL you get when you create a key. If your app lets you set request headers, use the server URL above and send <code>Authorization: Bearer &lt;your key&gt;</code> instead.</p>
+      </details>
+    </div>
+
+    <button class="shortcuts-close" id="t12sClose" type="button">Done</button>
   </div>
 </div>
 
@@ -8949,6 +9057,7 @@ Marketing,alex99,</div>
     { id: 'theme', label: 'Toggle theme', icon: 'sun', kbd: K('Mod+J'), run: () => themeToggle.click() },
     { id: 'device', label: 'Switch device mode (Higher / Lower End)', icon: 'device', kbd: K('Mod+Shift+L'), run: () => toggleDeviceMode() },
     { id: 'features', label: 'New features', icon: 'spark', run: () => window.T12Features && window.T12Features.open() },
+    { id: 'settings', label: 'Open settings (tutorial, AI connect)', icon: 'kb', run: () => openSettings() },
     { id: 'shortcuts', label: 'Show shortcuts', icon: 'kb', kbd: K('Mod+/'), run: () => shortcutsOverlay.classList.add('active') },
     { id: 'logout', label: 'Sign out', icon: 'logout', kbd: K('Mod+Shift+X'), run: () => doLogout() },
   ];
@@ -9134,7 +9243,115 @@ Marketing,alex99,</div>
     renderNotesList();
   });
 
-  shortcutsLink.addEventListener('click', () => shortcutsOverlay.classList.add('active'));
+  /* ============ Settings panel: Tutorial / Shortcuts / AI connect (MCP) ============
+     Backend contract (Supabase edge functions, staged for the end):
+       POST /functions/v1/mcp-keys  Bearer <authToken>
+         {action:'list'}                          -> {keys:[{id,name,prefix,scopes,created_at,last_used}]}
+         {action:'create', name, scopes:[...]}    -> {id, key, ...}   (key is shown once)
+         {action:'revoke', id}                    -> {ok:true}
+       /functions/v1/mcp?key=<key>  (or Authorization: Bearer <key>)  = the MCP server itself. */
+  const settingsOverlay = $('settingsOverlay');
+  const MCP_URL = SUPABASE_URL + '/functions/v1/mcp';
+  const MCP_KEYS_URL = SUPABASE_URL + '/functions/v1/mcp-keys';
+  const MCP_SCOPE_LABELS = { read: 'Read tasks & organizations', analytics: 'Read analytics', tasks: 'Create & edit tasks', files: 'Attach files to tasks' };
+  const MCP_PROMPTS = [
+    'Create a task “Photosynthesis worksheet” for 9D based on this PowerPoint, and upload the PowerPoint to it.',
+    'Take my students’ analytics and rank them from best to worst.',
+    'Which students have missed the most deadlines this month?'
+  ];
+  let settingsTab = 'tutorial';
+
+  function t12sEl(tag, cls, text) { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; }
+  function t12sCopy(text, btn) {
+    const done = () => { if (!btn) return; const o = btn.dataset.o || btn.textContent; btn.dataset.o = o; btn.textContent = 'Copied'; setTimeout(() => { btn.textContent = o; }, 1400); };
+    const fallback = () => { const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); done(); } catch (e) {} ta.remove(); };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done, fallback); else fallback();
+  }
+  function openSettings(tab) { setSettingsTab(tab || settingsTab); settingsOverlay.classList.add('active'); }
+  function closeSettings() { settingsOverlay.classList.remove('active'); }
+  function setSettingsTab(t) {
+    settingsTab = t;
+    settingsOverlay.querySelectorAll('.t12s-tab').forEach(b => { const on = b.dataset.tab === t; b.classList.toggle('active', on); b.setAttribute('aria-selected', on ? 'true' : 'false'); });
+    settingsOverlay.querySelectorAll('.t12s-pane').forEach(p => { p.hidden = p.dataset.pane !== t; });
+    if (t === 'mcp') mcpRefresh();
+  }
+  function mcpNote(msg, warn) { const n = $('t12sStatus'); n.textContent = msg || ''; n.classList.toggle('warn', !!warn); }
+  function mcpErr(e) {
+    return (e && (e.code === 'offline')) ? 'Can’t reach the Time12 MCP service. It isn’t deployed on your Supabase yet, or you’re offline.' : ((e && e.message) || 'Something went wrong.');
+  }
+  async function mcpApi(body) {
+    const tk = localStorage.getItem('authToken');
+    if (!tk) throw new Error('Sign in first.');
+    let res;
+    try { res = await fetch(MCP_KEYS_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tk }, body: JSON.stringify(body) }); }
+    catch (e) { const err = new Error('offline'); err.code = 'offline'; throw err; }
+    if (res.status === 404) { const err = new Error('offline'); err.code = 'offline'; throw err; }
+    let data = null; try { data = await res.json(); } catch (e) {}
+    if (!res.ok) throw new Error((data && (data.error || data.message)) || ('Request failed (' + res.status + ')'));
+    return data || {};
+  }
+  async function mcpRefresh() {
+    mcpNote('Loading your keys…');
+    try { const d = await mcpApi({ action: 'list' }); mcpRenderKeys(d.keys || []); mcpNote(''); }
+    catch (e) { mcpRenderKeys([]); mcpNote(mcpErr(e), true); }
+  }
+  function mcpRenderKeys(keys) {
+    const box = $('t12sKeys'); box.textContent = '';
+    if (!keys.length) { box.appendChild(t12sEl('div', 't12s-empty', 'No keys yet. Create one above to connect an AI.')); return; }
+    keys.forEach(k => {
+      const row = t12sEl('div', 't12s-key'), main = t12sEl('div', 't12s-key-main');
+      main.appendChild(t12sEl('div', 't12s-key-name', k.name || 'Unnamed key'));
+      const used = k.last_used ? 'Last used ' + new Date(k.last_used).toLocaleDateString() : 'Never used';
+      const made = k.created_at ? 'Created ' + new Date(k.created_at).toLocaleDateString() : '';
+      main.appendChild(t12sEl('div', 't12s-key-meta', [k.prefix ? k.prefix + '…' : '', made, used].filter(Boolean).join(' · ')));
+      main.appendChild(t12sEl('div', 't12s-key-meta', (k.scopes || []).map(x => MCP_SCOPE_LABELS[x] || x).join(' · ')));
+      const rv = t12sEl('button', 't12s-ghost danger', 'Revoke'); rv.type = 'button';
+      rv.addEventListener('click', async () => {
+        if (!rv.dataset.armed) { rv.dataset.armed = '1'; rv.textContent = 'Sure?'; setTimeout(() => { rv.dataset.armed = ''; rv.textContent = 'Revoke'; }, 3000); return; }
+        rv.disabled = true;
+        try { await mcpApi({ action: 'revoke', id: k.id }); mcpRefresh(); } catch (e) { rv.disabled = false; mcpNote(mcpErr(e), true); }
+      });
+      row.appendChild(main); row.appendChild(rv); box.appendChild(row);
+    });
+  }
+  function mcpReveal(key) {
+    const box = $('t12sReveal'), full = MCP_URL + '?key=' + encodeURIComponent(key);
+    box.textContent = '';
+    box.appendChild(t12sEl('div', 't12s-h', 'Your key is ready. Copy it now, it won’t be shown again.'));
+    [['Connection URL (paste this into your AI)', full], ['Key only (for apps that use a Bearer header)', key]].forEach(p => {
+      box.appendChild(t12sEl('div', 't12s-p', p[0]));
+      const row = t12sEl('div', 't12s-row'), inp = t12sEl('input', 't12s-input mono'); inp.readOnly = true; inp.value = p[1];
+      const cp = t12sEl('button', 't12s-ghost', 'Copy'); cp.type = 'button';
+      cp.addEventListener('click', () => t12sCopy(p[1], cp));
+      inp.addEventListener('focus', () => inp.select());
+      row.appendChild(inp); row.appendChild(cp); box.appendChild(row);
+    });
+    box.hidden = false;
+  }
+  async function mcpCreate() {
+    const btn = $('t12sCreate'), name = ($('t12sName').value || '').trim() || 'My AI';
+    const scopes = ['read'];
+    settingsOverlay.querySelectorAll('.t12s-scope input:checked').forEach(i => { if (i.value !== 'read') scopes.push(i.value); });
+    btn.disabled = true; mcpNote('Creating…');
+    try {
+      const d = await mcpApi({ action: 'create', name, scopes });
+      if (!d.key) throw new Error('The server didn’t return a key.');
+      mcpReveal(d.key); $('t12sName').value = ''; mcpNote(''); mcpRefresh();
+    } catch (e) { mcpNote(mcpErr(e), true); }
+    btn.disabled = false;
+  }
+
+  $('t12sUrl').value = MCP_URL;
+  MCP_PROMPTS.forEach(p => { const c = t12sEl('button', 't12s-chip', p); c.type = 'button'; c.addEventListener('click', () => { t12sCopy(p); const o = c.textContent; c.textContent = 'Copied'; setTimeout(() => { c.textContent = o; }, 1200); }); $('t12sPrompts').appendChild(c); });
+  settingsOverlay.querySelectorAll('.t12s-tab').forEach(b => b.addEventListener('click', () => setSettingsTab(b.dataset.tab)));
+  $('t12sCopyUrl').addEventListener('click', e => t12sCopy(MCP_URL, e.currentTarget));
+  $('t12sCreate').addEventListener('click', mcpCreate);
+  $('t12sClose').addEventListener('click', closeSettings);
+  $('t12sOpenKeys').addEventListener('click', () => { closeSettings(); shortcutsOverlay.classList.add('active'); });
+  $('t12sReplay').addEventListener('click', () => { closeSettings(); setTimeout(() => { try { window.Time12Tour && window.Time12Tour.start(true); } catch (e) {} }, 220); });
+  settingsOverlay.addEventListener('click', e => { if (e.target === settingsOverlay) closeSettings(); });
+
+  shortcutsLink.addEventListener('click', () => openSettings());
   shortcutsClose.addEventListener('click', () => shortcutsOverlay.classList.remove('active'));
   shortcutsOverlay.addEventListener('click', (e) => {
     if (e.target === shortcutsOverlay) shortcutsOverlay.classList.remove('active');
@@ -9186,6 +9403,7 @@ Marketing,alex99,</div>
     } else if (e.key === 'Escape') {
       dialogOverlay.classList.remove('active');
         shortcutsOverlay.classList.remove('active');
+      settingsOverlay.classList.remove('active');
       closePalette();
       deleteConfirmId = null;
       tabsDropdown.classList.remove('open');
@@ -9279,6 +9497,7 @@ Marketing,alex99,</div>
     if ($('dialogOverlay') && $('dialogOverlay').classList.contains('active')) return 'dialog';
     if ($('paletteOverlay') && $('paletteOverlay').classList.contains('active')) return 'palette';
     if ($('shortcutsOverlay') && $('shortcutsOverlay').classList.contains('active')) return 'shortcuts';
+    if ($('settingsOverlay') && $('settingsOverlay').classList.contains('active')) return 'dialog';
     if ($('t12nf') && $('t12nf').classList.contains('active')) return 'features';
     return null;
   }
@@ -9928,7 +10147,7 @@ Marketing,alex99,</div>
      - an @ account (user@org: student)            -> student guide: look-only demos of handing in work and earning papers
      - a normal account (teacher) with no groups   -> teacher guide: builds the first organization for real, hands-on
    Teachers who already have a group are never nagged. Cookie is saved the moment it's offered.
-   Replay: Shortcuts -> Replay tour, or Time12Tour.start(). */
+   Replay: Settings -> Tutorial, or Time12Tour.start(true). */
 (function () {
   'use strict';
   var D = document, $ = function (id) { return D.getElementById(id); };
@@ -10177,10 +10396,10 @@ Marketing,alex99,</div>
       text: function (el) {
         return el && el.id === 'themeToggle'
           ? 'Flip light and dark right here. The button beside it swaps Higher and Lower End mode if things ever feel heavy.'
-          : MOD + '+K opens the command palette, ' + MOD + '+E labels everything clickable so you can hit it by keyboard, ' + MOD + '+J flips the theme.';
+          : 'Settings (bottom left) holds this tutorial, the shortcut sheet and AI connect. ' + MOD + '+K opens the command palette, ' + MOD + '+E labels everything clickable so you can hit it by keyboard, ' + MOD + '+J flips the theme.';
       } });
     S.push({ id: 'done', tab: 'Notes', center: true, ill: 'done', title: 'You\u2019re all set',
-      text: COARSE() ? 'That\u2019s the lot. Go make your time true.' : 'That\u2019s the lot. Want it again? Shortcuts \u2192 Replay tour.', next: 'Start Now' });
+      text: COARSE() ? 'That\u2019s the lot. Go make your time true.' : 'That\u2019s the lot. Want it again? Settings \u2192 Tutorial.', next: 'Start Now' });
     return S;
   }
 
@@ -10441,13 +10660,6 @@ Marketing,alex99,</div>
     reset: function (u) { try { D.cookie = ukey(u || who().u) + '=; max-age=0; path=/'; } catch (e) {} }
   };
 
-  /* Replay link inside the Shortcuts sheet */
-  (function () {
-    var close = $('shortcutsClose'); if (!close || $('t12tReplay')) return;
-    var b = D.createElement('button'); b.type = 'button'; b.id = 't12tReplay'; b.className = 't12t-replay'; b.textContent = 'Replay tour';
-    b.onclick = function () { var o = $('shortcutsOverlay'); if (o) o.classList.remove('active'); setTimeout(function () { start(true); }, 220); };
-    close.parentNode.insertBefore(b, close);
-  })();
 })();
 </script>
 
