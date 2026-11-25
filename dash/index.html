@@ -9310,7 +9310,7 @@ Marketing,alex99,</div>
          {action:'revoke', id}                    -> {ok:true}
        /functions/v1/mcp?key=<key>  (or Authorization: Bearer <key>)  = the MCP server itself. */
   const settingsOverlay = $('settingsOverlay');
-  const MCP_URL = SUPABASE_URL + '/functions/v1/mcp-oauth';
+  const MCP_URL = 'https://api.time12.xin/mcp';
   const MCP_KEYS_URL = SUPABASE_URL + '/functions/v1/mcp-keys';
   const MCP_SCOPE_LABELS = { read: 'Read tasks & organizations', analytics: 'Read analytics', tasks: 'Create & edit tasks', files: 'Attach files to tasks' };
   const MCP_PROMPTS = [
