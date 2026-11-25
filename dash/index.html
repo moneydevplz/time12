@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="theme-color" content="#F1F1EC" />
 <script>try{if(localStorage.getItem("Time12-theme")==="dark")document.documentElement.setAttribute("data-theme","dark")}catch(e){}</script>
+<script>try{var m=location.hash.match(/[#&]mcp_oauth=([^&]*)/);if(m){sessionStorage.setItem("t12_mcp_oauth",decodeURIComponent(m[1]));history.replaceState(null,"",location.pathname+location.search)}}catch(e){}</script>
 <script>
 (() => {
   "use strict";
@@ -2616,25 +2617,26 @@
         <button type="button" class="t12s-ghost" id="t12sCopyUrl">Copy</button>
       </div>
 
-      <div class="t12s-h">Create an access key</div>
-      <p class="t12s-p">Each key only does what you switch on here. Revoke it any time and the AI loses access instantly.</p>
-      <input class="t12s-input" id="t12sName" maxlength="40" placeholder="Name it, e.g. Claude on my laptop" aria-label="Key name" autocomplete="off">
+      <div class="t12s-reveal" id="t12sConsent" hidden>
+      <div class="t12s-h" id="t12sConsentTitle">Allow access?</div>
+      <p class="t12s-p">Choose what it can do. Revoke it any time below and it loses access instantly.</p>
       <div class="t12s-scopes">
         <label class="t12s-scope"><input type="checkbox" value="read" checked disabled><span class="t12s-sw"></span><span><b>Read tasks &amp; organizations</b><i>Always on</i></span></label>
         <label class="t12s-scope"><input type="checkbox" value="analytics" checked><span class="t12s-sw"></span><span><b>Read analytics</b><i>Rank and compare students</i></span></label>
         <label class="t12s-scope"><input type="checkbox" value="tasks"><span class="t12s-sw"></span><span><b>Create &amp; edit tasks</b><i>Off by default</i></span></label>
         <label class="t12s-scope"><input type="checkbox" value="files"><span class="t12s-sw"></span><span><b>Attach files to tasks</b><i>Off by default</i></span></label>
       </div>
-      <button type="button" class="t12s-btn" id="t12sCreate">Create key</button>
-      <div class="t12s-reveal" id="t12sReveal" hidden></div>
+      <button type="button" class="t12s-btn" id="t12sCreate">Allow</button>
+      <button type="button" class="t12s-ghost" id="t12sDeny">Deny</button>
+      </div>
       <div class="t12s-note" id="t12sStatus" aria-live="polite"></div>
 
-      <div class="t12s-h">Your keys</div>
+      <div class="t12s-h">Connected apps</div>
       <div class="t12s-keys" id="t12sKeys"></div>
 
       <details class="t12s-more">
         <summary>How do I add it to my AI?</summary>
-        <p class="t12s-p" style="margin-top:8px">In Claude, ChatGPT or another MCP-capable app, add a custom connector (remote MCP server) and paste the connection URL you get when you create a key. If your app lets you set request headers, use the server URL above and send <code>Authorization: Bearer &lt;your key&gt;</code> instead.</p>
+        <p class="t12s-p" style="margin-top:8px">In Claude, ChatGPT or another MCP-capable app, add a custom connector (remote MCP server), paste the server URL above and sign in when asked. You will come back here to choose what it can do. No key to copy.</p>
       </details>
     </div>
 
@@ -9308,7 +9310,7 @@ Marketing,alex99,</div>
          {action:'revoke', id}                    -> {ok:true}
        /functions/v1/mcp?key=<key>  (or Authorization: Bearer <key>)  = the MCP server itself. */
   const settingsOverlay = $('settingsOverlay');
-  const MCP_URL = SUPABASE_URL + '/functions/v1/mcp';
+  const MCP_URL = SUPABASE_URL + '/functions/v1/mcp-oauth';
   const MCP_KEYS_URL = SUPABASE_URL + '/functions/v1/mcp-keys';
   const MCP_SCOPE_LABELS = { read: 'Read tasks & organizations', analytics: 'Read analytics', tasks: 'Create & edit tasks', files: 'Attach files to tasks' };
   const MCP_PROMPTS = [
@@ -9336,11 +9338,11 @@ Marketing,alex99,</div>
   function mcpErr(e) {
     return (e && (e.code === 'offline')) ? 'Can’t reach the Time12 MCP service. It isn’t deployed on your Supabase yet, or you’re offline.' : ((e && e.message) || 'Something went wrong.');
   }
-  async function mcpApi(body) {
+  async function mcpApi(body, url) {
     const tk = localStorage.getItem('authToken');
     if (!tk) throw new Error('Sign in first.');
     let res;
-    try { res = await fetch(MCP_KEYS_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tk }, body: JSON.stringify(body) }); }
+    try { res = await fetch(url || MCP_KEYS_URL, { method: 'POST', mode: 'cors', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + tk }, body: JSON.stringify(body) }); }
     catch (e) { const err = new Error('offline'); err.code = 'offline'; throw err; }
     if (res.status === 404) { const err = new Error('offline'); err.code = 'offline'; throw err; }
     let data = null; try { data = await res.json(); } catch (e) {}
@@ -9354,7 +9356,7 @@ Marketing,alex99,</div>
   }
   function mcpRenderKeys(keys) {
     const box = $('t12sKeys'); box.textContent = '';
-    if (!keys.length) { box.appendChild(t12sEl('div', 't12s-empty', 'No keys yet. Create one above to connect an AI.')); return; }
+    if (!keys.length) { box.appendChild(t12sEl('div', 't12s-empty', 'Nothing connected yet. Add the server URL above as a connector in your AI app and sign in.')); return; }
     keys.forEach(k => {
       const row = t12sEl('div', 't12s-key'), main = t12sEl('div', 't12s-key-main');
       main.appendChild(t12sEl('div', 't12s-key-name', k.name || 'Unnamed key'));
@@ -9371,38 +9373,34 @@ Marketing,alex99,</div>
       row.appendChild(main); row.appendChild(rv); box.appendChild(row);
     });
   }
-  function mcpReveal(key) {
-    const box = $('t12sReveal'), full = MCP_URL + '?key=' + encodeURIComponent(key);
-    box.textContent = '';
-    box.appendChild(t12sEl('div', 't12s-h', 'Your key is ready. Copy it now, it won’t be shown again.'));
-    [['Connection URL (paste this into your AI)', full], ['Key only (for apps that use a Bearer header)', key]].forEach(p => {
-      box.appendChild(t12sEl('div', 't12s-p', p[0]));
-      const row = t12sEl('div', 't12s-row'), inp = t12sEl('input', 't12s-input mono'); inp.readOnly = true; inp.value = p[1];
-      const cp = t12sEl('button', 't12s-ghost', 'Copy'); cp.type = 'button';
-      cp.addEventListener('click', () => t12sCopy(p[1], cp));
-      inp.addEventListener('focus', () => inp.select());
-      row.appendChild(inp); row.appendChild(cp); box.appendChild(row);
-    });
-    box.hidden = false;
-  }
-  async function mcpCreate() {
-    const btn = $('t12sCreate'), name = ($('t12sName').value || '').trim() || 'My AI';
-    const scopes = ['read'];
-    settingsOverlay.querySelectorAll('.t12s-scope input:checked').forEach(i => { if (i.value !== 'read') scopes.push(i.value); });
-    btn.disabled = true; mcpNote('Creating…');
+  function mcpPending() { try { return JSON.parse(sessionStorage.getItem('t12_mcp_oauth') || 'null'); } catch (e) { return null; } }
+  function mcpClearPending() { try { sessionStorage.removeItem('t12_mcp_oauth'); } catch (e) {} $('t12sConsent').hidden = true; }
+  async function mcpConsent() {
+    const req = mcpPending(); if (!req) return;
+    openSettings('mcp');
     try {
-      const d = await mcpApi({ action: 'create', name, scopes });
-      if (!d.key) throw new Error('The server didn’t return a key.');
-      mcpReveal(d.key); $('t12sName').value = ''; mcpNote(''); mcpRefresh();
-    } catch (e) { mcpNote(mcpErr(e), true); }
-    btn.disabled = false;
+      const d = await mcpApi({ action: 'info', request: req }, MCP_URL + '/approve');
+      $('t12sConsentTitle').textContent = 'Allow ' + d.client_name + ' (' + d.redirect_host + ') to use your Time12?';
+      $('t12sConsent').hidden = false; mcpNote('');
+    } catch (e) { if (!/sign.?in/i.test(e.message || '')) mcpClearPending(); mcpNote(mcpErr(e), true); }
+  }
+  async function mcpDecide(allow) {
+    const req = mcpPending(); if (!req) return;
+    const scopes = ['read']; settingsOverlay.querySelectorAll('.t12s-scope input:checked').forEach(i => { if (i.value !== 'read') scopes.push(i.value); });
+    $('t12sCreate').disabled = true; $('t12sDeny').disabled = true; mcpNote(allow ? 'Connecting…' : 'Cancelling…');
+    try {
+      const d = await mcpApi({ action: allow ? 'approve' : 'deny', request: req, scopes }, MCP_URL + '/approve');
+      mcpClearPending(); location.href = d.redirect;
+    } catch (e) { mcpNote(mcpErr(e), true); $('t12sCreate').disabled = false; $('t12sDeny').disabled = false; }
   }
 
   $('t12sUrl').value = MCP_URL;
   MCP_PROMPTS.forEach(p => { const c = t12sEl('button', 't12s-chip', p); c.type = 'button'; c.addEventListener('click', () => { t12sCopy(p); const o = c.textContent; c.textContent = 'Copied'; setTimeout(() => { c.textContent = o; }, 1200); }); $('t12sPrompts').appendChild(c); });
   settingsOverlay.querySelectorAll('.t12s-tab').forEach(b => b.addEventListener('click', () => setSettingsTab(b.dataset.tab)));
   $('t12sCopyUrl').addEventListener('click', e => t12sCopy(MCP_URL, e.currentTarget));
-  $('t12sCreate').addEventListener('click', mcpCreate);
+  $('t12sCreate').addEventListener('click', () => mcpDecide(true));
+  $('t12sDeny').addEventListener('click', () => mcpDecide(false));
+  (function () { let n = 0; const t = setInterval(() => { let p = null; try { p = sessionStorage.getItem('t12_mcp_oauth'); } catch (e) {} if (!p || ++n > 240) { clearInterval(t); return; } if (localStorage.getItem('authToken')) { clearInterval(t); mcpConsent(); } }, 500); })();
   $('t12sClose').addEventListener('click', closeSettings);
   $('t12sOpenKeys').addEventListener('click', () => { closeSettings(); shortcutsOverlay.classList.add('active'); });
   $('t12sReplay').addEventListener('click', () => { closeSettings(); setTimeout(() => { try { window.Time12Tour && window.Time12Tour.start(true); } catch (e) {} }, 220); });
